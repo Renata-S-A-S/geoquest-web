@@ -10,4 +10,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // Permite acceder al dev server vía el subdominio aleatorio de un
+    // Cloudflare quick tunnel (*.trycloudflare.com) para probar en celular.
+    // Solo para desarrollo — este archivo no se usa en build de producción.
+    allowedHosts: true,
+  },
 })
