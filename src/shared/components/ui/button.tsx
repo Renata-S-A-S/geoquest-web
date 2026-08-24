@@ -7,7 +7,7 @@ import { cn } from '@/shared/lib/cn'
  * primary, secondary, social, destructive. No inventar variantes nuevas.
  */
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 rounded-sm border-[1.5px] border-transparent px-[18px] py-2.5 font-sans text-[12.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm border-[1.5px] border-transparent px-[18px] py-2.5 font-sans text-[12.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {

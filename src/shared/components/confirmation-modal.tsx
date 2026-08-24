@@ -31,7 +31,7 @@ export function ConfirmationModal({
 }: ConfirmationModalProps): ReactNode {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 p-6 lg:items-center">
-      <div className="relative w-[220px]">
+      <div className="relative w-[260px] lg:w-[340px]">
         <TornPanel edge="top" backing="ink" className="flex flex-col gap-3 px-3.5 pb-3 pt-[18px]">
           <b className="font-display text-sm">{title}</b>
           <p className="-mt-2 font-sans text-[11px] text-muted">{description}</p>
