@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { NAV_ITEMS } from './nav-items'
 import { cn } from '@/shared/lib/cn'
 
@@ -7,9 +8,11 @@ import { cn } from '@/shared/lib/cn'
  * Reemplazada por RailNav en pantallas >=1024px.
  */
 export function BottomNav() {
+  const { t } = useTranslation()
+
   return (
     <nav className="flex justify-around border-t border-border bg-white px-1 pb-1.5 pt-2 lg:hidden">
-      {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+      {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}
@@ -22,7 +25,7 @@ export function BottomNav() {
           }
         >
           <Icon size={18} weight="fill" />
-          {label}
+          {t(labelKey)}
         </NavLink>
       ))}
     </nav>

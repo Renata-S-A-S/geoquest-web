@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { SignOut } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { TornPanel } from './torn-panel'
 import { Button } from '@/shared/components/ui/button'
 import { cn } from '@/shared/lib/cn'
@@ -31,11 +32,18 @@ export function ConfirmationModal({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Cancelar',
+  cancelLabel,
   destructive = true,
   onConfirm,
   onCancel,
 }: ConfirmationModalProps): ReactNode {
+  const { t } = useTranslation()
+  // `cancelLabel` cannot default in the signature to a translated value — a
+  // default parameter is evaluated once, outside any hook, and would freeze
+  // at whatever language was active on first render. Read it in the body
+  // instead so it re-resolves on every language change.
+  const cancel = cancelLabel ?? t('actions.cancel')
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 lg:items-center">
       <div className="w-full lg:w-[460px]">
@@ -61,7 +69,7 @@ export function ConfirmationModal({
               className="flex-1 py-[13px] lg:py-3.5 lg:text-[13.5px]"
               onClick={onCancel}
             >
-              {cancelLabel}
+              {cancel}
             </Button>
             <Button
               variant={destructive ? 'destructive' : 'primary'}

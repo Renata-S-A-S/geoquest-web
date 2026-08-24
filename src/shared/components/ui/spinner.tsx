@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib/cn'
 
 export interface SpinnerProps {
@@ -11,6 +12,8 @@ export interface SpinnerProps {
  * no hace falta declarar un keyframe propio.
  */
 export function Spinner({ size = 34, className }: SpinnerProps) {
+  const { t } = useTranslation()
+
   return (
     <div
       className={cn(
@@ -19,7 +22,7 @@ export function Spinner({ size = 34, className }: SpinnerProps) {
       )}
       style={{ width: size, height: size }}
       role="status"
-      aria-label="Cargando"
+      aria-label={t('aria.loading')}
     />
   )
 }
