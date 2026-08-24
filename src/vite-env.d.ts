@@ -7,6 +7,9 @@ interface ImportMetaEnv {
    * desarrollo en `src/shared/lib/api-client.ts` para cuando no está seteada.
    */
   readonly VITE_API_BASE_URL?: string
+
+  /** Token público de Mapbox (mapa de check-ins, WU10) — ver react-map-gl/mapbox-gl. */
+  readonly VITE_MAPBOX_TOKEN?: string
 }
 
 interface ImportMeta {

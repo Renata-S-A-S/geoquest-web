@@ -21,6 +21,16 @@ export const loginResponseSchema = z.object({
 export type LoginResponse = z.infer<typeof loginResponseSchema>
 
 /**
+ * Contrato REAL de `POST /auth/refresh` — WU6 (issue #6). El body key
+ * (`refreshToken`) fue confirmado contra el código fuente del backend. La
+ * respuesta reutiliza `loginResponseSchema` (misma forma exacta que login).
+ */
+export const refreshRequestSchema = z.object({
+  refreshToken: z.string().min(1),
+})
+export type RefreshRequest = z.infer<typeof refreshRequestSchema>
+
+/**
  * Forma problem+json (RFC7807) que devuelve ASP.NET `Results.Problem` en los
  * errores de login. Todos los campos opcionales porque no todas las
  * respuestas de error los incluyen siempre.
