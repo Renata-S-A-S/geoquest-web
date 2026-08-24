@@ -13,9 +13,12 @@ export interface ConfirmationModalProps {
 }
 
 /**
- * Modal de confirmación — fondo oscurecido + TornPanel con el hairline de tinta
- * estándar (`backing="ink"`, ver `torn-panel.tsx`) en el borde rasgado. Ver
- * sección "Componentes compartidos" del design system.
+ * Modal de confirmación — fondo oscurecido a pantalla completa (`fixed
+ * inset-0`, mismo patrón que `badge-detail-modal.tsx`) + TornPanel con el
+ * hairline de tinta estándar (`backing="ink"`, ver `torn-panel.tsx`) en el
+ * borde rasgado. En mobile (`<lg`) el panel queda anclado abajo (bottom
+ * sheet); desde `lg` (mismo corte que `AppShell`/`RailNav`) queda centrado.
+ * Ver sección "Componentes compartidos" del design system.
  */
 export function ConfirmationModal({
   title,
@@ -27,7 +30,7 @@ export function ConfirmationModal({
   onCancel,
 }: ConfirmationModalProps): ReactNode {
   return (
-    <div className="flex items-center justify-center rounded-lg bg-ink/55 p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 p-6 lg:items-center">
       <div className="relative w-[220px]">
         <TornPanel edge="top" backing="ink" className="flex flex-col gap-3 px-3.5 pb-3 pt-[18px]">
           <b className="font-display text-sm">{title}</b>
