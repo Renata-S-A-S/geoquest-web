@@ -5,7 +5,10 @@ import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
 import { Stamp } from '@/shared/components/stamp'
 import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
-import { CHECKIN_RULE_REJECTION_MESSAGES, GENERIC_CONTENT_REJECTION_MESSAGE } from '@/features/checkin/checkin-copy'
+import {
+  CHECKIN_RULE_REJECTION_MESSAGES,
+  GENERIC_CONTENT_REJECTION_MESSAGE,
+} from '@/features/checkin/checkin-copy'
 import { useCheckin } from '@/features/checkin/use-checkin'
 
 /**
@@ -64,14 +67,18 @@ export function CheckinPage() {
         <CenteredState>
           <Spinner size={34} className="mb-2.5" />
           <b className="font-sans text-xs text-ink">Estamos revisando tu foto…</b>
-          <span className="font-sans text-[10px] text-muted">Esto puede tardar hasta 2 minutos</span>
+          <span className="font-sans text-[10px] text-muted">
+            Esto puede tardar hasta 2 minutos
+          </span>
         </CenteredState>
       )
 
     case 'pending-review':
       return (
         <CenteredState>
-          <b className="px-5 text-center font-sans text-xs text-ink">Tu check-in quedó en revisión manual</b>
+          <b className="px-5 text-center font-sans text-xs text-ink">
+            Tu check-in quedó en revisión manual
+          </b>
           <span className="mb-3 mt-1 px-6 text-center font-sans text-[10px] text-muted">
             Te avisaremos apenas tengamos el resultado.
           </span>
@@ -101,7 +108,9 @@ export function CheckinPage() {
       return (
         <CenteredState>
           <WarningCircle size={30} weight="fill" className="mb-2 text-alert" />
-          <b className="px-5 text-center font-sans text-xs text-ink">{GENERIC_CONTENT_REJECTION_MESSAGE}</b>
+          <b className="px-5 text-center font-sans text-xs text-ink">
+            {GENERIC_CONTENT_REJECTION_MESSAGE}
+          </b>
           <Button variant="primary" className="mt-3" onClick={retry}>
             Intentar de nuevo
           </Button>
@@ -137,7 +146,13 @@ export function CheckinPage() {
       return (
         <div className="flex h-dvh flex-col bg-ink">
           <div className="relative flex-1">
-            <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
           </div>
           <div className="flex justify-center pb-10 pt-4">
             <button
@@ -155,6 +170,8 @@ export function CheckinPage() {
 /** Contenedor centrado en columna para todos los estados no-cámara — fondo cream, full-bleed. */
 function CenteredState({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-dvh flex-col items-center justify-center bg-cream px-6 text-center">{children}</div>
+    <div className="flex h-dvh flex-col items-center justify-center bg-cream px-6 text-center">
+      {children}
+    </div>
   )
 }

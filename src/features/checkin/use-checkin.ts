@@ -70,53 +70,50 @@ export function useCheckin(): UseCheckinResult {
    * `nextPollDelayMs` schedule (design decision #1). Armed on entering
    * `pending`, cleared on unmount and on every terminal transition.
    */
-  const armPolling = useCallback(
-    (checkInId: string) => {
-      const startedAt = Date.now()
+  const armPolling = useCallback((checkInId: string) => {
+    const startedAt = Date.now()
 
-      const scheduleNext = (elapsedMs: number) => {
-        const delay = nextPollDelayMs(elapsedMs)
-        if (delay === null) {
-          if (!unmountedRef.current) setState({ kind: 'pending-review', checkInId })
-          return
-        }
-        pollTimeoutRef.current = setTimeout(poll, delay)
+    const scheduleNext = (elapsedMs: number) => {
+      const delay = nextPollDelayMs(elapsedMs)
+      if (delay === null) {
+        if (!unmountedRef.current) setState({ kind: 'pending-review', checkInId })
+        return
       }
+      pollTimeoutRef.current = setTimeout(poll, delay)
+    }
 
-      const poll = () => {
-        void getCheckinStatus(checkInId)
-          .then((status) => {
-            if (unmountedRef.current) return
-            if (status.validationStatus === ValidationStatus.Approved) {
-              useCheckinStore.getState().clearPending()
-              setState({
-                kind: 'approved',
-                xpAwarded: status.xpAwarded,
-                geoPointsAwarded: status.geoPointsAwarded,
-              })
-              return
-            }
-            if (status.validationStatus === ValidationStatus.Rejected) {
-              useCheckinStore.getState().clearPending()
-              setState({ kind: 'rejected-content' })
-              return
-            }
-            if (status.validationStatus === ValidationStatus.PendingManualReview) {
-              setState({ kind: 'pending-review', checkInId })
-              return
-            }
-            scheduleNext(Date.now() - startedAt)
-          })
-          .catch(() => {
-            // Transient network hiccup mid-poll — keep trying until the deadline.
-            if (!unmountedRef.current) scheduleNext(Date.now() - startedAt)
-          })
-      }
+    const poll = () => {
+      void getCheckinStatus(checkInId)
+        .then((status) => {
+          if (unmountedRef.current) return
+          if (status.validationStatus === ValidationStatus.Approved) {
+            useCheckinStore.getState().clearPending()
+            setState({
+              kind: 'approved',
+              xpAwarded: status.xpAwarded,
+              geoPointsAwarded: status.geoPointsAwarded,
+            })
+            return
+          }
+          if (status.validationStatus === ValidationStatus.Rejected) {
+            useCheckinStore.getState().clearPending()
+            setState({ kind: 'rejected-content' })
+            return
+          }
+          if (status.validationStatus === ValidationStatus.PendingManualReview) {
+            setState({ kind: 'pending-review', checkInId })
+            return
+          }
+          scheduleNext(Date.now() - startedAt)
+        })
+        .catch(() => {
+          // Transient network hiccup mid-poll — keep trying until the deadline.
+          if (!unmountedRef.current) scheduleNext(Date.now() - startedAt)
+        })
+    }
 
-      scheduleNext(0)
-    },
-    [],
-  )
+    scheduleNext(0)
+  }, [])
 
   const acquirePermissions = useCallback(async () => {
     setState({ kind: 'requesting-permissions' })

@@ -45,11 +45,7 @@ export async function getCheckinStatus(checkInId: string): Promise<CheckinStatus
 }
 
 export type CheckinRuleRejection =
-  | 'OutOfRadius'
-  | 'HardBlock24Hours'
-  | 'PlaceInactive'
-  | 'GpsAccuracyExceeded'
-  | 'PlaceNotFound'
+  'OutOfRadius' | 'HardBlock24Hours' | 'PlaceInactive' | 'GpsAccuracyExceeded' | 'PlaceNotFound'
 
 const RULE_TITLES: readonly CheckinRuleRejection[] = [
   'OutOfRadius',

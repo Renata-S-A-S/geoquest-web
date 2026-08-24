@@ -4,7 +4,11 @@ import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useCheckin } from '@/features/checkin/use-checkin'
-import { MediaPermissionError, captureFrame, requestCameraStream } from '@/features/checkin/media/capture-photo'
+import {
+  MediaPermissionError,
+  captureFrame,
+  requestCameraStream,
+} from '@/features/checkin/media/capture-photo'
 import { requestPosition } from '@/features/checkin/media/request-position'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
@@ -17,7 +21,12 @@ import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
  */
 vi.mock('@/features/checkin/media/capture-photo', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/checkin/media/capture-photo')>()
-  return { ...actual, requestCameraStream: vi.fn(), captureFrame: vi.fn(), stopCameraStream: vi.fn() }
+  return {
+    ...actual,
+    requestCameraStream: vi.fn(),
+    captureFrame: vi.fn(),
+    stopCameraStream: vi.fn(),
+  }
 })
 
 vi.mock('@/features/checkin/media/request-position', async (importOriginal) => {
@@ -89,7 +98,7 @@ describe('useCheckin', () => {
     const { result } = renderHook(() => useCheckin())
 
     await waitFor(() =>
-      expect(result.current.state).toEqual({ kind: 'permission-denied', device: 'camera' }),
+      expect(result.current.state).toEqual({ kind: 'permission-denied', device: 'camera' })
     )
 
     vi.mocked(requestCameraStream).mockResolvedValue(fakeStream)
@@ -105,7 +114,7 @@ describe('useCheckin', () => {
     const { result } = renderHook(() => useCheckin())
 
     await waitFor(() =>
-      expect(result.current.state).toEqual({ kind: 'permission-denied', device: 'location' }),
+      expect(result.current.state).toEqual({ kind: 'permission-denied', device: 'location' })
     )
   })
 
@@ -114,14 +123,21 @@ describe('useCheckin', () => {
 
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () =>
         HttpResponse.json(
-          statusPayload({ validationStatus: 2, awardStatus: 1, xpAwarded: 50, geoPointsAwarded: 10 }),
-        ),
-      ),
+          statusPayload({
+            validationStatus: 2,
+            awardStatus: 1,
+            xpAwarded: 50,
+            geoPointsAwarded: 10,
+          })
+        )
+      )
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -139,7 +155,11 @@ describe('useCheckin', () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2_000)
       })
-      expect(result.current.state).toEqual({ kind: 'approved', xpAwarded: 50, geoPointsAwarded: 10 })
+      expect(result.current.state).toEqual({
+        kind: 'approved',
+        xpAwarded: 50,
+        geoPointsAwarded: 10,
+      })
       expect(useCheckinStore.getState().pending).toBeNull()
     } finally {
       vi.useRealTimers()
@@ -152,13 +172,15 @@ describe('useCheckin', () => {
     let statusRequestCount = 0
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () => {
         statusRequestCount += 1
         return HttpResponse.json(statusPayload({ validationStatus: 1 }))
-      }),
+      })
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -192,13 +214,15 @@ describe('useCheckin', () => {
     let statusRequestCount = 0
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () => {
         statusRequestCount += 1
         return HttpResponse.json(statusPayload({ validationStatus: 0 }))
-      }),
+      })
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -226,13 +250,15 @@ describe('useCheckin', () => {
     let statusRequestCount = 0
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () => {
         statusRequestCount += 1
         return HttpResponse.json(statusPayload({ validationStatus: 0 }))
-      }),
+      })
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -265,17 +291,17 @@ describe('useCheckin', () => {
 
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
       http.post(`${baseURL}/checkins`, () =>
-        HttpResponse.json({ title: 'CreateCheckInCommand.OutOfRadius' }, { status: 400 }),
-      ),
+        HttpResponse.json({ title: 'CreateCheckInCommand.OutOfRadius' }, { status: 400 })
+      )
     )
 
     act(() => result.current.capture())
 
     await waitFor(() =>
-      expect(result.current.state).toEqual({ kind: 'rejected-rule', rule: 'OutOfRadius' }),
+      expect(result.current.state).toEqual({ kind: 'rejected-rule', rule: 'OutOfRadius' })
     )
     expect(result.current.state.kind).not.toBe('rejected-content')
   })
@@ -285,14 +311,19 @@ describe('useCheckin', () => {
 
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () =>
         HttpResponse.json(
-          statusPayload({ validationStatus: 3, rejectionReason: 'nudity-detected-should-never-leak' }),
-        ),
-      ),
+          statusPayload({
+            validationStatus: 3,
+            rejectionReason: 'nudity-detected-should-never-leak',
+          })
+        )
+      )
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -306,7 +337,9 @@ describe('useCheckin', () => {
       })
 
       expect(result.current.state).toEqual({ kind: 'rejected-content' })
-      expect(JSON.stringify(result.current.state)).not.toContain('nudity-detected-should-never-leak')
+      expect(JSON.stringify(result.current.state)).not.toContain(
+        'nudity-detected-should-never-leak'
+      )
       expect(useCheckinStore.getState().pending).toBeNull()
     } finally {
       vi.useRealTimers()
@@ -318,12 +351,14 @@ describe('useCheckin', () => {
 
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
-      http.post(`${baseURL}/checkins`, () => HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
       http.get(`${baseURL}/checkins/checkin-1`, () =>
-        HttpResponse.json(statusPayload({ validationStatus: 3 })),
-      ),
+        HttpResponse.json(statusPayload({ validationStatus: 3 }))
+      )
     )
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
@@ -350,11 +385,11 @@ describe('useCheckin', () => {
 
     server.use(
       http.post(`${baseURL}/checkins/photo`, () =>
-        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' }),
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
       ),
       http.post(`${baseURL}/checkins`, () =>
-        HttpResponse.json({ title: 'CreateCheckInCommand.SomethingElse' }, { status: 400 }),
-      ),
+        HttpResponse.json({ title: 'CreateCheckInCommand.SomethingElse' }, { status: 400 })
+      )
     )
 
     act(() => result.current.capture())

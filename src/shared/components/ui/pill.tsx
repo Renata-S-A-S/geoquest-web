@@ -27,7 +27,8 @@ const pillVariants = cva(
   }
 )
 
-export interface PillProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof pillVariants> {}
+export interface PillProps
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof pillVariants> {}
 
 export const Pill = forwardRef<HTMLSpanElement, PillProps>(
   ({ className, variant, ...props }, ref) => (

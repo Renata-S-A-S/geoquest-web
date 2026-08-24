@@ -42,6 +42,6 @@ export const useCheckinStore = create<CheckinStoreState>()(
       version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ pending: state.pending }),
-    },
-  ),
+    }
+  )
 )

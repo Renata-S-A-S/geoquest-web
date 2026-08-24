@@ -80,7 +80,14 @@ function backingFilter(edge: 'top' | 'right', color: string) {
   return `drop-shadow(${x}px ${y}px 0 ${color})`
 }
 
-export function TornPanel({ edge = 'top', backing, className, style, children, ...props }: TornPanelProps) {
+export function TornPanel({
+  edge = 'top',
+  backing,
+  className,
+  style,
+  children,
+  ...props
+}: TornPanelProps) {
   const clipStyle = { clipPath: clipPaths[edge] }
 
   if (!backing) {
@@ -116,7 +123,11 @@ export function TornPanel({ edge = 'top', backing, className, style, children, .
   // `absolute inset-0`) va en el WRAPPER para que tenga tamaño propio como
   // containing block; el panel interno solo se estira a `h-full w-full`.
   return (
-    <div className={className} style={{ filter: backingFilter(edge, backingHex[backing]) }} {...props}>
+    <div
+      className={className}
+      style={{ filter: backingFilter(edge, backingHex[backing]) }}
+      {...props}
+    >
       <div className="relative h-full w-full bg-white" style={{ ...clipStyle, ...style }} />
     </div>
   )

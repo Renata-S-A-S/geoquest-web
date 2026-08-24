@@ -29,11 +29,7 @@ export function ConfirmationModal({
   return (
     <div className="flex items-center justify-center rounded-lg bg-ink/55 p-6">
       <div className="relative w-[220px]">
-        <TornPanel
-          edge="top"
-          backing="ink"
-          className="flex flex-col gap-3 px-3.5 pb-3 pt-[18px]"
-        >
+        <TornPanel edge="top" backing="ink" className="flex flex-col gap-3 px-3.5 pb-3 pt-[18px]">
           <b className="font-display text-sm">{title}</b>
           <p className="-mt-2 font-sans text-[11px] text-muted">{description}</p>
           <div className="flex gap-2">

@@ -41,7 +41,8 @@ describe('requestPosition', () => {
   it('rejects with the original error for a non-permission geolocation failure (e.g. timeout, code 3)', async () => {
     const timeoutError = { code: 3, message: 'timeout' } as GeolocationPositionError
     stubGeolocation({
-      getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) => error(timeoutError),
+      getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+        error(timeoutError),
     })
 
     await expect(requestPosition()).rejects.toBe(timeoutError)
@@ -59,7 +60,7 @@ describe('requestPosition', () => {
       getCurrentPosition: (
         _success: PositionCallback,
         _error: PositionErrorCallback,
-        options?: PositionOptions,
+        options?: PositionOptions
       ) => {
         receivedOptions = options
       },

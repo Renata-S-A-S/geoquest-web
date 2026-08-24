@@ -32,8 +32,8 @@ describe('installAuthInterceptors — request interceptor', () => {
     login('fresh-token')
     server.use(
       http.get(`${baseURL}/resource`, ({ request }) =>
-        HttpResponse.json({ authHeader: request.headers.get('authorization') }),
-      ),
+        HttpResponse.json({ authHeader: request.headers.get('authorization') })
+      )
     )
 
     const client = createClient()
@@ -45,8 +45,8 @@ describe('installAuthInterceptors — request interceptor', () => {
   it('omits the Authorization header when no access token is present', async () => {
     server.use(
       http.get(`${baseURL}/resource`, ({ request }) =>
-        HttpResponse.json({ authHeader: request.headers.get('authorization') }),
-      ),
+        HttpResponse.json({ authHeader: request.headers.get('authorization') })
+      )
     )
 
     const client = createClient()
@@ -61,15 +61,15 @@ describe('installAuthInterceptors — request interceptor', () => {
       login('fresh-token')
       server.use(
         http.post(`${baseURL}${path}`, ({ request }) =>
-          HttpResponse.json({ authHeader: request.headers.get('authorization') }),
-        ),
+          HttpResponse.json({ authHeader: request.headers.get('authorization') })
+        )
       )
 
       const client = createClient()
       const { data } = await client.post(path, {})
 
       expect(data.authHeader).toBeNull()
-    },
+    }
   )
 })
 
@@ -96,7 +96,7 @@ describe('installAuthInterceptors — 401 refresh-and-retry', () => {
           refreshToken: 'new-refresh-token',
           refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
         })
-      }),
+      })
     )
 
     const client = createClient()
@@ -126,15 +126,15 @@ describe('installAuthInterceptors — 401 refresh-and-retry', () => {
             accessTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
             refreshToken: 'new-refresh-token',
             refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
-          }),
-        ),
+          })
+        )
       )
 
       const client = createClient()
       const { data } = await client.request({ method, url: '/resource' })
 
       expect(data).toEqual({ ok: true, method })
-    },
+    }
   )
 
   it('leaves the original request pending on the real refresh latency, with no artificial UI state in between', async () => {
@@ -157,7 +157,7 @@ describe('installAuthInterceptors — 401 refresh-and-retry', () => {
           refreshToken: 'new-refresh-token',
           refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
         })
-      }),
+      })
     )
 
     const client = createClient()
@@ -202,7 +202,7 @@ describe('installAuthInterceptors — 401 refresh-and-retry', () => {
           refreshToken: 'new-refresh-token',
           refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
         })
-      }),
+      })
     )
 
     const client = createClient()
@@ -223,8 +223,8 @@ describe('installAuthInterceptors — refresh failure and anti-loop guard', () =
     server.use(
       http.get(`${baseURL}/resource`, () => new HttpResponse(null, { status: 401 })),
       http.post(`${baseURL}/auth/refresh`, () =>
-        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 }),
-      ),
+        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 })
+      )
     )
 
     const client = createClient()
@@ -243,8 +243,8 @@ describe('installAuthInterceptors — refresh failure and anti-loop guard', () =
       http.get(`${baseURL}/resource-a`, () => new HttpResponse(null, { status: 401 })),
       http.get(`${baseURL}/resource-b`, () => new HttpResponse(null, { status: 401 })),
       http.post(`${baseURL}/auth/refresh`, () =>
-        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 }),
-      ),
+        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 })
+      )
     )
 
     const client = createClient()
@@ -287,7 +287,7 @@ describe('installAuthInterceptors — refresh failure and anti-loop guard', () =
           refreshToken: 'new-refresh-token',
           refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
         })
-      }),
+      })
     )
 
     const client = createClient()

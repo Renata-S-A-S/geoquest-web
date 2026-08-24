@@ -13,7 +13,10 @@ export interface SpinnerProps {
 export function Spinner({ size = 34, className }: SpinnerProps) {
   return (
     <div
-      className={cn('animate-spin rounded-full border-[3px] border-border border-t-teal', className)}
+      className={cn(
+        'animate-spin rounded-full border-[3px] border-border border-t-teal',
+        className
+      )}
       style={{ width: size, height: size }}
       role="status"
       aria-label="Cargando"

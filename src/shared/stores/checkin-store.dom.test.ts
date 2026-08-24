@@ -47,10 +47,14 @@ describe('checkin-store', () => {
   it('clearPending empties the persisted key so a fresh instance rehydrates to null', async () => {
     const { useCheckinStore: firstInstance } = await importFreshCheckinStore('fresh-2')
     firstInstance.getState().setPending({ checkInId: 'checkin-2', placeName: 'Museo' })
-    expect(JSON.parse(window.localStorage.getItem('geoquest.pending-checkin') as string).state.pending).not.toBeNull()
+    expect(
+      JSON.parse(window.localStorage.getItem('geoquest.pending-checkin') as string).state.pending
+    ).not.toBeNull()
 
     firstInstance.getState().clearPending()
-    expect(JSON.parse(window.localStorage.getItem('geoquest.pending-checkin') as string).state.pending).toBeNull()
+    expect(
+      JSON.parse(window.localStorage.getItem('geoquest.pending-checkin') as string).state.pending
+    ).toBeNull()
 
     const { useCheckinStore: secondInstance } = await importFreshCheckinStore('fresh-3')
     await secondInstance.persist.rehydrate()
