@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { EditProfilePage } from './edit-profile-page'
 
@@ -123,5 +123,138 @@ describe('EditProfilePage', () => {
     await waitFor(() =>
       expect(screen.getByText('Ya existe un explorador con ese username.')).toBeInTheDocument()
     )
+  })
+})
+
+function makeFile(name: string, sizeBytes: number, type = 'image/jpeg'): File {
+  const file = new File([new Uint8Array(sizeBytes)], name, { type })
+  return file
+}
+
+/**
+ * WU10 (gamification) PR5 — spec "Avatar Upload and Removal Are Mutually
+ * Exclusive": the `avatarChange` discriminated union (design decision #4)
+ * makes replace/remove structurally impossible to combine, not merely
+ * validated.
+ */
+describe('EditProfilePage avatar upload', () => {
+  beforeEach(() => {
+    // Only stub the two static methods jsdom doesn't implement — replacing
+    // the whole global `URL` (e.g. via `vi.stubGlobal`) breaks `new URL()`,
+    // which axios/MSW rely on internally to resolve the request URL.
+    URL.createObjectURL = vi.fn(() => 'blob:mock-preview')
+    URL.revokeObjectURL = vi.fn()
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('shows a preview via URL.createObjectURL when a valid file is chosen', () => {
+    renderPage()
+
+    const input = screen.getByLabelText('Cambiar foto de perfil')
+    fireEvent.change(input, { target: { files: [makeFile('avatar.jpg', 1024)] } })
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'blob:mock-preview')
+  })
+
+  it('blocks files over 5 MB client-side and shows an error, without staging the file', () => {
+    renderPage()
+
+    const input = screen.getByLabelText('Cambiar foto de perfil')
+    fireEvent.change(input, { target: { files: [makeFile('big.jpg', 6 * 1024 * 1024)] } })
+
+    expect(screen.getByText(/5 ?MB/i)).toBeInTheDocument()
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
+  })
+
+  it('choosing a file clears a pending "remove" selection', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['explorer', 'me-echo'], {
+      explorerId: 'e1',
+      username: 'nachomed',
+      avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
+      interests: [],
+      usernameChangedAt: null,
+    })
+    renderPage(queryClient)
+
+    fireEvent.click(screen.getByRole('button', { name: /quitar foto/i }))
+    expect(screen.getByRole('button', { name: /deshacer/i })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Cambiar foto de perfil'), {
+      target: { files: [makeFile('avatar.jpg', 1024)] },
+    })
+
+    expect(screen.queryByRole('button', { name: /deshacer/i })).not.toBeInTheDocument()
+  })
+
+  it('choosing "remove" clears a pending file selection', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['explorer', 'me-echo'], {
+      explorerId: 'e1',
+      username: 'nachomed',
+      avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
+      interests: [],
+      usernameChangedAt: null,
+    })
+    renderPage(queryClient)
+
+    fireEvent.change(screen.getByLabelText('Cambiar foto de perfil'), {
+      target: { files: [makeFile('avatar.jpg', 1024)] },
+    })
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'blob:mock-preview')
+
+    fireEvent.click(screen.getByRole('button', { name: /quitar foto/i }))
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('sends the file under field name "avatar" and never sends removeAvatar in the same request', async () => {
+    let receivedFields: string[] = []
+    server.use(
+      http.patch(`${baseURL}/explorers/me`, async ({ request }) => {
+        const form = await request.formData()
+        receivedFields = Array.from(form.keys())
+        return HttpResponse.json({
+          explorerId: 'e1',
+          username: 'nachomed',
+          avatarUrl: 'https://cdn.example.com/avatars/new.jpg',
+          interests: [],
+          usernameChangedAt: null,
+        })
+      })
+    )
+    renderPage()
+
+    fireEvent.change(screen.getByLabelText('Cambiar foto de perfil'), {
+      target: { files: [makeFile('avatar.jpg', 1024)] },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    await waitFor(() => expect(receivedFields).toContain('avatar'))
+    expect(receivedFields).not.toContain('removeAvatar')
+  })
+
+  it('disables the submit button while the mutation is pending', async () => {
+    server.use(
+      http.patch(`${baseURL}/explorers/me`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        return HttpResponse.json({
+          explorerId: 'e1',
+          username: 'nachomed',
+          avatarUrl: null,
+          interests: [],
+          usernameChangedAt: null,
+        })
+      })
+    )
+    renderPage()
+
+    const submit = screen.getByRole('button', { name: /guardar/i })
+    fireEvent.click(submit)
+
+    await waitFor(() => expect(submit).toBeDisabled())
   })
 })
