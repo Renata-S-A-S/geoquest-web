@@ -52,4 +52,22 @@ describe('requestPosition', () => {
 
     await expect(requestPosition()).rejects.toThrow('Geolocation is not supported')
   })
+
+  it('passes a finite timeout to getCurrentPosition so a stuck GPS fix rejects instead of hanging forever', async () => {
+    let receivedOptions: PositionOptions | undefined
+    stubGeolocation({
+      getCurrentPosition: (
+        _success: PositionCallback,
+        _error: PositionErrorCallback,
+        options?: PositionOptions,
+      ) => {
+        receivedOptions = options
+      },
+    })
+
+    void requestPosition()
+
+    expect(receivedOptions?.timeout).toBeTypeOf('number')
+    expect(receivedOptions?.timeout).toBeLessThan(Infinity)
+  })
 })
