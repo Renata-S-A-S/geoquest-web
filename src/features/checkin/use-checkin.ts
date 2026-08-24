@@ -15,9 +15,10 @@ import {
   uploadCheckinPhoto,
   type CheckinRuleRejection,
 } from '@/features/checkin/checkin-api'
-import { SEED_PLACE_ID } from '@/features/checkin/checkin-config'
+import { SEED_PLACE_ID, SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 import { nextPollDelayMs } from '@/features/checkin/poll-schedule'
 import { ValidationStatus } from '@/shared/schemas/checkin'
+import { useCheckinStore } from '@/shared/stores/checkin-store'
 
 export type CheckinState =
   | { kind: 'requesting-permissions' }
@@ -87,6 +88,7 @@ export function useCheckin(): UseCheckinResult {
           .then((status) => {
             if (unmountedRef.current) return
             if (status.validationStatus === ValidationStatus.Approved) {
+              useCheckinStore.getState().clearPending()
               setState({
                 kind: 'approved',
                 xpAwarded: status.xpAwarded,
@@ -95,6 +97,7 @@ export function useCheckin(): UseCheckinResult {
               return
             }
             if (status.validationStatus === ValidationStatus.Rejected) {
+              useCheckinStore.getState().clearPending()
               setState({ kind: 'rejected-content' })
               return
             }
@@ -165,6 +168,10 @@ export function useCheckin(): UseCheckinResult {
         photoUrl,
       })
       if (unmountedRef.current) return
+      // Design decision #4: persist as soon as `checkInId` exists (the
+      // `202`), not only at the poll deadline — recoverable even if the tab
+      // closes mid-poll.
+      useCheckinStore.getState().setPending({ checkInId, placeName: SEED_PLACE_NAME })
       setState({ kind: 'pending', checkInId })
       armPolling(checkInId)
     } catch (error) {
