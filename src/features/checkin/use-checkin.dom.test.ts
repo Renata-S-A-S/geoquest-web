@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -65,6 +66,17 @@ describe('useCheckin', () => {
     const { result } = renderHook(() => useCheckin())
 
     expect(result.current.state).toEqual({ kind: 'requesting-permissions' })
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+  })
+
+  it('reaches camera under React StrictMode (mount->cleanup->remount) instead of hanging on requesting-permissions', async () => {
+    // Reproduces a real bug found by manual testing: `unmountedRef` was set
+    // to `true` by StrictMode's simulated cleanup and never reset on the
+    // real remount, so every later state update silently no-opped forever.
+    mockHappyPermissions()
+
+    const { result } = renderHook(() => useCheckin(), { wrapper: StrictMode })
+
     await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
   })
 

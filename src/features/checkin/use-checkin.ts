@@ -135,6 +135,13 @@ export function useCheckin(): UseCheckinResult {
   }, [])
 
   useEffect(() => {
+    // Reset on every (re)mount, not just at first render: React 18
+    // StrictMode's dev-only mount->cleanup->remount cycle runs this cleanup
+    // once before the "real" mount, which would otherwise leave
+    // unmountedRef permanently `true` and silently no-op every later state
+    // update forever (the exact bug this line fixes, found via manual
+    // testing — see use-checkin.dom.test.ts's StrictMode reproduction).
+    unmountedRef.current = false
     void acquirePermissions()
     return () => {
       unmountedRef.current = true
