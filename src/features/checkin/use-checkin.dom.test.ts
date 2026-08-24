@@ -6,6 +6,8 @@ import { server } from '@/test/msw-server'
 import { useCheckin } from '@/features/checkin/use-checkin'
 import { MediaPermissionError, captureFrame, requestCameraStream } from '@/features/checkin/media/capture-photo'
 import { requestPosition } from '@/features/checkin/media/request-position'
+import { useCheckinStore } from '@/shared/stores/checkin-store'
+import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 
 /**
  * Design decision #9: mock the two browser-touching media adapters entirely
@@ -129,11 +131,16 @@ describe('useCheckin', () => {
         await vi.advanceTimersByTimeAsync(0)
       })
       expect(result.current.state).toEqual({ kind: 'pending', checkInId: 'checkin-1' })
+      expect(useCheckinStore.getState().pending).toMatchObject({
+        checkInId: 'checkin-1',
+        placeName: SEED_PLACE_NAME,
+      })
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2_000)
       })
       expect(result.current.state).toEqual({ kind: 'approved', xpAwarded: 50, geoPointsAwarded: 10 })
+      expect(useCheckinStore.getState().pending).toBeNull()
     } finally {
       vi.useRealTimers()
     }
@@ -166,6 +173,9 @@ describe('useCheckin', () => {
 
       expect(result.current.state).toEqual({ kind: 'pending-review', checkInId: 'checkin-1' })
       expect(statusRequestCount).toBe(1)
+      // Design decision #4: pending-review keeps the persisted entry (never
+      // clears it) so the follow-up banner can still resolve it later.
+      expect(useCheckinStore.getState().pending).toMatchObject({ checkInId: 'checkin-1' })
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(60_000)
@@ -297,6 +307,7 @@ describe('useCheckin', () => {
 
       expect(result.current.state).toEqual({ kind: 'rejected-content' })
       expect(JSON.stringify(result.current.state)).not.toContain('nudity-detected-should-never-leak')
+      expect(useCheckinStore.getState().pending).toBeNull()
     } finally {
       vi.useRealTimers()
     }
