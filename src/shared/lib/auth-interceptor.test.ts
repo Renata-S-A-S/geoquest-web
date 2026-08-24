@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { HttpResponse, http } from 'msw'
+import { HttpResponse, delay, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import { __resetRefreshState, installAuthInterceptors } from '@/shared/lib/auth-interceptor'
@@ -137,6 +137,51 @@ describe('installAuthInterceptors — 401 refresh-and-retry', () => {
     },
   )
 
+  it('leaves the original request pending on the real refresh latency, with no artificial UI state in between', async () => {
+    login('expired', 'refresh-token')
+    let resolved = false
+
+    server.use(
+      http.get(`${baseURL}/resource`, ({ request }) => {
+        const auth = request.headers.get('authorization')
+        if (auth === 'Bearer fresh-token') {
+          return HttpResponse.json({ ok: true })
+        }
+        return new HttpResponse(null, { status: 401 })
+      }),
+      http.post(`${baseURL}/auth/refresh`, async () => {
+        await delay(50)
+        return HttpResponse.json({
+          accessToken: 'fresh-token',
+          accessTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
+          refreshToken: 'new-refresh-token',
+          refreshTokenExpiresAtUtc: '2099-01-01T00:00:00Z',
+        })
+      }),
+    )
+
+    const client = createClient()
+    const requestPromise = client.get('/resource').then((response) => {
+      resolved = true
+      return response
+    })
+
+    // The interceptor module exposes no loading flag, store field, or
+    // callback of its own — the ONLY observable state while the refresh is
+    // in flight is that this promise has not settled yet. If any
+    // refresh-specific UI/side-effect state existed, this window is where a
+    // premature resolution or an intermediate value would leak through.
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(resolved).toBe(false)
+
+    const { data } = await requestPromise
+
+    // The only thing that ever unblocks the caller is the real, delayed
+    // HTTP response — not a synthetic/optimistic resolution.
+    expect(resolved).toBe(true)
+    expect(data).toEqual({ ok: true })
+  })
+
   it('issues exactly one refresh call when 5 requests 401 concurrently', async () => {
     login('expired', 'refresh-token')
     let refreshCallCount = 0
@@ -189,6 +234,43 @@ describe('installAuthInterceptors — refresh failure and anti-loop guard', () =
     })
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(useAuthStore.getState().accessToken).toBeNull()
+  })
+
+  it('rejects each pending request with its own original 401, not a cancellation, when concurrent refresh fails', async () => {
+    login('expired', 'invalid-refresh-token')
+
+    server.use(
+      http.get(`${baseURL}/resource-a`, () => new HttpResponse(null, { status: 401 })),
+      http.get(`${baseURL}/resource-b`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${baseURL}/auth/refresh`, () =>
+        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 }),
+      ),
+    )
+
+    const client = createClient()
+
+    const [resultA, resultB] = await Promise.allSettled([
+      client.get('/resource-a'),
+      client.get('/resource-b'),
+    ])
+
+    expect(resultA.status).toBe('rejected')
+    expect(resultB.status).toBe('rejected')
+
+    const errorA = (resultA as PromiseRejectedResult).reason
+    const errorB = (resultB as PromiseRejectedResult).reason
+
+    // No AbortController exists anywhere in the interceptor, so neither
+    // pending request may reject as "canceled"/"aborted" — each must
+    // resolve its own lifecycle independently, ending in its own original
+    // 401 response.
+    expect(axios.isCancel(errorA)).toBe(false)
+    expect(axios.isCancel(errorB)).toBe(false)
+    expect(errorA.code).not.toBe('ERR_CANCELED')
+    expect(errorB.code).not.toBe('ERR_CANCELED')
+    expect(errorA.response).toMatchObject({ status: 401, config: { url: '/resource-a' } })
+    expect(errorB.response).toMatchObject({ status: 401, config: { url: '/resource-b' } })
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
   })
 
   it('does not attempt a second refresh when the retried request 401s again', async () => {
