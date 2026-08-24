@@ -8,3 +8,5 @@ App web responsive (PWA) de exploradores para GeoQuest, construida en React.
 - Slice de trabajo: `002b-frontend-scaffold` (ver [Secuencia de Slices y Completitud](https://renatageoquest.atlassian.net/wiki/spaces/CDP/pages/1277976/Secuencia+de+Slices+y+Completitud))
 
 Este repositorio aún no tiene el proyecto Vite inicializado — solo la estructura de carpetas base.
+
+Para correr el gate de calidad localmente antes de abrir un PR: `npm run lint && npm run format:check && npm test && npm run build`. En GitHub Actions el mismo gate corre en cada PR pero, al ser un plan gratuito, no bloquea el merge — un check en rojo se debe revisar y corregir igual antes de mergear.
