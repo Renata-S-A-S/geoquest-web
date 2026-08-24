@@ -8,12 +8,13 @@ import { Avatar } from '@/shared/components/ui/avatar'
 import { InputField } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Pill } from '@/shared/components/ui/pill'
+import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Toast } from '@/shared/components/toast'
 import { ConfirmationModal } from '@/shared/components/confirmation-modal'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { usernameCooldown } from '@/features/gamification/username-cooldown'
 import { INTEREST_CATALOG } from '@/features/gamification/interests-catalog'
-import { gamificationKeys, useUpdateProfile } from '@/features/gamification/queries'
+import { useExplorerProfile, useUpdateProfile } from '@/features/gamification/queries'
 import { mapProfilePatchError } from '@/features/gamification/profile-edit-api'
 import type { AvatarChange, Category, ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
@@ -29,33 +30,112 @@ type EditProfileFormValues = z.infer<typeof editUsernameSchema>
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 /**
- * `/perfil/editar` — WU10 (gamification) PR4+PR5. Username (with 30-day
- * cooldown, design decision #10), interests (spec "Interests Restricted to
- * the Real Backend Enum" — exactly the 6 real `Category` values), and
- * avatar upload/removal (spec "Avatar Upload and Removal Are Mutually
- * Exclusive" — the `avatarChange` union, design decision #4, makes
- * combining them structurally impossible, not merely validated).
+ * Container — `/perfil/editar` (WU10c, design decisions D9/D10). Reads
+ * `useExplorerProfile()` (`GET /explorers/me`, the same genuine read
+ * `/perfil` uses — TanStack dedupes on the shared key) and renders one of
+ * 3 branches: pending -> inline skeleton, `isError` -> blocking retry UI
+ * (spec "Edit Form Prefills From Server-Read Profile Data" — failing open
+ * into a blank form would silently full-replace `interests` on submit),
+ * success -> `EditProfileForm`. `useForm` is never constructed before the
+ * read resolves — hook count must stay identical across renders, so the
+ * early returns live in this container, not inside the form component.
  *
- * No read endpoint for the explorer's current profile exists yet (issue
- * #40): the only source for the current username/interests/avatarUrl/
- * `usernameChangedAt` is this session's `['explorer','me-echo']` cache,
- * seeded ONLY by a prior successful `PATCH` this session (design decision
- * #5). An empty cache means the cooldown fails OPEN (field stays enabled;
- * the server is still authority and rejects if actually on cooldown) and
- * interests/avatar start unselected.
+ * Logout lives here too (D10), not inside `EditProfileForm`: this screen
+ * is the app's only logout affordance, so it must render across all 3
+ * branches, including when the profile read fails.
  */
 export function EditProfilePage() {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const logout = useAuthStore((state) => state.logout)
-  const echo = queryClient.getQueryData<ExplorerProfileResponse>(gamificationKeys.explorerMeEcho)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const meQuery = useExplorerProfile()
 
-  const cooldown = usernameCooldown(echo?.usernameChangedAt ?? null)
-  const [selectedInterests, setSelectedInterests] = useState<Category[]>(echo?.interests ?? [])
+  const handleConfirmLogout = () => {
+    setConfirmOpen(false)
+    logout()
+    queryClient.clear()
+  }
+
+  const logoutSection = (
+    <>
+      <div className="p-4 pt-0">
+        <div className="border-t border-border pt-4">
+          <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>
+            Cerrar sesión
+          </Button>
+        </div>
+      </div>
+      {confirmOpen && (
+        <ConfirmationModal
+          title="¿Cerrar sesión?"
+          description="Vas a necesitar iniciar sesión de nuevo."
+          confirmLabel="Cerrar sesión"
+          cancelLabel="Cancelar"
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      )}
+    </>
+  )
+
+  if (meQuery.isPending) {
+    return (
+      <>
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-14 w-14 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </div>
+        {logoutSection}
+      </>
+    )
+  }
+
+  if (meQuery.isError) {
+    return (
+      <>
+        <div className="flex flex-col items-center gap-3 p-6 text-center">
+          <span className="font-sans text-xs text-ink">No pudimos cargar tu perfil.</span>
+          <Button variant="primary" onClick={() => meQuery.refetch()}>
+            Reintentar
+          </Button>
+        </div>
+        {logoutSection}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <EditProfileForm me={meQuery.data} />
+      {logoutSection}
+    </>
+  )
+}
+
+/**
+ * Presentational (well, mostly — still owns local form/mutation state) —
+ * the form body of `/perfil/editar`, prefilled from a genuine server read
+ * (`me`), never a session-local echo. Username (30-day cooldown), interests
+ * (exactly the 6 real `Category` values), and avatar upload/removal (the
+ * `avatarChange` union makes replace/remove structurally impossible to
+ * combine) all seed their initial state from `me`.
+ */
+function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
+  const navigate = useNavigate()
+  const cooldown = usernameCooldown(me.usernameChangedAt)
+  const [selectedInterests, setSelectedInterests] = useState<Category[]>(me.interests)
   const [avatarChange, setAvatarChange] = useState<AvatarChange>({ kind: 'none' })
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const updateProfile = useUpdateProfile()
 
   const previewUrl = useMemo(
@@ -68,8 +148,7 @@ export function EditProfilePage() {
     }
   }, [previewUrl])
 
-  const displayedAvatarUrl =
-    avatarChange.kind === 'remove' ? null : (previewUrl ?? echo?.avatarUrl ?? null)
+  const displayedAvatarUrl = avatarChange.kind === 'remove' ? null : (previewUrl ?? me.avatarUrl)
 
   const {
     register,
@@ -77,7 +156,7 @@ export function EditProfilePage() {
     formState: { errors },
   } = useForm<EditProfileFormValues>({
     resolver: zodResolver(editUsernameSchema),
-    defaultValues: { username: echo?.username ?? '' },
+    defaultValues: { username: me.username },
   })
 
   const toggleInterest = (value: Category) => {
@@ -126,12 +205,6 @@ export function EditProfilePage() {
     )
   }
 
-  const handleConfirmLogout = () => {
-    setConfirmOpen(false)
-    logout()
-    queryClient.clear()
-  }
-
   return (
     <>
       <form className="flex flex-col gap-4 p-4" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -139,7 +212,7 @@ export function EditProfilePage() {
           <b className="font-sans text-[11px] font-bold text-ink">Foto de perfil</b>
           <div className="flex items-center gap-3">
             <Avatar
-              initial={(echo?.username ?? 'G').charAt(0).toUpperCase()}
+              initial={me.username.charAt(0).toUpperCase()}
               src={displayedAvatarUrl}
               alt="Foto de perfil"
               size="lg"
@@ -164,7 +237,7 @@ export function EditProfilePage() {
                   Cancelar
                 </button>
               )}
-              {echo?.avatarUrl && avatarChange.kind !== 'remove' && (
+              {me.avatarUrl && avatarChange.kind !== 'remove' && (
                 <button
                   type="button"
                   className="text-left font-sans text-[10px] text-alert"
@@ -202,9 +275,6 @@ export function EditProfilePage() {
 
         <div className="flex flex-col gap-1.5">
           <b className="font-sans text-[11px] font-bold text-ink">Intereses</b>
-          <span className="font-sans text-[10px] text-muted">
-            Esta selección es de esta sesión — todavía no se guarda hasta que confirmes.
-          </span>
           <div className="flex flex-wrap gap-2">
             {INTEREST_CATALOG.map((entry) => {
               const selected = selectedInterests.includes(entry.value)
@@ -228,24 +298,6 @@ export function EditProfilePage() {
           {updateProfile.isPending ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </form>
-
-      <div className="p-4 pt-0">
-        <div className="border-t border-border pt-4">
-          <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
-      {confirmOpen && (
-        <ConfirmationModal
-          title="¿Cerrar sesión?"
-          description="Vas a necesitar iniciar sesión de nuevo."
-          confirmLabel="Cerrar sesión"
-          cancelLabel="Cancelar"
-          onConfirm={handleConfirmLogout}
-          onCancel={() => setConfirmOpen(false)}
-        />
-      )}
     </>
   )
 }

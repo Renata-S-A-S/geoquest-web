@@ -4,10 +4,7 @@
  * `UsernameChangeCooldownDays` + `ChangeUsername`. The server remains
  * authority (`Explorer.UsernameChangeCooldownActive` is still mapped by
  * `mapProfilePatchError` on submit); this only drives a proactive UI hint.
- * Unknown `usernameChangedAt` (no read echo yet, issue #40) fails OPEN —
- * the field stays enabled and the server rejects if actually still on
- * cooldown, rather than the client silently locking a field it can't
- * verify.
+ * A `null` `usernameChangedAt` (never changed) is treated as unlocked.
  */
 const COOLDOWN_DAYS = 30
 const MS_PER_DAY = 24 * 60 * 60 * 1000
