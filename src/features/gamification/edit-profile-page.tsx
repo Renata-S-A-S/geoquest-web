@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Avatar } from '@/shared/components/ui/avatar'
 import { InputField } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Pill } from '@/shared/components/ui/pill'
@@ -12,7 +13,7 @@ import { usernameCooldown } from '@/features/gamification/username-cooldown'
 import { INTEREST_CATALOG } from '@/features/gamification/interests-catalog'
 import { gamificationKeys, useUpdateProfile } from '@/features/gamification/queries'
 import { mapProfilePatchError } from '@/features/gamification/profile-edit-api'
-import type { Category, ExplorerProfileResponse } from '@/shared/schemas/gamification'
+import type { AvatarChange, Category, ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
 const editUsernameSchema = z.object({
   username: z
@@ -23,19 +24,23 @@ const editUsernameSchema = z.object({
 })
 type EditProfileFormValues = z.infer<typeof editUsernameSchema>
 
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
+
 /**
- * `/perfil/editar` — WU10 (gamification) PR4. Username (with 30-day
- * cooldown, design decision #10) + interests (spec "Interests Restricted to
- * the Real Backend Enum" — exactly the 6 real `Category` values). Avatar
- * upload/removal is added in PR5.
+ * `/perfil/editar` — WU10 (gamification) PR4+PR5. Username (with 30-day
+ * cooldown, design decision #10), interests (spec "Interests Restricted to
+ * the Real Backend Enum" — exactly the 6 real `Category` values), and
+ * avatar upload/removal (spec "Avatar Upload and Removal Are Mutually
+ * Exclusive" — the `avatarChange` union, design decision #4, makes
+ * combining them structurally impossible, not merely validated).
  *
  * No read endpoint for the explorer's current profile exists yet (issue
- * #40): the only source for the current username/interests/
+ * #40): the only source for the current username/interests/avatarUrl/
  * `usernameChangedAt` is this session's `['explorer','me-echo']` cache,
  * seeded ONLY by a prior successful `PATCH` this session (design decision
  * #5). An empty cache means the cooldown fails OPEN (field stays enabled;
  * the server is still authority and rejects if actually on cooldown) and
- * interests start unselected.
+ * interests/avatar start unselected.
  */
 export function EditProfilePage() {
   const navigate = useNavigate()
@@ -44,8 +49,23 @@ export function EditProfilePage() {
 
   const cooldown = usernameCooldown(echo?.usernameChangedAt ?? null)
   const [selectedInterests, setSelectedInterests] = useState<Category[]>(echo?.interests ?? [])
+  const [avatarChange, setAvatarChange] = useState<AvatarChange>({ kind: 'none' })
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const updateProfile = useUpdateProfile()
+
+  const previewUrl = useMemo(
+    () => (avatarChange.kind === 'replace' ? URL.createObjectURL(avatarChange.file) : null),
+    [avatarChange]
+  )
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
+  const displayedAvatarUrl =
+    avatarChange.kind === 'remove' ? null : (previewUrl ?? echo?.avatarUrl ?? null)
 
   const {
     register,
@@ -62,13 +82,38 @@ export function EditProfilePage() {
     )
   }
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError('La imagen supera los 5 MB permitidos.')
+      event.target.value = ''
+      return
+    }
+
+    setAvatarError(null)
+    // Structurally clears any pending "remove" — a single state variable,
+    // not two independent flags (design decision #4).
+    setAvatarChange({ kind: 'replace', file })
+  }
+
+  const handleRemoveAvatar = () => {
+    setAvatarError(null)
+    setAvatarChange({ kind: 'remove' })
+  }
+
+  const handleUndoAvatarChange = () => {
+    setAvatarChange({ kind: 'none' })
+  }
+
   const onSubmit = (values: EditProfileFormValues) => {
     setFormError(null)
     updateProfile.mutate(
       {
         username: values.username ? values.username : undefined,
         interests: selectedInterests,
-        avatarChange: { kind: 'none' },
+        avatarChange,
       },
       {
         onSuccess: () => navigate('/perfil'),
@@ -79,6 +124,58 @@ export function EditProfilePage() {
 
   return (
     <form className="flex flex-col gap-4 p-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <div className="flex flex-col gap-1.5">
+        <b className="font-sans text-[11px] font-bold text-ink">Foto de perfil</b>
+        <div className="flex items-center gap-3">
+          <Avatar
+            initial={(echo?.username ?? 'G').charAt(0).toUpperCase()}
+            src={displayedAvatarUrl}
+            alt="Foto de perfil"
+            size="lg"
+          />
+          <div className="flex flex-col gap-1">
+            <label className="font-sans text-[11px] font-bold text-teal">
+              Cambiar foto de perfil
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                aria-label="Cambiar foto de perfil"
+                onChange={handleFileChange}
+              />
+            </label>
+            {avatarChange.kind === 'replace' && (
+              <button
+                type="button"
+                className="text-left font-sans text-[10px] text-muted"
+                onClick={handleUndoAvatarChange}
+              >
+                Cancelar
+              </button>
+            )}
+            {echo?.avatarUrl && avatarChange.kind !== 'remove' && (
+              <button
+                type="button"
+                className="text-left font-sans text-[10px] text-alert"
+                onClick={handleRemoveAvatar}
+              >
+                Quitar foto
+              </button>
+            )}
+            {avatarChange.kind === 'remove' && (
+              <button
+                type="button"
+                className="text-left font-sans text-[10px] text-muted"
+                onClick={handleUndoAvatarChange}
+              >
+                Deshacer
+              </button>
+            )}
+            {avatarError && <span className="font-mono text-[10px] text-alert">{avatarError}</span>}
+          </div>
+        </div>
+      </div>
+
       <InputField
         label="Nombre de usuario"
         disabled={cooldown.locked}
