@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { NAV_ITEMS } from './nav-items'
 import { Avatar } from '@/shared/components/ui/avatar'
 import { cn } from '@/shared/lib/cn'
+import { useActiveLocale } from '@/shared/lib/locale'
 
 export interface RailNavProps {
   avatarInitial?: string
@@ -16,6 +17,7 @@ export interface RailNavProps {
  */
 export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
   const { t } = useTranslation()
+  const locale = useActiveLocale()
   const railItems = NAV_ITEMS.filter((item) => item.id !== 'profile')
 
   return (
@@ -45,7 +47,7 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
       </div>
       <NavLink to="/perfil" className="flex flex-col items-center gap-1">
         <Avatar initial={avatarInitial} size="sm" />
-        <span className="font-mono text-[7px] text-cream/60">{points.toLocaleString('es-CO')}</span>
+        <span className="font-mono text-[7px] text-cream/60">{points.toLocaleString(locale)}</span>
       </NavLink>
     </nav>
   )

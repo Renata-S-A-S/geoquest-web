@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { installAuthInterceptors } from '@/shared/lib/auth-interceptor'
+import { installLocaleInterceptor } from '@/shared/lib/locale-interceptor'
 
 /**
  * Cliente Axios — WU6 (issue #6). Bearer token attachment y 401
@@ -16,3 +17,4 @@ export const apiClient = axios.create({
 })
 
 installAuthInterceptors(apiClient)
+installLocaleInterceptor(apiClient)
