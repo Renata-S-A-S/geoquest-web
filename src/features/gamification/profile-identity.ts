@@ -1,11 +1,14 @@
-import type { BadgeAward, GamingProfile, LeaderboardEntry } from '@/shared/schemas/gamification'
+import type {
+  BadgeAward,
+  ExplorerProfileResponse,
+  GamingProfile,
+} from '@/shared/schemas/gamification'
 
 /**
  * WU10 (gamification), design decision #3 — the ONE seam that merges
- * `GET /gaming/profile` (progress) with `GET /gaming/leaderboard`'s `me`
- * entry (identity, a documented stand-in until backend issue #40 ships
- * `GET /explorers/me`). The container never learns where identity came
- * from; retiring #40 means rewriting this function + its `.test.ts` only.
+ * `GET /gaming/profile` (progress) with `GET /explorers/me` (identity).
+ * The container never learns where identity came from — it just passes
+ * whatever `useExplorerProfile()` returns.
  */
 export interface AssembledProfile {
   username: string | null
@@ -21,13 +24,13 @@ export interface AssembledProfile {
 }
 
 /**
- * Pure merge — never fabricates identity. `me: null` (a brand-new explorer
- * with no gamification profile yet, or an identity fetch that failed)
- * yields `username`/`avatarUrl: null`, never a placeholder string.
+ * Pure merge — never fabricates identity. `me: undefined` (the identity
+ * query pending or failed) yields `username`/`avatarUrl: null`, never a
+ * placeholder string.
  */
 export function assembleProfileView(
   profile: GamingProfile,
-  me: LeaderboardEntry | null
+  me: ExplorerProfileResponse | undefined
 ): AssembledProfile {
   return {
     username: me?.username ?? null,

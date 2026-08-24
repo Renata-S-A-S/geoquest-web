@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { assembleProfileView } from '@/features/gamification/profile-identity'
-import type { GamingProfile, LeaderboardEntry } from '@/shared/schemas/gamification'
+import type { ExplorerProfileResponse, GamingProfile } from '@/shared/schemas/gamification'
 
 /**
- * WU10 (gamification), design decision #3 — the ONE seam that merges
- * `GET /gaming/profile` (progress) with `GET /gaming/leaderboard`'s `me`
- * entry (identity). Backend issue #40 retires this by rewriting this file +
- * this test only.
+ * WU10c — the ONE seam that merges `GET /gaming/profile` (progress) with
+ * `GET /explorers/me` (identity, now a genuine read endpoint — no longer a
+ * `GET /gaming/leaderboard`-derived stand-in).
  */
 
 const profile: GamingProfile = {
@@ -21,12 +20,12 @@ const profile: GamingProfile = {
   badges: [{ name: 'Primer paso', awardedAtUtc: '2026-08-20T00:00:00Z' }],
 }
 
-const me: LeaderboardEntry = {
-  rank: 1,
+const me: ExplorerProfileResponse = {
   explorerId: 'explorer-1',
   username: 'nachomed',
   avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
-  weeklyXP: 120,
+  interests: ['Naturaleza'],
+  usernameChangedAt: null,
 }
 
 describe('assembleProfileView', () => {
@@ -47,8 +46,8 @@ describe('assembleProfileView', () => {
     })
   })
 
-  it('does not fabricate identity when me is null (a brand-new explorer with no gamification profile yet)', () => {
-    const assembled = assembleProfileView(profile, null)
+  it('does not fabricate identity when me is undefined (identity read still pending or failed)', () => {
+    const assembled = assembleProfileView(profile, undefined)
 
     expect(assembled.username).toBeNull()
     expect(assembled.avatarUrl).toBeNull()

@@ -10,7 +10,7 @@ import type { BadgeAward } from '@/shared/schemas/gamification'
 
 export interface ProfileViewProps {
   profile: AssembledProfile
-  /** True when the identity source (`GET /gaming/leaderboard`) failed — shows a retry affordance instead of fabricating a username (spec "One source fails"). */
+  /** True when the identity source (`GET /explorers/me`) failed — shows a retry affordance instead of fabricating a username (spec "One source fails"). */
   identityError?: boolean
   onRetryIdentity?: () => void
   onBadgeClick?: (badge: BadgeAward) => void
