@@ -8,11 +8,17 @@ import {
 } from '@/shared/schemas/gamification'
 
 /**
- * WU10 (gamification) — `PATCH /explorers/me` transport. Mirrors
- * `checkin-api.ts`'s pattern (Zod parse out + `map*Error`), but the request
- * body is built by a PURE function (design decision #4) so the
+ * WU10 (gamification) — `/explorers/me` transport (GET + PATCH). Mirrors
+ * `checkin-api.ts`'s pattern (Zod parse out + `map*Error`), but the PATCH
+ * request body is built by a PURE function (design decision #4) so the
  * avatar/removeAvatar XOR is unit-testable without a real request.
  */
+
+/** `GET /explorers/me` — no bespoke error taxonomy, caller decides (WU10c design decision D1). */
+export async function getExplorerProfile(): Promise<ExplorerProfileResponse> {
+  const { data } = await apiClient.get('/explorers/me')
+  return explorerProfileResponseSchema.parse(data)
+}
 
 /**
  * Builds the multipart body for `PATCH /explorers/me`. Field names confirmed

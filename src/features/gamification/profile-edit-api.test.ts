@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import {
   buildProfilePatchForm,
+  getExplorerProfile,
   mapProfilePatchError,
   updateExplorerProfile,
 } from '@/features/gamification/profile-edit-api'
@@ -84,6 +85,38 @@ describe('updateExplorerProfile', () => {
 
     expect(receivedFieldNames.sort()).toEqual(['interests', 'username'].sort())
     expect(result.username).toBe('nachomed')
+  })
+})
+
+describe('getExplorerProfile', () => {
+  it('GETs /explorers/me and parses the response', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json({
+          explorerId: 'explorer-1',
+          username: 'nachomed',
+          avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
+          interests: ['Naturaleza'],
+          usernameChangedAt: '2026-08-24T00:00:00Z',
+        })
+      )
+    )
+
+    const result = await getExplorerProfile()
+
+    expect(result).toEqual({
+      explorerId: 'explorer-1',
+      username: 'nachomed',
+      avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
+      interests: ['Naturaleza'],
+      usernameChangedAt: '2026-08-24T00:00:00Z',
+    })
+  })
+
+  it('rejects when the server responds 404', async () => {
+    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 404 })))
+
+    await expect(getExplorerProfile()).rejects.toBeDefined()
   })
 })
 
