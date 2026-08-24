@@ -237,16 +237,14 @@ export function EditProfilePage() {
         </div>
       </div>
       {confirmOpen && (
-        <div className="fixed inset-0 z-50">
-          <ConfirmationModal
-            title="¿Cerrar sesión?"
-            description="Vas a necesitar iniciar sesión de nuevo."
-            confirmLabel="Cerrar sesión"
-            cancelLabel="Cancelar"
-            onConfirm={handleConfirmLogout}
-            onCancel={() => setConfirmOpen(false)}
-          />
-        </div>
+        <ConfirmationModal
+          title="¿Cerrar sesión?"
+          description="Vas a necesitar iniciar sesión de nuevo."
+          confirmLabel="Cerrar sesión"
+          cancelLabel="Cancelar"
+          onConfirm={handleConfirmLogout}
+          onCancel={() => setConfirmOpen(false)}
+        />
       )}
     </>
   )
