@@ -1,48 +1,68 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthLayout } from '@/shared/components/auth-layout'
 import { InputField } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
+import { Toast } from '@/shared/components/toast'
 import { useAuthStore } from '@/shared/stores/auth-store'
+import { loginRequest, mapLoginError } from './auth-api'
 import { loginSchema, type LoginFormValues } from './login-schema'
 
 /**
- * Pantalla de login — WU8 (issue #8). Solo UI + validación cliente: no hay
- * cliente Axios todavía (eso es WU6), así que ambos handlers quedan stubbeados.
+ * Pantalla de login — WU8 (UI, issue #8) + WU6 (cliente API real, issue #6).
  *
  * Decisión del founder (revisión de WU8): "Iniciar sesión" y "Continuar con
  * Google" son dos acciones separadas, no un único botón. "Iniciar sesión" es
- * el `type="submit"` real del formulario usuario/contraseña; "Continuar con
- * Google" es un botón aparte (variant `social`) con su propio handler — no
- * dispara el submit del formulario ni valida esos campos.
+ * el `type="submit"` real del formulario email/contraseña — ahora pega de
+ * verdad a `POST /auth/login`; "Continuar con Google" sigue siendo un stub
+ * (ver comentario en su handler, más abajo).
  */
 export function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((state) => state.login)
+  const [formError, setFormError] = useState<string | null>(null)
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) })
 
+  const loginMutation = useMutation({
+    mutationFn: loginRequest,
+    onSuccess: (tokens) => {
+      setFormError(null)
+      login(tokens)
+      navigate('/')
+    },
+    onError: (error) => {
+      setFormError(mapLoginError(error))
+    },
+  })
+
   const onSubmit = (values: LoginFormValues) => {
-    // TODO(WU6): reemplazar por la llamada real al cliente Axios cuando exista
-    // (issue #6, aún no implementado). Por ahora solo confirmamos que la
-    // validación cliente funciona y disparamos el stub de auth (WU7) para
-    // que el redirect de rutas protegidas sea probable end-to-end.
-    console.log('[login] valores validados, pendiente de integrar API', values)
-    login()
-    navigate('/')
+    setFormError(null)
+    loginMutation.mutate(values)
   }
 
   const handleGoogleContinue = () => {
-    // TODO(WU6): reemplazar por el flujo real de OAuth con Google cuando exista
-    // el cliente Axios/backend (issue #6). Acción independiente del formulario
-    // de usuario/contraseña — no lo valida ni lo envía. Mismo stub de auth
-    // (WU7) que el submit del formulario.
+    // TODO(OAuth — fuera de alcance de WU6): esto sigue siendo 100% stub, no
+    // hay integración real de Google todavía. Antes de WU6, este handler
+    // llamaba a un `login()` sin argumentos (stub de WU7); ahora que el
+    // store guarda tokens reales, acá simulamos una sesión con valores
+    // obviamente falsos SOLO para no romper el click-through de demo. Cuando
+    // se implemente OAuth de verdad, casi seguro no encaja en este mismo
+    // `login(tokens)` de email/contraseña — hace falta su propio flujo de
+    // redirect + callback — así que no tomar esto como plantilla.
     console.log('[login] click en "Continuar con Google", pendiente de integrar OAuth')
-    login()
+    login({
+      accessToken: 'stub-google-access-token',
+      accessTokenExpiresAtUtc: new Date(Date.now() + 3_600_000).toISOString(),
+      refreshToken: 'stub-google-refresh-token',
+      refreshTokenExpiresAtUtc: new Date(Date.now() + 86_400_000).toISOString(),
+    })
     navigate('/')
   }
 
@@ -72,11 +92,11 @@ export function LoginPage() {
     >
       <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)} noValidate>
         <InputField
-          label="Usuario o correo"
-          type="text"
-          autoComplete="username"
-          hint={errors.identifier?.message}
-          {...register('identifier')}
+          label="Correo electrónico"
+          type="email"
+          autoComplete="email"
+          hint={errors.email?.message}
+          {...register('email')}
         />
         <InputField
           label="Contraseña"
@@ -85,8 +105,14 @@ export function LoginPage() {
           hint={errors.password?.message}
           {...register('password')}
         />
-        <Button type="submit" variant="primary" disabled={isSubmitting} className="mt-1 w-full">
-          Iniciar sesión
+        {formError && <Toast variant="error" message={formError} />}
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={loginMutation.isPending}
+          className="mt-1 w-full"
+        >
+          {loginMutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}
         </Button>
       </form>
 
