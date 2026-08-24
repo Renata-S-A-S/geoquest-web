@@ -6,53 +6,91 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { EditProfilePage } from './edit-profile-page'
+import type { ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
 const baseURL = 'http://localhost:5219'
 
-function renderPage(
+function meResponse(overrides: Partial<ExplorerProfileResponse> = {}): ExplorerProfileResponse {
+  return {
+    explorerId: 'e1',
+    username: 'nachomed',
+    avatarUrl: null,
+    interests: [],
+    usernameChangedAt: null,
+    ...overrides,
+  }
+}
+
+beforeEach(() => {
+  server.use(http.get(`${baseURL}/explorers/me`, () => HttpResponse.json(meResponse())))
+})
+
+/**
+ * Renders `EditProfilePage` and awaits the initial `GET /explorers/me`
+ * settle before returning — the form only mounts once that query resolves
+ * (WU10c design decision D9), so every test that needs the form present
+ * must await this, not assert against the pending skeleton.
+ */
+async function renderPage(
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 ) {
-  return render(
+  const utils = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/perfil/editar']}>
         <EditProfilePage />
       </MemoryRouter>
     </QueryClientProvider>
   )
+  await screen.findByLabelText('Nombre de usuario')
+  return utils
 }
 
 /**
- * WU10 (gamification) PR4 — spec "Username Edit With 30-Day Cooldown" +
- * "Interests Restricted to the Real Backend Enum". Since no read endpoint
- * exists yet (issue #40), the current username/interests/`usernameChangedAt`
- * only exist in this session's `['explorer','me-echo']` cache (seeded by a
- * prior successful PATCH) — an empty cache fails OPEN (design decision #10).
+ * WU10c — `/perfil/editar` PR2. `EditProfilePage` (container) reads
+ * `useExplorerProfile()` (`GET /explorers/me`, genuine — no longer a
+ * session-only echo, issue #40 retired) and renders one of 3 branches:
+ * pending -> skeleton, error -> blocking retry UI (D5), success ->
+ * `EditProfileForm` prefilled from the real read (spec "Edit Form
+ * Prefills From Server-Read Profile Data").
  */
 describe('EditProfilePage', () => {
-  it('leaves the username field enabled with no cooldown hint when there is no cached echo (fails open)', () => {
-    renderPage()
+  it('prefills the form from the real server read — username value and each returned interest pill aria-pressed', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json(
+          meResponse({ username: 'nachomed', interests: ['Naturaleza', 'Aventura'] })
+        )
+      )
+    )
+    await renderPage()
 
-    const input = screen.getByLabelText('Nombre de usuario')
-    expect(input).not.toBeDisabled()
+    expect(screen.getByLabelText('Nombre de usuario')).toHaveValue('nachomed')
+    expect(screen.getByRole('button', { name: 'Naturaleza' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(screen.getByRole('button', { name: 'Aventura' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Arte' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('disables the username field and shows the exact remaining days when the cached echo is within cooldown', () => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['explorer', 'me-echo'], {
-      explorerId: 'e1',
-      username: 'nachomed',
-      avatarUrl: null,
-      interests: [],
-      usernameChangedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    })
-    renderPage(queryClient)
+  it('disables the username field and shows the exact remaining days when the read profile is within cooldown', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json(
+          meResponse({
+            usernameChangedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          })
+        )
+      )
+    )
+    await renderPage()
 
     expect(screen.getByLabelText('Nombre de usuario')).toBeDisabled()
     expect(screen.getByText(/25 día/)).toBeInTheDocument()
   })
 
-  it('renders exactly the 6 real interest options as toggleable pills', () => {
-    renderPage()
+  it('renders exactly the 6 real interest options as toggleable pills', async () => {
+    await renderPage()
 
     for (const label of [
       'Gastronomía',
@@ -88,7 +126,7 @@ describe('EditProfilePage', () => {
         })
       })
     )
-    renderPage()
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Aventura' }))
     fireEvent.change(screen.getByLabelText('Nombre de usuario'), {
@@ -114,7 +152,7 @@ describe('EditProfilePage', () => {
         )
       )
     )
-    renderPage()
+    await renderPage()
 
     fireEvent.change(screen.getByLabelText('Nombre de usuario'), {
       target: { value: 'nuevoUsername' },
@@ -150,8 +188,8 @@ describe('EditProfilePage avatar upload', () => {
     vi.restoreAllMocks()
   })
 
-  it('shows a preview via URL.createObjectURL when a valid file is chosen', () => {
-    renderPage()
+  it('shows a preview via URL.createObjectURL when a valid file is chosen', async () => {
+    await renderPage()
 
     const input = screen.getByLabelText('Cambiar foto de perfil')
     fireEvent.change(input, { target: { files: [makeFile('avatar.jpg', 1024)] } })
@@ -160,8 +198,8 @@ describe('EditProfilePage avatar upload', () => {
     expect(screen.getByRole('img')).toHaveAttribute('src', 'blob:mock-preview')
   })
 
-  it('blocks files over 5 MB client-side and shows an error, without staging the file', () => {
-    renderPage()
+  it('blocks files over 5 MB client-side and shows an error, without staging the file', async () => {
+    await renderPage()
 
     const input = screen.getByLabelText('Cambiar foto de perfil')
     fireEvent.change(input, { target: { files: [makeFile('big.jpg', 6 * 1024 * 1024)] } })
@@ -170,16 +208,13 @@ describe('EditProfilePage avatar upload', () => {
     expect(URL.createObjectURL).not.toHaveBeenCalled()
   })
 
-  it('choosing a file clears a pending "remove" selection', () => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['explorer', 'me-echo'], {
-      explorerId: 'e1',
-      username: 'nachomed',
-      avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
-      interests: [],
-      usernameChangedAt: null,
-    })
-    renderPage(queryClient)
+  it('choosing a file clears a pending "remove" selection', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json(meResponse({ avatarUrl: 'https://cdn.example.com/avatars/a.jpg' }))
+      )
+    )
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: /quitar foto/i }))
     expect(screen.getByRole('button', { name: /deshacer/i })).toBeInTheDocument()
@@ -191,16 +226,13 @@ describe('EditProfilePage avatar upload', () => {
     expect(screen.queryByRole('button', { name: /deshacer/i })).not.toBeInTheDocument()
   })
 
-  it('choosing "remove" clears a pending file selection', () => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['explorer', 'me-echo'], {
-      explorerId: 'e1',
-      username: 'nachomed',
-      avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
-      interests: [],
-      usernameChangedAt: null,
-    })
-    renderPage(queryClient)
+  it('choosing "remove" clears a pending file selection', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json(meResponse({ avatarUrl: 'https://cdn.example.com/avatars/a.jpg' }))
+      )
+    )
+    await renderPage()
 
     fireEvent.change(screen.getByLabelText('Cambiar foto de perfil'), {
       target: { files: [makeFile('avatar.jpg', 1024)] },
@@ -227,7 +259,7 @@ describe('EditProfilePage avatar upload', () => {
         })
       })
     )
-    renderPage()
+    await renderPage()
 
     fireEvent.change(screen.getByLabelText('Cambiar foto de perfil'), {
       target: { files: [makeFile('avatar.jpg', 1024)] },
@@ -251,7 +283,7 @@ describe('EditProfilePage avatar upload', () => {
         })
       })
     )
-    renderPage()
+    await renderPage()
 
     const submit = screen.getByRole('button', { name: /guardar/i })
     fireEvent.click(submit)
@@ -261,11 +293,14 @@ describe('EditProfilePage avatar upload', () => {
 })
 
 /**
- * WU10b (issue closure) — logout affordance on `/perfil/editar`. The trigger
- * button and the `ConfirmationModal`'s confirm button share the same
- * accessible name ("Cerrar sesión"), so once the modal is open there are
- * TWO matching buttons; tests disambiguate by taking the last match, since
- * the confirmation section renders after the trigger in DOM order.
+ * WU10b (issue closure) / WU10c (D10) — logout affordance on
+ * `/perfil/editar`. Moved up to the `EditProfilePage` container so it
+ * renders across all 3 branches — this is the app's only logout
+ * affordance, so it must stay reachable even if the profile read fails.
+ * The trigger button and the `ConfirmationModal`'s confirm button share the
+ * same accessible name ("Cerrar sesión"), so once the modal is open there
+ * are TWO matching buttons; tests disambiguate by taking the last match,
+ * since the confirmation section renders after the trigger in DOM order.
  */
 describe('EditProfilePage logout', () => {
   beforeEach(() => {
@@ -275,8 +310,8 @@ describe('EditProfilePage logout', () => {
     localStorage.clear()
   })
 
-  it('opens a confirmation modal with the exact logout copy when "Cerrar sesión" is activated', () => {
-    renderPage()
+  it('opens a confirmation modal with the exact logout copy when "Cerrar sesión" is activated', async () => {
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
@@ -286,9 +321,9 @@ describe('EditProfilePage logout', () => {
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
   })
 
-  it('closes the modal on Cancel, keeps the session active, and never calls logout()', () => {
+  it('closes the modal on Cancel, keeps the session active, and never calls logout()', async () => {
     const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
-    renderPage()
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
@@ -298,9 +333,9 @@ describe('EditProfilePage logout', () => {
     expect(logoutSpy).not.toHaveBeenCalled()
   })
 
-  it('calls logout() on Confirm, flips isAuthenticated to false, and does not unmount the page', () => {
+  it('calls logout() on Confirm, flips isAuthenticated to false, and does not unmount the page', async () => {
     const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
-    renderPage()
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
@@ -308,19 +343,22 @@ describe('EditProfilePage logout', () => {
 
     expect(logoutSpy).toHaveBeenCalledTimes(1)
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
-    expect(screen.getByLabelText('Nombre de usuario')).toBeInTheDocument()
+    // The cleared queryClient (D10) drops the cached explorerMe read, so the
+    // container briefly re-shows its pending skeleton before the mounted
+    // query observer refetches and the form reappears — the page itself is
+    // never unmounted or navigated away.
+    expect(await screen.findByLabelText('Nombre de usuario')).toBeInTheDocument()
   })
 
-  it('clears the QueryClient cache on confirmed logout', () => {
+  it('clears the QueryClient cache — including the explorerMe read — on confirmed logout', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['explorer', 'me-echo'], { explorerId: 'e1' })
-    renderPage(queryClient)
+    await renderPage(queryClient)
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
     fireEvent.click(confirmButtons[confirmButtons.length - 1])
 
-    expect(queryClient.getQueryData(['explorer', 'me-echo'])).toBeUndefined()
+    expect(queryClient.getQueryData(['explorer', 'me'])).toBeUndefined()
   })
 
   it('never triggers the profile PATCH when opening, cancelling, or confirming logout', async () => {
@@ -337,7 +375,7 @@ describe('EditProfilePage logout', () => {
         })
       })
     )
-    renderPage()
+    await renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
@@ -347,5 +385,43 @@ describe('EditProfilePage logout', () => {
 
     await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false))
     expect(patchCalls).toBe(0)
+  })
+})
+
+/**
+ * WU10c design decision D5 (LOCKED, user-accepted) — a failed
+ * `GET /explorers/me` blocks the form entirely rather than failing open
+ * into an unprefilled form: `onSubmit` unconditionally sends
+ * `interests: selectedInterests`, and `[]` is a FULL REPLACE server-side,
+ * so an unprefilled form is destructive, not merely incomplete. Logout
+ * (D10) stays reachable on this branch too.
+ */
+describe('EditProfilePage error state', () => {
+  it('blocks the form and shows a retry affordance when GET /explorers/me fails, without ever firing the PATCH, while logout stays reachable', async () => {
+    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
+    let patchCalls = 0
+    server.use(
+      http.patch(`${baseURL}/explorers/me`, () => {
+        patchCalls += 1
+        return HttpResponse.json(meResponse())
+      })
+    )
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(await screen.findByText('No pudimos cargar tu perfil.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Nombre de usuario')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Naturaleza' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+    expect(patchCalls).toBe(0)
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
   })
 })
