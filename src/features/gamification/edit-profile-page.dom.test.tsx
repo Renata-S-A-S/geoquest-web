@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { HttpResponse, http } from 'msw'
+import { HttpResponse, http, delay } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useAuthStore } from '@/shared/stores/auth-store'
@@ -385,6 +385,38 @@ describe('EditProfilePage logout', () => {
 
     await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false))
     expect(patchCalls).toBe(0)
+  })
+})
+
+/**
+ * WU10c — spec "Pending state before data arrives" (`/perfil/editar`).
+ * Mirrors `profile-page.dom.test.tsx`'s equivalent pending-state test: an
+ * infinitely delayed `GET /explorers/me` response keeps `meQuery.isPending`
+ * true, so `EditProfileForm` must never mount and only the container's
+ * inline skeleton (D9) is present.
+ */
+describe('EditProfilePage pending state', () => {
+  it('shows a loading skeleton before the initial GET /explorers/me resolves, with no form rendered yet', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, async () => {
+        await delay('infinite')
+        return HttpResponse.json(meResponse())
+      })
+    )
+
+    const { container } = render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(screen.queryByLabelText('Nombre de usuario')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guardar/i })).not.toBeInTheDocument()
   })
 })
 
