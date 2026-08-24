@@ -3,6 +3,7 @@ import { AppShell } from './layout/app-shell'
 import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
 import { CheckinPage } from '@/features/checkin/checkin-page'
+import { ProfilePage } from '@/features/gamification/profile-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -14,8 +15,9 @@ import { ProtectedRoute } from './protected-route'
  * pero SÍ vive dentro de `ProtectedRoute` — a diferencia de /login, acá sí
  * hace falta sesión (stub) para entrar. El árbol con AppShell está envuelto
  * en `ProtectedRoute` (WU7, issue #7) — sin sesión real todavía, usa el stub
- * de `useAuthStore` para decidir si deja pasar o manda a /login. El resto
- * sigue siendo placeholder — sin vistas reales todavía (eso llega con WU10).
+ * de `useAuthStore` para decidir si deja pasar o manda a /login. `/perfil`
+ * (WU10) ya renderiza `ProfilePage` de verdad; `mapa`, `rutas` y `premios`
+ * siguen siendo placeholder — llegan en WUs futuras.
  */
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -29,7 +31,7 @@ export const router = createBrowserRouter([
           { path: '/', element: <RoutePlaceholder label="mapa — pendiente" /> },
           { path: '/rutas', element: <RoutePlaceholder label="rutas — pendiente" /> },
           { path: '/premios', element: <RoutePlaceholder label="premios — pendiente" /> },
-          { path: '/perfil', element: <RoutePlaceholder label="perfil — pendiente" /> },
+          { path: '/perfil', element: <ProfilePage /> },
         ],
       },
     ],
