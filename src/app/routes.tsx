@@ -3,6 +3,7 @@ import { AppShell } from './layout/app-shell'
 import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
 import { CheckinPage } from '@/features/checkin/checkin-page'
+import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
 import { ProtectedRoute } from './protected-route'
 
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
           { path: '/rutas', element: <RoutePlaceholder label="rutas — pendiente" /> },
           { path: '/premios', element: <RoutePlaceholder label="premios — pendiente" /> },
           { path: '/perfil', element: <ProfilePage /> },
+          { path: '/perfil/editar', element: <EditProfilePage /> },
         ],
       },
     ],
