@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
+import { useAuthStore } from '@/shared/stores/auth-store'
 import { EditProfilePage } from './edit-profile-page'
 
 const baseURL = 'http://localhost:5219'
@@ -256,5 +257,95 @@ describe('EditProfilePage avatar upload', () => {
     fireEvent.click(submit)
 
     await waitFor(() => expect(submit).toBeDisabled())
+  })
+})
+
+/**
+ * WU10b (issue closure) — logout affordance on `/perfil/editar`. The trigger
+ * button and the `ConfirmationModal`'s confirm button share the same
+ * accessible name ("Cerrar sesión"), so once the modal is open there are
+ * TWO matching buttons; tests disambiguate by taking the last match, since
+ * the confirmation section renders after the trigger in DOM order.
+ */
+describe('EditProfilePage logout', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ isAuthenticated: true, accessToken: 'token' })
+  })
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('opens a confirmation modal with the exact logout copy when "Cerrar sesión" is activated', () => {
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+
+    expect(screen.getByText('¿Cerrar sesión?')).toBeInTheDocument()
+    expect(screen.getByText('Vas a necesitar iniciar sesión de nuevo.')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Cerrar sesión' })).toHaveLength(2)
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+  })
+
+  it('closes the modal on Cancel, keeps the session active, and never calls logout()', () => {
+    const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByText('¿Cerrar sesión?')).not.toBeInTheDocument()
+    expect(useAuthStore.getState().isAuthenticated).toBe(true)
+    expect(logoutSpy).not.toHaveBeenCalled()
+  })
+
+  it('calls logout() on Confirm, flips isAuthenticated to false, and does not unmount the page', () => {
+    const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
+    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+
+    expect(logoutSpy).toHaveBeenCalledTimes(1)
+    expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    expect(screen.getByLabelText('Nombre de usuario')).toBeInTheDocument()
+  })
+
+  it('clears the QueryClient cache on confirmed logout', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['explorer', 'me-echo'], { explorerId: 'e1' })
+    renderPage(queryClient)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
+    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+
+    expect(queryClient.getQueryData(['explorer', 'me-echo'])).toBeUndefined()
+  })
+
+  it('never triggers the profile PATCH when opening, cancelling, or confirming logout', async () => {
+    let patchCalls = 0
+    server.use(
+      http.patch(`${baseURL}/explorers/me`, () => {
+        patchCalls += 1
+        return HttpResponse.json({
+          explorerId: 'e1',
+          username: 'nachomed',
+          avatarUrl: null,
+          interests: [],
+          usernameChangedAt: null,
+        })
+      })
+    )
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
+    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+
+    await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false))
+    expect(patchCalls).toBe(0)
   })
 })

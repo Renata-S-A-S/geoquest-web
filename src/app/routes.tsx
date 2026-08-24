@@ -19,8 +19,12 @@ import { ProtectedRoute } from './protected-route'
  * en `ProtectedRoute` (WU7, issue #7) — sin sesión real todavía, usa el stub
  * de `useAuthStore` para decidir si deja pasar o manda a /login. `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
- * reales; `mapa`, `rutas` y `/premios` (el índice) siguen siendo
- * placeholder — llegan en WUs futuras.
+ * reales; `mapa` y `rutas` siguen siendo placeholder — llegan en WUs
+ * futuras. La ruta índice `/premios` (bare) también sigue siendo
+ * placeholder: WU10b (issue closure) repuntó la nav de "Premios" a
+ * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
+ * navegación — se conserva reservada para la futura pantalla de
+ * Recompensas (Slice 004); no es un cambio funcional, solo documentación.
  */
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },

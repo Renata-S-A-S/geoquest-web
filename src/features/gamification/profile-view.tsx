@@ -1,4 +1,5 @@
-import { Fire } from '@phosphor-icons/react'
+import { Fire, Gear } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
 import { Avatar } from '@/shared/components/ui/avatar'
 import { Button } from '@/shared/components/ui/button'
 import { Progress } from '@/shared/components/ui/progress'
@@ -55,6 +56,9 @@ export function ProfileView({
             <span>{profile.currentStreak} días de racha</span>
           </div>
         </div>
+        <Link to="/perfil/editar" aria-label="Editar perfil" className="text-muted">
+          <Gear size={20} weight="fill" />
+        </Link>
       </div>
 
       <div className="flex flex-col gap-1.5">
