@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, edited, synchronize]
 
 permissions:
   contents: read
@@ -27,6 +28,14 @@ jobs:
 
       - run: npm run format:check
 
-      - run: npm test
+      - run: npm run test:coverage
 
       - run: npm run build
+
+  pr-title:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      # amannn/action-semantic-pull-request v5.5.3
+      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017
