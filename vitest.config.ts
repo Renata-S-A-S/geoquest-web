@@ -19,6 +19,13 @@ export default defineConfig({
       exclude: [
         'src/main.tsx',
         'src/app/routes.tsx',
+        // Side-effect bootstrap module, same class as main.tsx — see its
+        // own doc comment. Importing it in a test would double-init the
+        // i18next singleton the setup already configures via
+        // `src/test/i18n.ts`. This is NOT a threshold relaxation: the
+        // 60/50/60/60 numbers below are unchanged, and the real behavior
+        // (parity, t(), fallback) is covered by `resources.test.ts`.
+        'src/shared/lib/i18n.ts',
         'src/test/**',
         'src/**/*.d.ts',
         'src/vite-env.d.ts',

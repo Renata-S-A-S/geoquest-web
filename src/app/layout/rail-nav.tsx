@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { NAV_ITEMS } from './nav-items'
 import { Avatar } from '@/shared/components/ui/avatar'
 import { cn } from '@/shared/lib/cn'
@@ -14,7 +15,8 @@ export interface RailNavProps {
  * design system sobre el ajuste vs. la primera versión).
  */
 export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
-  const railItems = NAV_ITEMS.filter((item) => item.label !== 'Perfil')
+  const { t } = useTranslation()
+  const railItems = NAV_ITEMS.filter((item) => item.id !== 'profile')
 
   return (
     <nav className="hidden h-full w-[74px] flex-col items-center justify-between rounded-md bg-ink py-4 lg:flex">
@@ -23,7 +25,7 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
           <b className="font-display text-sm text-cream">G</b>
         </div>
         <div className="flex flex-col items-center gap-[18px]">
-          {railItems.map(({ to, label, icon: Icon }) => (
+          {railItems.map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -36,7 +38,7 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
               }
             >
               <Icon size={18} weight="fill" />
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </div>
