@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import { __resetRefreshState, installAuthInterceptors } from '@/shared/lib/auth-interceptor'
 import { useAuthStore } from '@/shared/stores/auth-store'
+import { queryClient } from '@/shared/lib/query-client'
 
 const baseURL = 'http://test.local'
 
@@ -25,6 +26,7 @@ function login(accessToken: string, refreshToken = 'refresh-token') {
 beforeEach(() => {
   useAuthStore.getState().logout()
   __resetRefreshState()
+  queryClient.clear()
 })
 
 describe('installAuthInterceptors — request interceptor', () => {
@@ -234,6 +236,25 @@ describe('installAuthInterceptors — refresh failure and anti-loop guard', () =
     })
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(useAuthStore.getState().accessToken).toBeNull()
+  })
+
+  it('clears the shared query cache on forced logout, so a subsequent login never sees the previous user data', async () => {
+    login('expired', 'invalid-refresh-token')
+    queryClient.setQueryData(['previous-user', 'profile'], { username: 'old-user' })
+
+    server.use(
+      http.get(`${baseURL}/resource`, () => new HttpResponse(null, { status: 401 })),
+      http.post(`${baseURL}/auth/refresh`, () =>
+        HttpResponse.json({ title: 'Identity.InvalidRefreshToken' }, { status: 401 })
+      )
+    )
+
+    const client = createClient()
+
+    await expect(client.get('/resource')).rejects.toMatchObject({
+      response: { status: 401 },
+    })
+    expect(queryClient.getQueryData(['previous-user', 'profile'])).toBeUndefined()
   })
 
   it('rejects each pending request with its own original 401, not a cancellation, when concurrent refresh fails', async () => {

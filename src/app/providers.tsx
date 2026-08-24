@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { IconContext } from '@phosphor-icons/react'
-
-const queryClient = new QueryClient()
+import { queryClient } from '@/shared/lib/query-client'
 
 /**
  * Peso de ícono global: fill — reemplaza el look outline por defecto de
