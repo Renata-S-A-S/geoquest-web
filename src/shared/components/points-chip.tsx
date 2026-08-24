@@ -1,5 +1,6 @@
 import { Diamond } from '@phosphor-icons/react'
 import { cn } from '@/shared/lib/cn'
+import { useActiveLocale } from '@/shared/lib/locale'
 
 export interface PointsChipProps {
   points: number
@@ -8,6 +9,8 @@ export interface PointsChipProps {
 
 /** Chip de saldo de GeoPoints — topbar del mapa. */
 export function PointsChip({ points, className }: PointsChipProps) {
+  const locale = useActiveLocale()
+
   return (
     <div
       className={cn(
@@ -16,7 +19,7 @@ export function PointsChip({ points, className }: PointsChipProps) {
       )}
     >
       <Diamond size={12} weight="fill" className="text-coral" />
-      {points.toLocaleString('es-CO')}
+      {points.toLocaleString(locale)}
     </div>
   )
 }
