@@ -137,7 +137,6 @@ export function CheckinPage() {
       return (
         <div className="flex h-dvh flex-col bg-ink">
           <div className="relative flex-1">
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
           </div>
           <div className="flex justify-center pb-10 pt-4">
