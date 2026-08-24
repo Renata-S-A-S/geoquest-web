@@ -3,6 +3,11 @@ import { defineConfig } from 'vitest/config'
 
 const alias = {
   '@': fileURLToPath(new URL('./src', import.meta.url)),
+  // VitePWA is not loaded in the Vitest config, so this virtual module has no
+  // resolver here. The stub keeps `vi.mock` resolvable in *.dom.test.tsx.
+  'virtual:pwa-register/react': fileURLToPath(
+    new URL('./src/test/pwa-register-stub.ts', import.meta.url)
+  ),
 }
 
 export default defineConfig({
