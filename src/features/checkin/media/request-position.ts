@@ -45,7 +45,7 @@ export function requestPosition(): Promise<GpsReading> {
         }
         reject(error)
       },
-      { enableHighAccuracy: true, timeout: POSITION_TIMEOUT_MS, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: POSITION_TIMEOUT_MS, maximumAge: 0 }
     )
   })
 }

@@ -26,7 +26,7 @@ describe('createCheckinRequestSchema', () => {
 
   it('rejects a mistyped latitude (string instead of number)', () => {
     expect(() =>
-      createCheckinRequestSchema.parse({ ...validPayload, latitude: '6.2234' }),
+      createCheckinRequestSchema.parse({ ...validPayload, latitude: '6.2234' })
     ).toThrow()
   })
 })
@@ -45,9 +45,9 @@ describe('createCheckinResponseSchema', () => {
 
 describe('photoUploadResponseSchema', () => {
   it('accepts { photoUrl }', () => {
-    expect(photoUploadResponseSchema.parse({ photoUrl: 'https://cdn.example.com/x.jpg' })).toEqual(
-      { photoUrl: 'https://cdn.example.com/x.jpg' },
-    )
+    expect(photoUploadResponseSchema.parse({ photoUrl: 'https://cdn.example.com/x.jpg' })).toEqual({
+      photoUrl: 'https://cdn.example.com/x.jpg',
+    })
   })
 
   it('rejects a response missing photoUrl', () => {
@@ -76,7 +76,13 @@ describe('checkinStatusSchema', () => {
   })
 
   it('accepts a terminal approved payload with awarded values', () => {
-    const payload = { ...base, validationStatus: 2, awardStatus: 1, xpAwarded: 50, geoPointsAwarded: 10 }
+    const payload = {
+      ...base,
+      validationStatus: 2,
+      awardStatus: 1,
+      xpAwarded: 50,
+      geoPointsAwarded: 10,
+    }
     expect(checkinStatusSchema.parse(payload)).toEqual(payload)
   })
 
@@ -87,7 +93,7 @@ describe('checkinStatusSchema', () => {
 
   it('rejects awardStatus=null (backend never sends it null, only rejectionReason is nullable)', () => {
     expect(() =>
-      checkinStatusSchema.parse({ ...base, validationStatus: 0, awardStatus: null }),
+      checkinStatusSchema.parse({ ...base, validationStatus: 0, awardStatus: null })
     ).toThrow()
   })
 })

@@ -68,8 +68,8 @@ export function PendingCheckinBanner() {
     <div className="mx-3 mt-3 flex items-center justify-between gap-3 rounded-md border border-border bg-white px-3 py-2.5">
       {outcome === 'approved' ? (
         <p className="font-sans text-xs text-ink">
-          <b className="text-teal">¡Check-in aprobado en {snapshot.placeName}!</b> +{data.xpAwarded} XP · +
-          {data.geoPointsAwarded} GeoPoints
+          <b className="text-teal">¡Check-in aprobado en {snapshot.placeName}!</b> +{data.xpAwarded}{' '}
+          XP · +{data.geoPointsAwarded} GeoPoints
         </p>
       ) : (
         <p className="font-sans text-xs text-ink">{GENERIC_CONTENT_REJECTION_MESSAGE}</p>

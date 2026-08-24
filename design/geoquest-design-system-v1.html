@@ -1,524 +1,1622 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GeoQuest — Design System &amp; Wireframes v1</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
-<style>
-:root{
-  --teal:#0EA5A0; --coral:#FF7A59; --green:#3ECF8E; --ink:#10262B; --cream:#FFF9F2; --alert:#E5484D;
-  --border:#E4DFD4; --muted:#8A8578; --white:#FFFFFF; --paper:#F6F3EC;
-}
-*{box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{margin:0;background:var(--paper);font-family:'Nunito',sans-serif;color:var(--ink);}
-h1,h2,h3{font-family:'Baloo 2',sans-serif;margin:0;}
-.wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
-.mono{font-family:'Space Mono',monospace;}
-.muted{color:var(--muted);}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GeoQuest — Design System &amp; Wireframes v1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css"
+    />
+    <style>
+      :root {
+        --teal: #0ea5a0;
+        --coral: #ff7a59;
+        --green: #3ecf8e;
+        --ink: #10262b;
+        --cream: #fff9f2;
+        --alert: #e5484d;
+        --border: #e4dfd4;
+        --muted: #8a8578;
+        --white: #ffffff;
+        --paper: #f6f3ec;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+        font-family: 'Nunito', sans-serif;
+        color: var(--ink);
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: 'Baloo 2', sans-serif;
+        margin: 0;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 28px;
+      }
+      .mono {
+        font-family: 'Space Mono', monospace;
+      }
+      .muted {
+        color: var(--muted);
+      }
 
-/* cover */
-.cover{background:var(--ink);color:var(--cream);padding:70px 28px 50px;text-align:center;position:relative;overflow:hidden;}
-.cover h1{font-size:44px;}
-.cover p.tag{font-family:'Space Mono',monospace;opacity:.65;margin-top:10px;font-size:13px;}
-.cover .meta{margin-top:22px;font-size:13px;opacity:.6;}
+      /* cover */
+      .cover {
+        background: var(--ink);
+        color: var(--cream);
+        padding: 70px 28px 50px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .cover h1 {
+        font-size: 44px;
+      }
+      .cover p.tag {
+        font-family: 'Space Mono', monospace;
+        opacity: 0.65;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      .cover .meta {
+        margin-top: 22px;
+        font-size: 13px;
+        opacity: 0.6;
+      }
 
-/* toc */
-.toc{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;padding:12px 28px;}
-.toc ul{list-style:none;display:flex;gap:18px;flex-wrap:wrap;margin:0;padding:0;max-width:1120px;margin:0 auto;}
-.toc a{font-size:12px;font-weight:700;color:var(--ink);text-decoration:none;font-family:'Nunito',sans-serif;}
-.toc a:hover{color:var(--teal);}
+      /* toc */
+      .toc {
+        background: var(--white);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 12px 28px;
+      }
+      .toc ul {
+        list-style: none;
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+      .toc a {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink);
+        text-decoration: none;
+        font-family: 'Nunito', sans-serif;
+      }
+      .toc a:hover {
+        color: var(--teal);
+      }
 
-/* sections */
-.section{padding:52px 0;border-bottom:1px solid var(--border);}
-.section h2{font-size:24px;margin-bottom:4px;}
-.section .lede{color:var(--muted);font-size:13.5px;max-width:680px;margin:10px 0 26px;line-height:1.5;}
+      /* sections */
+      .section {
+        padding: 52px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .section h2 {
+        font-size: 24px;
+        margin-bottom: 4px;
+      }
+      .section .lede {
+        color: var(--muted);
+        font-size: 13.5px;
+        max-width: 680px;
+        margin: 10px 0 26px;
+        line-height: 1.5;
+      }
 
-/* swatches */
-.swatch-row{display:flex;gap:14px;flex-wrap:wrap;}
-.swatch{width:120px;}
-.swatch .chip{width:100%;height:70px;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);}
-.swatch b{font-size:12.5px;display:block;}
-.swatch span{font-size:11px;color:var(--muted);}
+      /* swatches */
+      .swatch-row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .swatch {
+        width: 120px;
+      }
+      .swatch .chip {
+        width: 100%;
+        height: 70px;
+        border-radius: 10px;
+        margin-bottom: 6px;
+        border: 1px solid var(--border);
+      }
+      .swatch b {
+        font-size: 12.5px;
+        display: block;
+      }
+      .swatch span {
+        font-size: 11px;
+        color: var(--muted);
+      }
 
-/* type specimens */
-.type-row{display:flex;gap:50px;flex-wrap:wrap;margin-top:16px;}
-.type-card .label{font-size:11px;color:var(--muted);margin-bottom:6px;}
+      /* type specimens */
+      .type-row {
+        display: flex;
+        gap: 50px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .type-card .label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12.5px;border:1.5px solid transparent;}
-.btn-primary{background:var(--teal);color:var(--cream);}
-.btn-secondary{background:transparent;border-color:var(--teal);color:var(--teal);}
-.btn-social{background:#fff;border-color:var(--border);color:var(--ink);}
-.btn-destructive{background:transparent;border-color:var(--alert);color:var(--alert);}
+      /* buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-family: 'Nunito', sans-serif;
+        font-weight: 700;
+        font-size: 12.5px;
+        border: 1.5px solid transparent;
+      }
+      .btn-primary {
+        background: var(--teal);
+        color: var(--cream);
+      }
+      .btn-secondary {
+        background: transparent;
+        border-color: var(--teal);
+        color: var(--teal);
+      }
+      .btn-social {
+        background: #fff;
+        border-color: var(--border);
+        color: var(--ink);
+      }
+      .btn-destructive {
+        background: transparent;
+        border-color: var(--alert);
+        color: var(--alert);
+      }
 
-/* inputs */
-.field{width:190px;}
-.field label{font-size:11px;font-weight:700;display:block;margin-bottom:4px;}
-.field .box{height:36px;background:#fff;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px;color:var(--muted);}
-.box{background:#fff;border:1px solid var(--border);border-radius:8px;}
+      /* inputs */
+      .field {
+        width: 190px;
+      }
+      .field label {
+        font-size: 11px;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .field .box {
+        height: 36px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .box {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
 
-/* phone frame */
-.phone{width:250px;background:var(--cream);border-radius:26px;border:1px solid var(--border);overflow:hidden;position:relative;flex-shrink:0;display:flex;flex-direction:column;}
-.phone-tall{height:500px;}
-.phone-med{height:430px;}
-.phone .topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 8px;}
-.phone .points-chip{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:4px 9px;font-size:11px;font-weight:700;}
-.phone .navbar{display:flex;justify-content:space-around;padding:9px 4px 5px;}
-.phone .navbar .item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;}
-.phone .navbar i{font-size:18px;}
-.home-indicator{width:90px;height:4px;border-radius:2px;background:var(--ink);opacity:.25;margin:0 auto 8px;}
+      /* phone frame */
+      .phone {
+        width: 250px;
+        background: var(--cream);
+        border-radius: 26px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        position: relative;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .phone-tall {
+        height: 500px;
+      }
+      .phone-med {
+        height: 430px;
+      }
+      .phone .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 14px 8px;
+      }
+      .phone .points-chip {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 4px 9px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .phone .navbar {
+        display: flex;
+        justify-content: space-around;
+        padding: 9px 4px 5px;
+      }
+      .phone .navbar .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        font-size: 10px;
+      }
+      .phone .navbar i {
+        font-size: 18px;
+      }
+      .home-indicator {
+        width: 90px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--ink);
+        opacity: 0.25;
+        margin: 0 auto 8px;
+      }
 
-/* torn edges */
-.torn-top{clip-path:polygon(0% 4%,6% 1%,12% 4%,18% 1%,24% 3%,30% 1%,36% 4%,42% 1%,48% 3%,54% 1%,60% 4%,66% 1%,72% 3%,78% 1%,84% 4%,90% 1%,96% 3%,100% 1%,100% 100%,0% 100%);}
-.torn-right{clip-path:polygon(0% 0%,92% 0%,97% 4%,90% 8%,97% 12%,90% 16%,97% 20%,90% 24%,97% 28%,90% 32%,97% 36%,90% 40%,97% 44%,90% 48%,97% 52%,90% 56%,97% 60%,90% 64%,97% 68%,90% 72%,97% 76%,90% 80%,97% 84%,90% 88%,97% 92%,92% 96%,0% 100%);}
+      /* torn edges */
+      .torn-top {
+        clip-path: polygon(
+          0% 4%,
+          6% 1%,
+          12% 4%,
+          18% 1%,
+          24% 3%,
+          30% 1%,
+          36% 4%,
+          42% 1%,
+          48% 3%,
+          54% 1%,
+          60% 4%,
+          66% 1%,
+          72% 3%,
+          78% 1%,
+          84% 4%,
+          90% 1%,
+          96% 3%,
+          100% 1%,
+          100% 100%,
+          0% 100%
+        );
+      }
+      .torn-right {
+        clip-path: polygon(
+          0% 0%,
+          92% 0%,
+          97% 4%,
+          90% 8%,
+          97% 12%,
+          90% 16%,
+          97% 20%,
+          90% 24%,
+          97% 28%,
+          90% 32%,
+          97% 36%,
+          90% 40%,
+          97% 44%,
+          90% 48%,
+          97% 52%,
+          90% 56%,
+          97% 60%,
+          90% 64%,
+          97% 68%,
+          90% 72%,
+          97% 76%,
+          90% 80%,
+          97% 84%,
+          90% 88%,
+          97% 92%,
+          92% 96%,
+          0% 100%
+        );
+      }
 
-/* stamp */
-.stamp{border:2px double var(--coral);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-9deg);color:var(--coral);text-align:center;line-height:1.15;flex-shrink:0;}
+      /* stamp */
+      .stamp {
+        border: 2px double var(--coral);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-9deg);
+        color: var(--coral);
+        text-align: center;
+        line-height: 1.15;
+        flex-shrink: 0;
+      }
 
-/* topo texture */
-.topo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+      /* topo texture */
+      .topo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
 
-/* generic small helpers */
-.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;}
-.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;}
-.pill{border-radius:16px;padding:5px 11px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:5px;}
-.state-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;display:block;}
-</style>
-</head>
-<body>
-
-<div class="cover">
-  <h1>GeoQuest</h1>
-  <p class="tag">6.2442°N · 75.5812°W — Laureles-Estadio, Medellín</p>
-  <h2 style="font-size:20px;margin-top:26px;">Design System &amp; Wireframes — v1</h2>
-  <p class="meta">Boceto conceptual · 22 de agosto de 2026 · Base para refinamiento con diseñador · Nombre "GeoQuest" tentativo</p>
-</div>
-
-<div class="toc">
-  <ul>
-    <li><a href="#marca">Marca</a></li>
-    <li><a href="#firma">Firma visual</a></li>
-    <li><a href="#componentes">Componentes</a></li>
-    <li><a href="#navegacion">Navegación</a></li>
-    <li><a href="#onboarding">Onboarding</a></li>
-    <li><a href="#auth">Login/Registro</a></li>
-    <li><a href="#mapa">Mapa</a></li>
-    <li><a href="#lugar">Detalle de lugar</a></li>
-    <li><a href="#checkin">Check-in</a></li>
-    <li><a href="#perfil">Perfil</a></li>
-    <li><a href="#insignia">Insignia</a></li>
-    <li><a href="#recompensas">Recompensas</a></li>
-    <li><a href="#pendientes">Pendientes</a></li>
-  </ul>
-</div>
-
-<div class="wrap">
-
-<div class="section" id="marca">
-  <h2>Identidad de marca</h2>
-  <p class="lede">Personalidad: aventurera y juguetona, con una capa de descubrimiento curado. El usuario es un local explorando su propia ciudad — no un turista.</p>
-  <div class="swatch-row">
-    <div class="swatch"><div class="chip" style="background:#0EA5A0;"></div><b>Explorer teal</b><span>#0EA5A0</span></div>
-    <div class="swatch"><div class="chip" style="background:#FF7A59;"></div><b>Sunset coral</b><span>#FF7A59</span></div>
-    <div class="swatch"><div class="chip" style="background:#3ECF8E;"></div><b>Spring green</b><span>#3ECF8E</span></div>
-    <div class="swatch"><div class="chip" style="background:#10262B;"></div><b>Jungle ink</b><span>#10262B</span></div>
-    <div class="swatch"><div class="chip" style="background:#FFF9F2;"></div><b>Cloud cream</b><span>#FFF9F2</span></div>
-    <div class="swatch"><div class="chip" style="background:#E5484D;"></div><b>Alert red</b><span>#E5484D · solo error</span></div>
-  </div>
-  <div class="type-row">
-    <div class="type-card"><div class="label">Display — Baloo 2 / 700</div><div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:30px;">GeoQuest</div></div>
-    <div class="type-card"><div class="label">UI — Nunito / 400,700</div><div style="font-size:16px;">Descubre lugares y gana <b style="color:#0EA5A0;">GeoPoints</b>.</div></div>
-    <div class="type-card"><div class="label">Datos — Space Mono / 400,700</div><div class="mono" style="font-size:15px;">+50 PTS · 120 M · 6.2442°N</div></div>
-  </div>
-  <p class="lede" style="margin-top:20px;">Logo: wordmark tipográfico puro. Ícono de app (PWA): monograma "G" en Explorer teal con punto Sunset coral (guiño a pin de mapa).</p>
-</div>
-
-<div class="section" id="firma">
-  <h2>Firma visual distintiva</h2>
-  <p class="lede">Investigado para no caer en el look genérico de interfaces generadas con IA (simetría total, misma tarjeta blanca con borde+sombra en todo, radios idénticos, tipografía tipo Inter). Tres piezas que rompen ese patrón:</p>
-  <ul style="color:var(--muted);font-size:13.5px;line-height:1.7;max-width:680px;">
-    <li><b style="color:var(--ink);">Borde rasgado</b> — hojas y modales usan un <span class="mono">clip-path</span> irregular tipo página arrancada, no un rectángulo redondeado perfecto. Es la única pieza de "apuesta" del sistema — todo lo demás se mantiene disciplinado alrededor de ella.</li>
-    <li><b style="color:var(--ink);">Sello de expedición/barrio</b> — en vez de badges circulares genéricos o un sello de pasaporte (territorio muy trillado), se usa un sello con nombre de barrio. Coherente con que el usuario es local, no turista.</li>
-    <li><b style="color:var(--ink);">Textura topográfica</b> — curvas de nivel casi invisibles de fondo en vez de color plano. Recurso confirmado para identidad "outdoor/aventura".</li>
-  </ul>
-</div>
-
-<div class="section" id="componentes">
-  <h2>Componentes compartidos</h2>
-  <p class="lede">Base de todo lo demás — cualquier pantalla nueva reusa esto, no inventa botones o inputs nuevos.</p>
-
-  <span class="state-label">Botones</span>
-  <div class="row" style="margin-bottom:26px;">
-    <div class="btn btn-primary">Confirmar</div>
-    <div class="btn btn-secondary">Cancelar</div>
-    <div class="btn btn-social">Continuar con Google</div>
-    <div class="btn btn-destructive">Cerrar sesión</div>
-  </div>
-
-  <span class="state-label">Inputs</span>
-  <div class="row" style="margin-bottom:26px;">
-    <div class="field"><label>Nombre de usuario</label><div class="box"><span>explorador123</span></div></div>
-    <div class="field"><label>Contraseña</label><div class="box"><span>••••••••</span><i class="ti ti-eye" style="font-size:14px;"></i></div></div>
-  </div>
-
-  <span class="state-label">Modal de confirmación — con fondo oscurecido</span>
-  <div style="width:270px;background:rgba(16,38,43,0.55);border-radius:16px;padding:24px 20px;margin-bottom:26px;display:flex;justify-content:center;">
-    <div style="position:relative;width:220px;">
-      <div style="position:absolute;top:8px;left:0;right:0;bottom:0;background:var(--ink);border-radius:0 0 4px 4px;"></div>
-      <div class="torn-top" style="position:relative;background:#fff;padding:18px 14px 12px;">
-        <b style="font-family:'Baloo 2',sans-serif;font-size:14px;">¿Cerrar sesión?</b>
-        <p class="muted" style="font-size:11px;margin:6px 0 12px;">Vas a necesitar iniciar sesión de nuevo.</p>
-        <div class="row"><div class="btn btn-secondary" style="flex:1;">Cancelar</div><div class="btn btn-destructive" style="flex:1;">Cerrar sesión</div></div>
-      </div>
+      /* generic small helpers */
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+      .pill {
+        border-radius: 16px;
+        padding: 5px 11px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .state-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 8px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cover">
+      <h1>GeoQuest</h1>
+      <p class="tag">6.2442°N · 75.5812°W — Laureles-Estadio, Medellín</p>
+      <h2 style="font-size: 20px; margin-top: 26px">Design System &amp; Wireframes — v1</h2>
+      <p class="meta">
+        Boceto conceptual · 22 de agosto de 2026 · Base para refinamiento con diseñador · Nombre
+        "GeoQuest" tentativo
+      </p>
     </div>
-  </div>
 
-  <span class="state-label">Toasts</span>
-  <div class="row" style="margin-bottom:26px;">
-    <div class="pill" style="background:#fff;border:1.5px solid var(--teal);"><span class="stamp" style="width:16px;height:16px;border-width:1.5px;"></span> +50 puntos ganados</div>
-    <div class="pill" style="background:#FDECEC;border:1px solid var(--alert);color:var(--alert);"><i class="ti ti-alert-triangle"></i> Sin conexión</div>
-  </div>
-
-  <span class="state-label">Estado vacío</span>
-  <div style="width:260px;border:1px dashed var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:26px;">
-    <i class="ti ti-map-pin-off" style="font-size:20px;color:var(--muted);"></i>
-    <div style="font-weight:700;font-size:12px;margin-top:4px;">Todavía no hay insignias</div>
-    <div class="muted" style="font-size:11px;">Salí a explorar para ganar la primera.</div>
-  </div>
-
-  <span class="state-label">Skeleton</span>
-  <div class="row" style="align-items:center;">
-    <div style="width:34px;height:34px;border-radius:50%;background:#E9E5DC;"></div>
-    <div><div style="width:110px;height:9px;border-radius:4px;background:#E9E5DC;margin-bottom:6px;"></div><div style="width:70px;height:9px;border-radius:4px;background:#E9E5DC;"></div></div>
-  </div>
-</div>
-
-<div class="section" id="navegacion">
-  <h2>Navegación</h2>
-  <p class="lede">4 secciones — Mapa (home) · Rutas · Recompensas · Perfil. Corte responsive en <span class="mono">1024px</span> (breakpoint <span class="mono">lg</span> de Tailwind), no en 768px — tablet vertical se sigue usando con el dedo.</p>
-  <div class="row">
-    <div>
-      <span class="state-label">&lt;1024px — barra inferior</span>
-      <div class="phone" style="height:150px;">
-        <div style="flex:1;background:#E1F0E6;margin:10px 10px 0;border-radius:12px;display:flex;align-items:center;justify-content:center;">
-          <span class="muted mono" style="font-size:9px;">contenido de la pantalla</span>
-        </div>
-        <div class="navbar">
-          <div class="item" style="color:var(--teal);font-weight:700;"><i class="ti ti-map-2"></i>Mapa</div>
-          <div class="item muted"><i class="ti ti-route"></i>Rutas</div>
-          <div class="item muted"><i class="ti ti-gift"></i>Premios</div>
-          <div class="item muted"><i class="ti ti-user"></i>Perfil</div>
-        </div>
-      </div>
+    <div class="toc">
+      <ul>
+        <li><a href="#marca">Marca</a></li>
+        <li><a href="#firma">Firma visual</a></li>
+        <li><a href="#componentes">Componentes</a></li>
+        <li><a href="#navegacion">Navegación</a></li>
+        <li><a href="#onboarding">Onboarding</a></li>
+        <li><a href="#auth">Login/Registro</a></li>
+        <li><a href="#mapa">Mapa</a></li>
+        <li><a href="#lugar">Detalle de lugar</a></li>
+        <li><a href="#checkin">Check-in</a></li>
+        <li><a href="#perfil">Perfil</a></li>
+        <li><a href="#insignia">Insignia</a></li>
+        <li><a href="#recompensas">Recompensas</a></li>
+        <li><a href="#pendientes">Pendientes</a></li>
+      </ul>
     </div>
-    <div>
-      <span class="state-label">≥1024px — rail lateral</span>
-      <div style="width:74px;height:260px;background:var(--ink);border-radius:16px;display:flex;flex-direction:column;align-items:center;padding:16px 0;justify-content:space-between;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:22px;">
-          <div style="width:30px;height:30px;border-radius:9px;background:var(--teal);display:flex;align-items:center;justify-content:center;"><b style="font-family:'Baloo 2',sans-serif;font-size:14px;color:var(--cream);">G</b></div>
-          <div style="display:flex;flex-direction:column;gap:18px;align-items:center;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--teal);"><i class="ti ti-map-2" style="font-size:18px;"></i><span style="font-size:8px;font-weight:700;">Mapa</span></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:rgba(255,249,242,.55);"><i class="ti ti-route" style="font-size:18px;"></i><span style="font-size:8px;">Rutas</span></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:rgba(255,249,242,.55);"><i class="ti ti-gift" style="font-size:18px;"></i><span style="font-size:8px;">Premios</span></div>
+
+    <div class="wrap">
+      <div class="section" id="marca">
+        <h2>Identidad de marca</h2>
+        <p class="lede">
+          Personalidad: aventurera y juguetona, con una capa de descubrimiento curado. El usuario es
+          un local explorando su propia ciudad — no un turista.
+        </p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="chip" style="background: #0ea5a0"></div>
+            <b>Explorer teal</b><span>#0EA5A0</span>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #ff7a59"></div>
+            <b>Sunset coral</b><span>#FF7A59</span>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #3ecf8e"></div>
+            <b>Spring green</b><span>#3ECF8E</span>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #10262b"></div>
+            <b>Jungle ink</b><span>#10262B</span>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #fff9f2"></div>
+            <b>Cloud cream</b><span>#FFF9F2</span>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #e5484d"></div>
+            <b>Alert red</b><span>#E5484D · solo error</span>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-          <div style="width:28px;height:28px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--cream);">D</div>
-          <span class="mono" style="font-size:7px;color:rgba(255,249,242,.6);">1,240</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <p class="lede" style="margin-top:10px;">Ajuste vs. la primera versión: en el rail se quitó el ícono "Perfil" separado — el avatar de abajo ya cumple esa función. Tenerlos los dos era confuso (¿dos caminos al mismo lugar?). Monograma arriba, como referencia visual de marca — patrón de Discord/Slack, algo que la barra inferior no necesita porque ahí no hay espacio de sobra.</p>
-  <p class="lede" style="margin-top:14px;">Nota: check-in requiere GPS + selfie — poco práctico en escritorio. El layout de escritorio es para <b>explorar y consultar</b>, no necesariamente para ejecutar el check-in.</p>
-</div>
-
-<div class="section" id="onboarding">
-  <h2>Onboarding</h2>
-  <p class="lede">2-3 pantallas cortas antes del mapa. El registro se pide recién al intentar hacer check-in, no antes.</p>
-  <div class="row">
-    <div class="phone phone-med">
-      <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-10,20 Q30,6 70,20 T150,14" stroke="rgba(16,38,43,0.08)" stroke-width="0.6" fill="none"/><path d="M-10,55 Q30,41 70,55 T150,49" stroke="rgba(16,38,43,0.06)" stroke-width="0.6" fill="none"/></svg>
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;position:relative;">
-        <i class="ti ti-map-2" style="font-size:34px;color:var(--teal);"></i>
-        <b style="font-family:'Baloo 2',sans-serif;font-size:15px;">Descubrí tu ciudad</b>
-        <span class="muted" style="font-size:11px;">Cada rincón de Medellín esconde un lugar por visitar.</span>
-      </div>
-      <div style="display:flex;justify-content:center;gap:5px;padding-bottom:14px;"><div style="width:16px;height:5px;border-radius:3px;background:var(--teal);"></div><div style="width:5px;height:5px;border-radius:3px;background:var(--border);"></div><div style="width:5px;height:5px;border-radius:3px;background:var(--border);"></div></div>
-    </div>
-    <div class="phone phone-med">
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;">
-        <i class="ti ti-camera" style="font-size:34px;color:var(--coral);"></i>
-        <b style="font-family:'Baloo 2',sans-serif;font-size:15px;">Hacé check-in</b>
-        <span class="muted" style="font-size:11px;">Una selfie + tu ubicación validan tu visita real.</span>
-      </div>
-      <div style="display:flex;justify-content:center;gap:5px;padding-bottom:14px;"><div style="width:5px;height:5px;border-radius:3px;background:var(--border);"></div><div style="width:16px;height:5px;border-radius:3px;background:var(--teal);"></div><div style="width:5px;height:5px;border-radius:3px;background:var(--border);"></div></div>
-    </div>
-    <div class="phone phone-med">
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;">
-        <span class="stamp" style="width:46px;height:46px;font-size:8px;">MED</span>
-        <b style="font-family:'Baloo 2',sans-serif;font-size:15px;">Ganá y subí de nivel</b>
-        <span class="muted" style="font-size:11px;">GeoPoints, insignias y un lugar en el ranking.</span>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;padding:0 20px 16px;">
-        <div class="btn btn-primary">Empezar</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="section" id="auth">
-  <h2>Login / Registro</h2>
-  <p class="lede">Responsive real, no solo estirado: móvil una columna, tablet/escritorio parten en portada + formulario.</p>
-  <div class="row" style="align-items:flex-start;">
-    <div>
-      <span class="state-label">móvil &lt;640px</span>
-      <div class="phone" style="width:150px;height:370px;">
-        <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-10,18 Q30,4 70,18 T150,12" stroke="rgba(16,38,43,0.08)" stroke-width="0.6" fill="none"/><path d="M-10,42 Q30,28 70,42 T150,36" stroke="rgba(16,38,43,0.06)" stroke-width="0.6" fill="none"/></svg>
-        <div style="padding:18px 10px 0;text-align:center;position:relative;">
-          <b style="font-family:'Baloo 2',sans-serif;color:var(--teal);font-size:17px;">GeoQuest</b>
-          <div class="mono muted" style="font-size:7px;margin-top:2px;">6.2442°N · 75.5812°W</div>
-          <span class="stamp" style="position:absolute;top:12px;right:6px;width:26px;height:26px;font-size:5px;">MED</span>
-        </div>
-        <div style="flex:1;"></div>
-        <div class="torn-top" style="background:#fff;padding:16px 12px;display:flex;flex-direction:column;gap:7px;">
-          <div class="box" style="height:24px;"></div>
-          <div class="box" style="height:24px;"></div>
-          <div class="btn btn-primary" style="font-size:9px;padding:8px;">Continuar con Google</div>
-          <span class="muted" style="font-size:8px;text-align:center;">¿Nuevo? <b style="color:var(--teal);">Crear cuenta</b></span>
-        </div>
-      </div>
-    </div>
-    <div>
-      <span class="state-label">tablet/escritorio ≥768px</span>
-      <div style="width:340px;height:230px;border-radius:18px;border:1px solid var(--border);overflow:hidden;display:flex;">
-        <div class="torn-right" style="width:130px;background:var(--ink);position:relative;padding:20px 14px 0;">
-          <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-10,22 Q30,8 70,22 T150,16" stroke="rgba(255,249,242,0.1)" stroke-width="0.7" fill="none"/></svg>
-          <b style="font-family:'Baloo 2',sans-serif;color:var(--cream);font-size:15px;position:relative;">GeoQuest</b>
-          <p style="font-size:9px;color:rgba(255,249,242,.7);position:relative;">Explorá Medellín.<br/>Ganá en el camino.</p>
-          <span class="stamp" style="width:34px;height:34px;font-size:6px;margin-top:8px;position:relative;">LAURELES<br/>MED</span>
-        </div>
-        <div style="flex:1;background:var(--cream);padding:20px;display:flex;flex-direction:column;gap:9px;justify-content:center;">
-          <b style="font-family:'Baloo 2',sans-serif;font-size:13px;">Iniciar sesión</b>
-          <div class="box" style="height:26px;"></div>
-          <div class="box" style="height:26px;"></div>
-          <div class="btn btn-primary" style="font-size:10px;">Continuar con Google</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="section" id="mapa">
-  <h2>Mapa (home)</h2>
-  <p class="lede">Pantalla de entrada real de la app — el mapa manda, el saldo de puntos no estorba.</p>
-  <div class="phone phone-tall">
-    <div class="topbar">
-      <b style="font-size:12px;">Laureles-Estadio</b>
-      <div class="points-chip"><i class="ti ti-diamond" style="font-size:12px;color:var(--coral);"></i>1,240</div>
-    </div>
-    <div style="flex:1;position:relative;background:#E1F0E6;margin:2px 12px 10px;border-radius:18px;overflow:hidden;">
-      <div style="position:absolute;top:18%;left:22%;width:11px;height:11px;border-radius:50%;background:var(--teal);border:2px solid var(--cream);"></div>
-      <div style="position:absolute;top:32%;left:68%;width:11px;height:11px;border-radius:50%;background:var(--teal);border:2px solid var(--cream);"></div>
-      <div style="position:absolute;top:52%;left:38%;width:20px;height:20px;border-radius:50%;background:var(--coral);border:3px solid var(--cream);"></div>
-      <div style="position:absolute;left:9px;right:9px;bottom:9px;background:#fff;border-radius:12px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;">
-        <div><b style="font-size:12px;">Café de la Torre</b><div class="muted mono" style="font-size:9px;">120m · +50 pts</div></div>
-        <i class="ti ti-chevron-right" style="color:var(--teal);"></i>
-      </div>
-    </div>
-    <div class="navbar"><div class="item" style="color:var(--teal);font-weight:700;"><i class="ti ti-map-2"></i>Mapa</div><div class="item muted"><i class="ti ti-route"></i>Rutas</div><div class="item muted"><i class="ti ti-gift"></i>Premios</div><div class="item muted"><i class="ti ti-user"></i>Perfil</div></div>
-    <div class="home-indicator"></div>
-  </div>
-</div>
-
-<div class="section" id="lugar">
-  <h2>Detalle de lugar <span class="muted" style="font-size:12px;font-weight:400;">— nueva, sin slice asignado</span></h2>
-  <p class="lede">Se abre al tocar un pin o la tarjeta del mapa. Contiene toda la info antes de comprometerse al check-in.</p>
-  <div class="phone phone-tall">
-    <div style="height:130px;background:#DCD6C8;display:flex;align-items:center;justify-content:center;position:relative;">
-      <i class="ti ti-photo" style="font-size:24px;color:var(--muted);"></i>
-      <i class="ti ti-chevron-left" style="position:absolute;top:12px;left:12px;color:#fff;background:rgba(16,38,43,.4);border-radius:50%;padding:4px;font-size:14px;"></i>
-    </div>
-    <div style="padding:14px;flex:1;">
-      <b style="font-family:'Baloo 2',sans-serif;font-size:15px;">Café de la Torre</b>
-      <div class="row" style="margin:6px 0 10px;gap:6px;">
-        <span class="pill" style="background:#E1F5EE;color:var(--teal);">Café</span>
-        <span class="mono muted" style="font-size:10px;">120 m</span>
-      </div>
-      <p class="muted" style="font-size:11px;line-height:1.5;">Cafetería de especialidad en el corazón de Laureles. Ideal para trabajar o hacer una pausa.</p>
-      <div class="card" style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-        <span class="stamp" style="width:24px;height:24px;font-size:5px;">+50</span>
-        <span style="font-size:11px;font-weight:700;">+50 GeoPoints al hacer check-in</span>
-      </div>
-    </div>
-    <div style="padding:12px 14px;"><div class="btn btn-primary" style="width:100%;">Hacer check-in</div></div>
-    <div class="home-indicator"></div>
-  </div>
-</div>
-
-<div class="section" id="checkin">
-  <h2>Check-in — 4 estados</h2>
-  <p class="lede">Es async: se envía y el explorador sigue navegando. El resultado llega por polling (SignalR queda para Slice 005, no está activo).</p>
-  <div class="row" style="align-items:flex-start;">
-    <div>
-      <span class="state-label">1 · Cámara</span>
-      <div class="phone phone-med" style="background:var(--ink);">
-        <div style="flex:1;position:relative;">
-          <span class="mono" style="position:absolute;top:10px;left:10px;color:rgba(255,249,242,.7);font-size:9px;">±8m GPS</span>
-          <i class="ti ti-user" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:40px;color:rgba(255,249,242,.25);"></i>
-        </div>
-        <div style="display:flex;justify-content:center;padding:16px;"><div style="width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid var(--coral);"></div></div>
-      </div>
-    </div>
-    <div>
-      <span class="state-label">2 · Enviando</span>
-      <div class="phone phone-med" style="align-items:center;justify-content:center;">
-        <div style="width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;margin-bottom:10px;"></div>
-        <b style="font-size:12px;">Validando tu check-in…</b>
-        <span class="muted" style="font-size:10px;">Puede tardar unos segundos</span>
-      </div>
-    </div>
-    <div>
-      <span class="state-label">3 · Aprobado</span>
-      <div class="phone phone-med" style="align-items:center;justify-content:center;">
-        <span class="stamp" style="width:52px;height:52px;font-size:8px;margin-bottom:10px;">LAURELES<br/>MED</span>
-        <b style="font-family:'Baloo 2',sans-serif;font-size:16px;color:var(--teal);">+50 puntos</b>
-        <span class="muted" style="font-size:10.5px;margin:2px 0 12px;">Café de la Torre</span>
-        <div class="btn btn-secondary" style="font-size:10px;">Ver mi perfil</div>
-      </div>
-    </div>
-    <div>
-      <span class="state-label">4 · Rechazado</span>
-      <div class="phone phone-med" style="align-items:center;justify-content:center;">
-        <i class="ti ti-alert-circle" style="font-size:30px;color:var(--alert);margin-bottom:8px;"></i>
-        <b style="font-size:12px;text-align:center;padding:0 20px;">No pudimos validar la foto</b>
-        <span class="muted" style="font-size:10px;text-align:center;padding:0 24px;margin:4px 0 12px;">Probá de nuevo con más luz y de frente</span>
-        <div class="btn btn-primary" style="font-size:10px;">Intentar de nuevo</div>
-      </div>
-    </div>
-  </div>
-  <p class="lede" style="margin-top:14px;">Nota de copy: el rechazo por moderación de contenido usa este mismo estado — mensaje genérico siempre, nunca se expone el motivo específico (regla de negocio, evita que se pueda "aprender" a burlar el filtro).</p>
-</div>
-
-<div class="section" id="perfil">
-  <h2>Perfil</h2>
-  <p class="lede">Ver y editar. Username tiene cooldown de 30 días, avatar 512×512 sin moderación (regla de negocio RN-PROF).</p>
-  <div class="row" style="align-items:flex-start;">
-    <div>
-      <span class="state-label">Ver</span>
-      <div class="phone phone-tall">
-        <div style="padding:16px 14px 8px;display:flex;justify-content:space-between;align-items:center;">
-          <div style="display:flex;align-items:center;gap:9px;">
-            <div style="width:38px;height:38px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;"><b style="color:var(--cream);font-family:'Baloo 2',sans-serif;">D</b></div>
-            <div><b style="font-size:13px;">Derek</b><div class="muted" style="font-size:10px;">Nivel 4</div></div>
+        <div class="type-row">
+          <div class="type-card">
+            <div class="label">Display — Baloo 2 / 700</div>
+            <div style="font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 30px">
+              GeoQuest
+            </div>
           </div>
-          <i class="ti ti-settings" style="color:var(--muted);"></i>
-        </div>
-        <div style="padding:0 14px;">
-          <div style="height:6px;border-radius:3px;background:#E1F0E6;overflow:hidden;margin-bottom:4px;"><div style="width:64%;height:100%;background:var(--teal);"></div></div>
-          <span class="mono muted" style="font-size:10px;">320 / 500 XP</span>
-          <div class="row" style="align-items:center;gap:5px;margin:10px 0 8px;"><i class="ti ti-flame" style="color:var(--coral);"></i><b style="font-size:11px;color:var(--coral);">5 días de racha</b></div>
-          <div class="row" style="gap:16px;">
-            <div><span class="mono" style="font-size:14px;font-weight:700;">12</span><div class="muted" style="font-size:8.5px;">lugares</div></div>
-            <div><span class="mono" style="font-size:14px;font-weight:700;">3</span><div class="muted" style="font-size:8.5px;">insignias</div></div>
+          <div class="type-card">
+            <div class="label">UI — Nunito / 400,700</div>
+            <div style="font-size: 16px">
+              Descubre lugares y gana <b style="color: #0ea5a0">GeoPoints</b>.
+            </div>
+          </div>
+          <div class="type-card">
+            <div class="label">Datos — Space Mono / 400,700</div>
+            <div class="mono" style="font-size: 15px">+50 PTS · 120 M · 6.2442°N</div>
           </div>
         </div>
-        <div style="flex:1;padding:0 14px;">
-          <span class="muted" style="font-size:10.5px;">Insignias</span>
-          <div class="row" style="margin-top:6px;gap:8px;">
-            <span class="stamp" style="width:30px;height:30px;font-size:5px;">1°<br/>PASO</span>
-            <span class="stamp" style="width:30px;height:30px;font-size:5px;">ON<br/>FIRE</span>
-            <span class="stamp" style="width:30px;height:30px;font-size:5px;">EXPLO<br/>RADOR</span>
-          </div>
-        </div>
-        <div class="navbar"><div class="item muted"><i class="ti ti-map-2"></i>Mapa</div><div class="item muted"><i class="ti ti-route"></i>Rutas</div><div class="item muted"><i class="ti ti-gift"></i>Premios</div><div class="item" style="color:var(--teal);font-weight:700;"><i class="ti ti-user"></i>Perfil</div></div>
-        <div class="home-indicator"></div>
+        <p class="lede" style="margin-top: 20px">
+          Logo: wordmark tipográfico puro. Ícono de app (PWA): monograma "G" en Explorer teal con
+          punto Sunset coral (guiño a pin de mapa).
+        </p>
       </div>
-    </div>
-    <div>
-      <span class="state-label">Editar <span class="muted" style="text-transform:none;">— nueva, sin slice asignado</span></span>
-      <div class="phone phone-tall">
-        <div style="padding:14px;display:flex;align-items:center;gap:10px;"><i class="ti ti-chevron-left"></i><b style="font-size:13px;">Editar perfil</b></div>
-        <div style="display:flex;justify-content:center;margin-bottom:10px;position:relative;">
-          <div style="width:56px;height:56px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;"><b style="color:var(--cream);font-family:'Baloo 2',sans-serif;font-size:18px;">D</b></div>
-          <div style="position:absolute;bottom:0;right:calc(50% - 28px);width:18px;height:18px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;"><i class="ti ti-camera" style="font-size:10px;color:#fff;"></i></div>
+
+      <div class="section" id="firma">
+        <h2>Firma visual distintiva</h2>
+        <p class="lede">
+          Investigado para no caer en el look genérico de interfaces generadas con IA (simetría
+          total, misma tarjeta blanca con borde+sombra en todo, radios idénticos, tipografía tipo
+          Inter). Tres piezas que rompen ese patrón:
+        </p>
+        <ul style="color: var(--muted); font-size: 13.5px; line-height: 1.7; max-width: 680px">
+          <li>
+            <b style="color: var(--ink)">Borde rasgado</b> — hojas y modales usan un
+            <span class="mono">clip-path</span> irregular tipo página arrancada, no un rectángulo
+            redondeado perfecto. Es la única pieza de "apuesta" del sistema — todo lo demás se
+            mantiene disciplinado alrededor de ella.
+          </li>
+          <li>
+            <b style="color: var(--ink)">Sello de expedición/barrio</b> — en vez de badges
+            circulares genéricos o un sello de pasaporte (territorio muy trillado), se usa un sello
+            con nombre de barrio. Coherente con que el usuario es local, no turista.
+          </li>
+          <li>
+            <b style="color: var(--ink)">Textura topográfica</b> — curvas de nivel casi invisibles
+            de fondo en vez de color plano. Recurso confirmado para identidad "outdoor/aventura".
+          </li>
+        </ul>
+      </div>
+
+      <div class="section" id="componentes">
+        <h2>Componentes compartidos</h2>
+        <p class="lede">
+          Base de todo lo demás — cualquier pantalla nueva reusa esto, no inventa botones o inputs
+          nuevos.
+        </p>
+
+        <span class="state-label">Botones</span>
+        <div class="row" style="margin-bottom: 26px">
+          <div class="btn btn-primary">Confirmar</div>
+          <div class="btn btn-secondary">Cancelar</div>
+          <div class="btn btn-social">Continuar con Google</div>
+          <div class="btn btn-destructive">Cerrar sesión</div>
         </div>
-        <div style="padding:0 14px;display:flex;flex-direction:column;gap:10px;">
-          <div class="field" style="width:100%;"><label>Nombre de usuario</label><div class="box" style="height:32px;padding:0 8px;display:flex;align-items:center;font-size:11px;">derek_explora</div><span class="mono muted" style="font-size:8.5px;">Podés cambiarlo de nuevo en 12 días</span></div>
-          <div>
-            <label style="font-size:11px;font-weight:700;">Intereses</label>
-            <div class="row" style="margin-top:5px;gap:5px;">
-              <span class="pill" style="background:var(--teal);color:var(--cream);">Café</span>
-              <span class="pill" style="background:var(--teal);color:var(--cream);">Arte</span>
-              <span class="pill" style="background:transparent;border:1px solid var(--border);color:var(--muted);">Deporte</span>
-              <span class="pill" style="background:transparent;border:1px solid var(--border);color:var(--muted);">Música</span>
+
+        <span class="state-label">Inputs</span>
+        <div class="row" style="margin-bottom: 26px">
+          <div class="field">
+            <label>Nombre de usuario</label>
+            <div class="box"><span>explorador123</span></div>
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <div class="box">
+              <span>••••••••</span><i class="ti ti-eye" style="font-size: 14px"></i>
             </div>
           </div>
         </div>
-        <div style="flex:1;"></div>
-        <div style="padding:14px;"><div class="btn btn-primary" style="width:100%;">Guardar cambios</div></div>
+
+        <span class="state-label">Modal de confirmación — con fondo oscurecido</span>
+        <div
+          style="
+            width: 270px;
+            background: rgba(16, 38, 43, 0.55);
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 26px;
+            display: flex;
+            justify-content: center;
+          "
+        >
+          <div style="position: relative; width: 220px">
+            <div
+              style="
+                position: absolute;
+                top: 8px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--ink);
+                border-radius: 0 0 4px 4px;
+              "
+            ></div>
+            <div
+              class="torn-top"
+              style="position: relative; background: #fff; padding: 18px 14px 12px"
+            >
+              <b style="font-family: 'Baloo 2', sans-serif; font-size: 14px">¿Cerrar sesión?</b>
+              <p class="muted" style="font-size: 11px; margin: 6px 0 12px">
+                Vas a necesitar iniciar sesión de nuevo.
+              </p>
+              <div class="row">
+                <div class="btn btn-secondary" style="flex: 1">Cancelar</div>
+                <div class="btn btn-destructive" style="flex: 1">Cerrar sesión</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <span class="state-label">Toasts</span>
+        <div class="row" style="margin-bottom: 26px">
+          <div class="pill" style="background: #fff; border: 1.5px solid var(--teal)">
+            <span class="stamp" style="width: 16px; height: 16px; border-width: 1.5px"></span> +50
+            puntos ganados
+          </div>
+          <div
+            class="pill"
+            style="background: #fdecec; border: 1px solid var(--alert); color: var(--alert)"
+          >
+            <i class="ti ti-alert-triangle"></i> Sin conexión
+          </div>
+        </div>
+
+        <span class="state-label">Estado vacío</span>
+        <div
+          style="
+            width: 260px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 26px;
+          "
+        >
+          <i class="ti ti-map-pin-off" style="font-size: 20px; color: var(--muted)"></i>
+          <div style="font-weight: 700; font-size: 12px; margin-top: 4px">
+            Todavía no hay insignias
+          </div>
+          <div class="muted" style="font-size: 11px">Salí a explorar para ganar la primera.</div>
+        </div>
+
+        <span class="state-label">Skeleton</span>
+        <div class="row" style="align-items: center">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: #e9e5dc"></div>
+          <div>
+            <div
+              style="
+                width: 110px;
+                height: 9px;
+                border-radius: 4px;
+                background: #e9e5dc;
+                margin-bottom: 6px;
+              "
+            ></div>
+            <div style="width: 70px; height: 9px; border-radius: 4px; background: #e9e5dc"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="navegacion">
+        <h2>Navegación</h2>
+        <p class="lede">
+          4 secciones — Mapa (home) · Rutas · Recompensas · Perfil. Corte responsive en
+          <span class="mono">1024px</span> (breakpoint <span class="mono">lg</span> de Tailwind), no
+          en 768px — tablet vertical se sigue usando con el dedo.
+        </p>
+        <div class="row">
+          <div>
+            <span class="state-label">&lt;1024px — barra inferior</span>
+            <div class="phone" style="height: 150px">
+              <div
+                style="
+                  flex: 1;
+                  background: #e1f0e6;
+                  margin: 10px 10px 0;
+                  border-radius: 12px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <span class="muted mono" style="font-size: 9px">contenido de la pantalla</span>
+              </div>
+              <div class="navbar">
+                <div class="item" style="color: var(--teal); font-weight: 700">
+                  <i class="ti ti-map-2"></i>Mapa
+                </div>
+                <div class="item muted"><i class="ti ti-route"></i>Rutas</div>
+                <div class="item muted"><i class="ti ti-gift"></i>Premios</div>
+                <div class="item muted"><i class="ti ti-user"></i>Perfil</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="state-label">≥1024px — rail lateral</span>
+            <div
+              style="
+                width: 74px;
+                height: 260px;
+                background: var(--ink);
+                border-radius: 16px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 16px 0;
+                justify-content: space-between;
+              "
+            >
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 22px">
+                <div
+                  style="
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 9px;
+                    background: var(--teal);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <b
+                    style="font-family: 'Baloo 2', sans-serif; font-size: 14px; color: var(--cream)"
+                    >G</b
+                  >
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 18px; align-items: center">
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      gap: 3px;
+                      color: var(--teal);
+                    "
+                  >
+                    <i class="ti ti-map-2" style="font-size: 18px"></i
+                    ><span style="font-size: 8px; font-weight: 700">Mapa</span>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      gap: 3px;
+                      color: rgba(255, 249, 242, 0.55);
+                    "
+                  >
+                    <i class="ti ti-route" style="font-size: 18px"></i
+                    ><span style="font-size: 8px">Rutas</span>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      gap: 3px;
+                      color: rgba(255, 249, 242, 0.55);
+                    "
+                  >
+                    <i class="ti ti-gift" style="font-size: 18px"></i
+                    ><span style="font-size: 8px">Premios</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+                <div
+                  style="
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background: var(--teal);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--cream);
+                  "
+                >
+                  D
+                </div>
+                <span class="mono" style="font-size: 7px; color: rgba(255, 249, 242, 0.6)"
+                  >1,240</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="lede" style="margin-top: 10px">
+          Ajuste vs. la primera versión: en el rail se quitó el ícono "Perfil" separado — el avatar
+          de abajo ya cumple esa función. Tenerlos los dos era confuso (¿dos caminos al mismo
+          lugar?). Monograma arriba, como referencia visual de marca — patrón de Discord/Slack, algo
+          que la barra inferior no necesita porque ahí no hay espacio de sobra.
+        </p>
+        <p class="lede" style="margin-top: 14px">
+          Nota: check-in requiere GPS + selfie — poco práctico en escritorio. El layout de
+          escritorio es para <b>explorar y consultar</b>, no necesariamente para ejecutar el
+          check-in.
+        </p>
+      </div>
+
+      <div class="section" id="onboarding">
+        <h2>Onboarding</h2>
+        <p class="lede">
+          2-3 pantallas cortas antes del mapa. El registro se pide recién al intentar hacer
+          check-in, no antes.
+        </p>
+        <div class="row">
+          <div class="phone phone-med">
+            <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path
+                d="M-10,20 Q30,6 70,20 T150,14"
+                stroke="rgba(16,38,43,0.08)"
+                stroke-width="0.6"
+                fill="none"
+              />
+              <path
+                d="M-10,55 Q30,41 70,55 T150,49"
+                stroke="rgba(16,38,43,0.06)"
+                stroke-width="0.6"
+                fill="none"
+              />
+            </svg>
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 20px;
+                text-align: center;
+                position: relative;
+              "
+            >
+              <i class="ti ti-map-2" style="font-size: 34px; color: var(--teal)"></i>
+              <b style="font-family: 'Baloo 2', sans-serif; font-size: 15px">Descubrí tu ciudad</b>
+              <span class="muted" style="font-size: 11px"
+                >Cada rincón de Medellín esconde un lugar por visitar.</span
+              >
+            </div>
+            <div style="display: flex; justify-content: center; gap: 5px; padding-bottom: 14px">
+              <div
+                style="width: 16px; height: 5px; border-radius: 3px; background: var(--teal)"
+              ></div>
+              <div
+                style="width: 5px; height: 5px; border-radius: 3px; background: var(--border)"
+              ></div>
+              <div
+                style="width: 5px; height: 5px; border-radius: 3px; background: var(--border)"
+              ></div>
+            </div>
+          </div>
+          <div class="phone phone-med">
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 20px;
+                text-align: center;
+              "
+            >
+              <i class="ti ti-camera" style="font-size: 34px; color: var(--coral)"></i>
+              <b style="font-family: 'Baloo 2', sans-serif; font-size: 15px">Hacé check-in</b>
+              <span class="muted" style="font-size: 11px"
+                >Una selfie + tu ubicación validan tu visita real.</span
+              >
+            </div>
+            <div style="display: flex; justify-content: center; gap: 5px; padding-bottom: 14px">
+              <div
+                style="width: 5px; height: 5px; border-radius: 3px; background: var(--border)"
+              ></div>
+              <div
+                style="width: 16px; height: 5px; border-radius: 3px; background: var(--teal)"
+              ></div>
+              <div
+                style="width: 5px; height: 5px; border-radius: 3px; background: var(--border)"
+              ></div>
+            </div>
+          </div>
+          <div class="phone phone-med">
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 20px;
+                text-align: center;
+              "
+            >
+              <span class="stamp" style="width: 46px; height: 46px; font-size: 8px">MED</span>
+              <b style="font-family: 'Baloo 2', sans-serif; font-size: 15px"
+                >Ganá y subí de nivel</b
+              >
+              <span class="muted" style="font-size: 11px"
+                >GeoPoints, insignias y un lugar en el ranking.</span
+              >
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 20px 16px">
+              <div class="btn btn-primary">Empezar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="auth">
+        <h2>Login / Registro</h2>
+        <p class="lede">
+          Responsive real, no solo estirado: móvil una columna, tablet/escritorio parten en portada
+          + formulario.
+        </p>
+        <div class="row" style="align-items: flex-start">
+          <div>
+            <span class="state-label">móvil &lt;640px</span>
+            <div class="phone" style="width: 150px; height: 370px">
+              <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path
+                  d="M-10,18 Q30,4 70,18 T150,12"
+                  stroke="rgba(16,38,43,0.08)"
+                  stroke-width="0.6"
+                  fill="none"
+                />
+                <path
+                  d="M-10,42 Q30,28 70,42 T150,36"
+                  stroke="rgba(16,38,43,0.06)"
+                  stroke-width="0.6"
+                  fill="none"
+                />
+              </svg>
+              <div style="padding: 18px 10px 0; text-align: center; position: relative">
+                <b style="font-family: 'Baloo 2', sans-serif; color: var(--teal); font-size: 17px"
+                  >GeoQuest</b
+                >
+                <div class="mono muted" style="font-size: 7px; margin-top: 2px">
+                  6.2442°N · 75.5812°W
+                </div>
+                <span
+                  class="stamp"
+                  style="
+                    position: absolute;
+                    top: 12px;
+                    right: 6px;
+                    width: 26px;
+                    height: 26px;
+                    font-size: 5px;
+                  "
+                  >MED</span
+                >
+              </div>
+              <div style="flex: 1"></div>
+              <div
+                class="torn-top"
+                style="
+                  background: #fff;
+                  padding: 16px 12px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 7px;
+                "
+              >
+                <div class="box" style="height: 24px"></div>
+                <div class="box" style="height: 24px"></div>
+                <div class="btn btn-primary" style="font-size: 9px; padding: 8px">
+                  Continuar con Google
+                </div>
+                <span class="muted" style="font-size: 8px; text-align: center"
+                  >¿Nuevo? <b style="color: var(--teal)">Crear cuenta</b></span
+                >
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="state-label">tablet/escritorio ≥768px</span>
+            <div
+              style="
+                width: 340px;
+                height: 230px;
+                border-radius: 18px;
+                border: 1px solid var(--border);
+                overflow: hidden;
+                display: flex;
+              "
+            >
+              <div
+                class="torn-right"
+                style="
+                  width: 130px;
+                  background: var(--ink);
+                  position: relative;
+                  padding: 20px 14px 0;
+                "
+              >
+                <svg class="topo" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path
+                    d="M-10,22 Q30,8 70,22 T150,16"
+                    stroke="rgba(255,249,242,0.1)"
+                    stroke-width="0.7"
+                    fill="none"
+                  />
+                </svg>
+                <b
+                  style="
+                    font-family: 'Baloo 2', sans-serif;
+                    color: var(--cream);
+                    font-size: 15px;
+                    position: relative;
+                  "
+                  >GeoQuest</b
+                >
+                <p style="font-size: 9px; color: rgba(255, 249, 242, 0.7); position: relative">
+                  Explorá Medellín.<br />Ganá en el camino.
+                </p>
+                <span
+                  class="stamp"
+                  style="
+                    width: 34px;
+                    height: 34px;
+                    font-size: 6px;
+                    margin-top: 8px;
+                    position: relative;
+                  "
+                  >LAURELES<br />MED</span
+                >
+              </div>
+              <div
+                style="
+                  flex: 1;
+                  background: var(--cream);
+                  padding: 20px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 9px;
+                  justify-content: center;
+                "
+              >
+                <b style="font-family: 'Baloo 2', sans-serif; font-size: 13px">Iniciar sesión</b>
+                <div class="box" style="height: 26px"></div>
+                <div class="box" style="height: 26px"></div>
+                <div class="btn btn-primary" style="font-size: 10px">Continuar con Google</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="mapa">
+        <h2>Mapa (home)</h2>
+        <p class="lede">
+          Pantalla de entrada real de la app — el mapa manda, el saldo de puntos no estorba.
+        </p>
+        <div class="phone phone-tall">
+          <div class="topbar">
+            <b style="font-size: 12px">Laureles-Estadio</b>
+            <div class="points-chip">
+              <i class="ti ti-diamond" style="font-size: 12px; color: var(--coral)"></i>1,240
+            </div>
+          </div>
+          <div
+            style="
+              flex: 1;
+              position: relative;
+              background: #e1f0e6;
+              margin: 2px 12px 10px;
+              border-radius: 18px;
+              overflow: hidden;
+            "
+          >
+            <div
+              style="
+                position: absolute;
+                top: 18%;
+                left: 22%;
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                background: var(--teal);
+                border: 2px solid var(--cream);
+              "
+            ></div>
+            <div
+              style="
+                position: absolute;
+                top: 32%;
+                left: 68%;
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                background: var(--teal);
+                border: 2px solid var(--cream);
+              "
+            ></div>
+            <div
+              style="
+                position: absolute;
+                top: 52%;
+                left: 38%;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--coral);
+                border: 3px solid var(--cream);
+              "
+            ></div>
+            <div
+              style="
+                position: absolute;
+                left: 9px;
+                right: 9px;
+                bottom: 9px;
+                background: #fff;
+                border-radius: 12px;
+                padding: 9px 11px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <div>
+                <b style="font-size: 12px">Café de la Torre</b>
+                <div class="muted mono" style="font-size: 9px">120m · +50 pts</div>
+              </div>
+              <i class="ti ti-chevron-right" style="color: var(--teal)"></i>
+            </div>
+          </div>
+          <div class="navbar">
+            <div class="item" style="color: var(--teal); font-weight: 700">
+              <i class="ti ti-map-2"></i>Mapa
+            </div>
+            <div class="item muted"><i class="ti ti-route"></i>Rutas</div>
+            <div class="item muted"><i class="ti ti-gift"></i>Premios</div>
+            <div class="item muted"><i class="ti ti-user"></i>Perfil</div>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+
+      <div class="section" id="lugar">
+        <h2>
+          Detalle de lugar
+          <span class="muted" style="font-size: 12px; font-weight: 400"
+            >— nueva, sin slice asignado</span
+          >
+        </h2>
+        <p class="lede">
+          Se abre al tocar un pin o la tarjeta del mapa. Contiene toda la info antes de
+          comprometerse al check-in.
+        </p>
+        <div class="phone phone-tall">
+          <div
+            style="
+              height: 130px;
+              background: #dcd6c8;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+            "
+          >
+            <i class="ti ti-photo" style="font-size: 24px; color: var(--muted)"></i>
+            <i
+              class="ti ti-chevron-left"
+              style="
+                position: absolute;
+                top: 12px;
+                left: 12px;
+                color: #fff;
+                background: rgba(16, 38, 43, 0.4);
+                border-radius: 50%;
+                padding: 4px;
+                font-size: 14px;
+              "
+            ></i>
+          </div>
+          <div style="padding: 14px; flex: 1">
+            <b style="font-family: 'Baloo 2', sans-serif; font-size: 15px">Café de la Torre</b>
+            <div class="row" style="margin: 6px 0 10px; gap: 6px">
+              <span class="pill" style="background: #e1f5ee; color: var(--teal)">Café</span>
+              <span class="mono muted" style="font-size: 10px">120 m</span>
+            </div>
+            <p class="muted" style="font-size: 11px; line-height: 1.5">
+              Cafetería de especialidad en el corazón de Laureles. Ideal para trabajar o hacer una
+              pausa.
+            </p>
+            <div
+              class="card"
+              style="margin-top: 10px; display: flex; align-items: center; gap: 8px"
+            >
+              <span class="stamp" style="width: 24px; height: 24px; font-size: 5px">+50</span>
+              <span style="font-size: 11px; font-weight: 700">+50 GeoPoints al hacer check-in</span>
+            </div>
+          </div>
+          <div style="padding: 12px 14px">
+            <div class="btn btn-primary" style="width: 100%">Hacer check-in</div>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+
+      <div class="section" id="checkin">
+        <h2>Check-in — 4 estados</h2>
+        <p class="lede">
+          Es async: se envía y el explorador sigue navegando. El resultado llega por polling
+          (SignalR queda para Slice 005, no está activo).
+        </p>
+        <div class="row" style="align-items: flex-start">
+          <div>
+            <span class="state-label">1 · Cámara</span>
+            <div class="phone phone-med" style="background: var(--ink)">
+              <div style="flex: 1; position: relative">
+                <span
+                  class="mono"
+                  style="
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    color: rgba(255, 249, 242, 0.7);
+                    font-size: 9px;
+                  "
+                  >±8m GPS</span
+                >
+                <i
+                  class="ti ti-user"
+                  style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 40px;
+                    color: rgba(255, 249, 242, 0.25);
+                  "
+                ></i>
+              </div>
+              <div style="display: flex; justify-content: center; padding: 16px">
+                <div
+                  style="
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    background: #fff;
+                    border: 3px solid var(--coral);
+                  "
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <span class="state-label">2 · Enviando</span>
+            <div class="phone phone-med" style="align-items: center; justify-content: center">
+              <div
+                style="
+                  width: 34px;
+                  height: 34px;
+                  border: 3px solid var(--border);
+                  border-top-color: var(--teal);
+                  border-radius: 50%;
+                  margin-bottom: 10px;
+                "
+              ></div>
+              <b style="font-size: 12px">Validando tu check-in…</b>
+              <span class="muted" style="font-size: 10px">Puede tardar unos segundos</span>
+            </div>
+          </div>
+          <div>
+            <span class="state-label">3 · Aprobado</span>
+            <div class="phone phone-med" style="align-items: center; justify-content: center">
+              <span
+                class="stamp"
+                style="width: 52px; height: 52px; font-size: 8px; margin-bottom: 10px"
+                >LAURELES<br />MED</span
+              >
+              <b style="font-family: 'Baloo 2', sans-serif; font-size: 16px; color: var(--teal)"
+                >+50 puntos</b
+              >
+              <span class="muted" style="font-size: 10.5px; margin: 2px 0 12px"
+                >Café de la Torre</span
+              >
+              <div class="btn btn-secondary" style="font-size: 10px">Ver mi perfil</div>
+            </div>
+          </div>
+          <div>
+            <span class="state-label">4 · Rechazado</span>
+            <div class="phone phone-med" style="align-items: center; justify-content: center">
+              <i
+                class="ti ti-alert-circle"
+                style="font-size: 30px; color: var(--alert); margin-bottom: 8px"
+              ></i>
+              <b style="font-size: 12px; text-align: center; padding: 0 20px"
+                >No pudimos validar la foto</b
+              >
+              <span
+                class="muted"
+                style="font-size: 10px; text-align: center; padding: 0 24px; margin: 4px 0 12px"
+                >Probá de nuevo con más luz y de frente</span
+              >
+              <div class="btn btn-primary" style="font-size: 10px">Intentar de nuevo</div>
+            </div>
+          </div>
+        </div>
+        <p class="lede" style="margin-top: 14px">
+          Nota de copy: el rechazo por moderación de contenido usa este mismo estado — mensaje
+          genérico siempre, nunca se expone el motivo específico (regla de negocio, evita que se
+          pueda "aprender" a burlar el filtro).
+        </p>
+      </div>
+
+      <div class="section" id="perfil">
+        <h2>Perfil</h2>
+        <p class="lede">
+          Ver y editar. Username tiene cooldown de 30 días, avatar 512×512 sin moderación (regla de
+          negocio RN-PROF).
+        </p>
+        <div class="row" style="align-items: flex-start">
+          <div>
+            <span class="state-label">Ver</span>
+            <div class="phone phone-tall">
+              <div
+                style="
+                  padding: 16px 14px 8px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 9px">
+                  <div
+                    style="
+                      width: 38px;
+                      height: 38px;
+                      border-radius: 50%;
+                      background: var(--teal);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                  >
+                    <b style="color: var(--cream); font-family: 'Baloo 2', sans-serif">D</b>
+                  </div>
+                  <div>
+                    <b style="font-size: 13px">Derek</b>
+                    <div class="muted" style="font-size: 10px">Nivel 4</div>
+                  </div>
+                </div>
+                <i class="ti ti-settings" style="color: var(--muted)"></i>
+              </div>
+              <div style="padding: 0 14px">
+                <div
+                  style="
+                    height: 6px;
+                    border-radius: 3px;
+                    background: #e1f0e6;
+                    overflow: hidden;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div style="width: 64%; height: 100%; background: var(--teal)"></div>
+                </div>
+                <span class="mono muted" style="font-size: 10px">320 / 500 XP</span>
+                <div class="row" style="align-items: center; gap: 5px; margin: 10px 0 8px">
+                  <i class="ti ti-flame" style="color: var(--coral)"></i
+                  ><b style="font-size: 11px; color: var(--coral)">5 días de racha</b>
+                </div>
+                <div class="row" style="gap: 16px">
+                  <div>
+                    <span class="mono" style="font-size: 14px; font-weight: 700">12</span>
+                    <div class="muted" style="font-size: 8.5px">lugares</div>
+                  </div>
+                  <div>
+                    <span class="mono" style="font-size: 14px; font-weight: 700">3</span>
+                    <div class="muted" style="font-size: 8.5px">insignias</div>
+                  </div>
+                </div>
+              </div>
+              <div style="flex: 1; padding: 0 14px">
+                <span class="muted" style="font-size: 10.5px">Insignias</span>
+                <div class="row" style="margin-top: 6px; gap: 8px">
+                  <span class="stamp" style="width: 30px; height: 30px; font-size: 5px"
+                    >1°<br />PASO</span
+                  >
+                  <span class="stamp" style="width: 30px; height: 30px; font-size: 5px"
+                    >ON<br />FIRE</span
+                  >
+                  <span class="stamp" style="width: 30px; height: 30px; font-size: 5px"
+                    >EXPLO<br />RADOR</span
+                  >
+                </div>
+              </div>
+              <div class="navbar">
+                <div class="item muted"><i class="ti ti-map-2"></i>Mapa</div>
+                <div class="item muted"><i class="ti ti-route"></i>Rutas</div>
+                <div class="item muted"><i class="ti ti-gift"></i>Premios</div>
+                <div class="item" style="color: var(--teal); font-weight: 700">
+                  <i class="ti ti-user"></i>Perfil
+                </div>
+              </div>
+              <div class="home-indicator"></div>
+            </div>
+          </div>
+          <div>
+            <span class="state-label"
+              >Editar
+              <span class="muted" style="text-transform: none"
+                >— nueva, sin slice asignado</span
+              ></span
+            >
+            <div class="phone phone-tall">
+              <div style="padding: 14px; display: flex; align-items: center; gap: 10px">
+                <i class="ti ti-chevron-left"></i><b style="font-size: 13px">Editar perfil</b>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  justify-content: center;
+                  margin-bottom: 10px;
+                  position: relative;
+                "
+              >
+                <div
+                  style="
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 50%;
+                    background: var(--teal);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <b
+                    style="color: var(--cream); font-family: 'Baloo 2', sans-serif; font-size: 18px"
+                    >D</b
+                  >
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 0;
+                    right: calc(50% - 28px);
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: var(--coral);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <i class="ti ti-camera" style="font-size: 10px; color: #fff"></i>
+                </div>
+              </div>
+              <div style="padding: 0 14px; display: flex; flex-direction: column; gap: 10px">
+                <div class="field" style="width: 100%">
+                  <label>Nombre de usuario</label>
+                  <div
+                    class="box"
+                    style="
+                      height: 32px;
+                      padding: 0 8px;
+                      display: flex;
+                      align-items: center;
+                      font-size: 11px;
+                    "
+                  >
+                    derek_explora
+                  </div>
+                  <span class="mono muted" style="font-size: 8.5px"
+                    >Podés cambiarlo de nuevo en 12 días</span
+                  >
+                </div>
+                <div>
+                  <label style="font-size: 11px; font-weight: 700">Intereses</label>
+                  <div class="row" style="margin-top: 5px; gap: 5px">
+                    <span class="pill" style="background: var(--teal); color: var(--cream)"
+                      >Café</span
+                    >
+                    <span class="pill" style="background: var(--teal); color: var(--cream)"
+                      >Arte</span
+                    >
+                    <span
+                      class="pill"
+                      style="
+                        background: transparent;
+                        border: 1px solid var(--border);
+                        color: var(--muted);
+                      "
+                      >Deporte</span
+                    >
+                    <span
+                      class="pill"
+                      style="
+                        background: transparent;
+                        border: 1px solid var(--border);
+                        color: var(--muted);
+                      "
+                      >Música</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div style="flex: 1"></div>
+              <div style="padding: 14px">
+                <div class="btn btn-primary" style="width: 100%">Guardar cambios</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="insignia">
+        <h2>
+          Detalle de insignia
+          <span class="muted" style="font-size: 12px; font-weight: 400"
+            >— modal, no pantalla nueva</span
+          >
+        </h2>
+        <div
+          style="
+            width: 270px;
+            background: rgba(16, 38, 43, 0.55);
+            border-radius: 16px;
+            padding: 24px 20px;
+            display: flex;
+            justify-content: center;
+          "
+        >
+          <div style="position: relative; width: 210px">
+            <div
+              style="
+                position: absolute;
+                top: 8px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--coral);
+                border-radius: 0 0 4px 4px;
+              "
+            ></div>
+            <div class="torn-top" style="position: relative; background: #fff; padding: 20px 16px">
+              <i
+                class="ti ti-x"
+                style="position: absolute; top: 10px; right: 10px; color: var(--muted)"
+              ></i>
+              <div style="display: flex; justify-content: center; margin-bottom: 10px">
+                <span class="stamp" style="width: 56px; height: 56px; font-size: 8px"
+                  >EXPLO<br />RADOR</span
+                >
+              </div>
+              <b
+                style="
+                  font-family: 'Baloo 2', sans-serif;
+                  font-size: 14px;
+                  display: block;
+                  text-align: center;
+                "
+                >Explorador</b
+              >
+              <p class="muted" style="font-size: 11px; text-align: center; margin: 6px 0">
+                Visitaste 5 lugares distintos en Medellín.
+              </p>
+              <span class="mono muted" style="font-size: 9px; display: block; text-align: center"
+                >Obtenida el 14 ago 2026</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="recompensas">
+        <h2>
+          Recompensas
+          <span class="muted" style="font-size: 12px; font-weight: 400">— alcance ajustado</span>
+        </h2>
+        <p class="lede">
+          No hay catálogo de canje todavía (eso es Slice 004). Por ahora: solo saldo + insignias +
+          ranking, casi fusionada con Perfil.
+        </p>
+        <div class="phone phone-tall">
+          <div style="padding: 16px 14px 6px; display: flex; align-items: baseline; gap: 6px">
+            <b style="font-family: 'Baloo 2', sans-serif; font-size: 24px; color: var(--teal)"
+              >1,240</b
+            >
+            <span class="muted" style="font-size: 11px">GeoPoints</span>
+          </div>
+          <div style="padding: 0 14px">
+            <span class="muted" style="font-size: 10.5px">Insignias</span>
+            <div class="row" style="margin: 6px 0 14px; gap: 7px">
+              <span class="stamp" style="width: 28px; height: 28px; font-size: 4.5px"
+                >1°<br />PASO</span
+              >
+              <span class="stamp" style="width: 28px; height: 28px; font-size: 4.5px"
+                >ON<br />FIRE</span
+              >
+            </div>
+            <div
+              class="card"
+              style="display: flex; justify-content: space-between; align-items: center"
+            >
+              <div>
+                <span class="muted" style="font-size: 10px">Ranking semanal</span>
+                <div style="font-weight: 700; font-size: 12px">Puesto #23</div>
+              </div>
+              <span style="font-size: 10px; color: var(--teal); font-weight: 700">Ver todo →</span>
+            </div>
+          </div>
+          <div style="flex: 1"></div>
+          <div class="navbar">
+            <div class="item muted"><i class="ti ti-map-2"></i>Mapa</div>
+            <div class="item muted"><i class="ti ti-route"></i>Rutas</div>
+            <div class="item" style="color: var(--teal); font-weight: 700">
+              <i class="ti ti-gift"></i>Premios
+            </div>
+            <div class="item muted"><i class="ti ti-user"></i>Perfil</div>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+      </div>
+
+      <div class="section" id="pendientes" style="border-bottom: none">
+        <h2>Pendiente</h2>
+        <ul style="color: var(--muted); font-size: 13px; line-height: 1.8">
+          <li>
+            Confirmar si el founder tiene assets previos (Canva/Figma/fotos) o se sigue partiendo de
+            cero.
+          </li>
+          <li>Definir paleta exacta de modo oscuro.</li>
+          <li>Producir el wordmark vectorial final — esto es boceto conceptual, no arte final.</li>
+          <li>
+            Leaderboard completo (top 50) — se accede desde "Ver todo" en Recompensas, no bocetado
+            en detalle en esta v1.
+          </li>
+          <li>
+            Definir herramienta final de diseño (Figma / whiteboard de Confluence / seguir iterando
+            acá).
+          </li>
+        </ul>
+        <p class="muted" style="font-size: 11px; margin-top: 24px">
+          Generado en conversación con Claude · Boceto de baja fidelidad para refinamiento
+          profesional · No usar como arte final de producción.
+        </p>
       </div>
     </div>
-  </div>
-</div>
-
-<div class="section" id="insignia">
-  <h2>Detalle de insignia <span class="muted" style="font-size:12px;font-weight:400;">— modal, no pantalla nueva</span></h2>
-  <div style="width:270px;background:rgba(16,38,43,0.55);border-radius:16px;padding:24px 20px;display:flex;justify-content:center;">
-    <div style="position:relative;width:210px;">
-      <div style="position:absolute;top:8px;left:0;right:0;bottom:0;background:var(--coral);border-radius:0 0 4px 4px;"></div>
-      <div class="torn-top" style="position:relative;background:#fff;padding:20px 16px;">
-        <i class="ti ti-x" style="position:absolute;top:10px;right:10px;color:var(--muted);"></i>
-        <div style="display:flex;justify-content:center;margin-bottom:10px;"><span class="stamp" style="width:56px;height:56px;font-size:8px;">EXPLO<br/>RADOR</span></div>
-        <b style="font-family:'Baloo 2',sans-serif;font-size:14px;display:block;text-align:center;">Explorador</b>
-        <p class="muted" style="font-size:11px;text-align:center;margin:6px 0;">Visitaste 5 lugares distintos en Medellín.</p>
-        <span class="mono muted" style="font-size:9px;display:block;text-align:center;">Obtenida el 14 ago 2026</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="section" id="recompensas">
-  <h2>Recompensas <span class="muted" style="font-size:12px;font-weight:400;">— alcance ajustado</span></h2>
-  <p class="lede">No hay catálogo de canje todavía (eso es Slice 004). Por ahora: solo saldo + insignias + ranking, casi fusionada con Perfil.</p>
-  <div class="phone phone-tall">
-    <div style="padding:16px 14px 6px;display:flex;align-items:baseline;gap:6px;">
-      <b style="font-family:'Baloo 2',sans-serif;font-size:24px;color:var(--teal);">1,240</b>
-      <span class="muted" style="font-size:11px;">GeoPoints</span>
-    </div>
-    <div style="padding:0 14px;">
-      <span class="muted" style="font-size:10.5px;">Insignias</span>
-      <div class="row" style="margin:6px 0 14px;gap:7px;">
-        <span class="stamp" style="width:28px;height:28px;font-size:4.5px;">1°<br/>PASO</span>
-        <span class="stamp" style="width:28px;height:28px;font-size:4.5px;">ON<br/>FIRE</span>
-      </div>
-      <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
-        <div><span class="muted" style="font-size:10px;">Ranking semanal</span><div style="font-weight:700;font-size:12px;">Puesto #23</div></div>
-        <span style="font-size:10px;color:var(--teal);font-weight:700;">Ver todo →</span>
-      </div>
-    </div>
-    <div style="flex:1;"></div>
-    <div class="navbar"><div class="item muted"><i class="ti ti-map-2"></i>Mapa</div><div class="item muted"><i class="ti ti-route"></i>Rutas</div><div class="item" style="color:var(--teal);font-weight:700;"><i class="ti ti-gift"></i>Premios</div><div class="item muted"><i class="ti ti-user"></i>Perfil</div></div>
-    <div class="home-indicator"></div>
-  </div>
-</div>
-
-<div class="section" id="pendientes" style="border-bottom:none;">
-  <h2>Pendiente</h2>
-  <ul style="color:var(--muted);font-size:13px;line-height:1.8;">
-    <li>Confirmar si el founder tiene assets previos (Canva/Figma/fotos) o se sigue partiendo de cero.</li>
-    <li>Definir paleta exacta de modo oscuro.</li>
-    <li>Producir el wordmark vectorial final — esto es boceto conceptual, no arte final.</li>
-    <li>Leaderboard completo (top 50) — se accede desde "Ver todo" en Recompensas, no bocetado en detalle en esta v1.</li>
-    <li>Definir herramienta final de diseño (Figma / whiteboard de Confluence / seguir iterando acá).</li>
-  </ul>
-  <p class="muted" style="font-size:11px;margin-top:24px;">Generado en conversación con Claude · Boceto de baja fidelidad para refinamiento profesional · No usar como arte final de producción.</p>
-</div>
-
-</div>
-</body>
+  </body>
 </html>

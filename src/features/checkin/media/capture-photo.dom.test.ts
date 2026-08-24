@@ -15,7 +15,7 @@ function stubCanvas(blobSize: number) {
   } as unknown as CanvasRenderingContext2D)
   vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (
     this: HTMLCanvasElement,
-    callback: BlobCallback,
+    callback: BlobCallback
   ) {
     callback(new Blob([new Uint8Array(blobSize)], { type: 'image/jpeg' }))
   })

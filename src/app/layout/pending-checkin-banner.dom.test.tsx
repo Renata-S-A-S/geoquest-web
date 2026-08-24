@@ -27,7 +27,7 @@ function renderBanner() {
   return render(
     <QueryClientProvider client={queryClient}>
       <PendingCheckinBanner />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
 }
 
@@ -59,8 +59,10 @@ describe('PendingCheckinBanner', () => {
     server.use(
       http.get(`${baseURL}/checkins/checkin-1`, () => {
         requestCount += 1
-        return HttpResponse.json(statusPayload({ validationStatus: 2, xpAwarded: 50, geoPointsAwarded: 10 }))
-      }),
+        return HttpResponse.json(
+          statusPayload({ validationStatus: 2, xpAwarded: 50, geoPointsAwarded: 10 })
+        )
+      })
     )
 
     renderBanner()
@@ -76,13 +78,17 @@ describe('PendingCheckinBanner', () => {
     useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
     server.use(
       http.get(`${baseURL}/checkins/checkin-1`, () =>
-        HttpResponse.json(statusPayload({ validationStatus: 3, rejectionReason: 'nudity-should-never-leak' })),
-      ),
+        HttpResponse.json(
+          statusPayload({ validationStatus: 3, rejectionReason: 'nudity-should-never-leak' })
+        )
+      )
     )
 
     renderBanner()
 
-    await waitFor(() => expect(screen.getByText(GENERIC_CONTENT_REJECTION_MESSAGE)).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByText(GENERIC_CONTENT_REJECTION_MESSAGE)).toBeInTheDocument()
+    )
     expect(screen.queryByText(/nudity-should-never-leak/)).not.toBeInTheDocument()
     expect(useCheckinStore.getState().pending).toBeNull()
   })
@@ -94,7 +100,7 @@ describe('PendingCheckinBanner', () => {
       http.get(`${baseURL}/checkins/checkin-1`, () => {
         requestCount += 1
         return HttpResponse.json(statusPayload({ validationStatus: 1 }))
-      }),
+      })
     )
 
     const { container } = renderBanner()
@@ -110,7 +116,9 @@ describe('PendingCheckinBanner', () => {
 
   it('clears the entry on a 404 without rendering a result', async () => {
     useCheckinStore.getState().setPending({ checkInId: 'missing', placeName: 'El Cielo' })
-    server.use(http.get(`${baseURL}/checkins/missing`, () => new HttpResponse(null, { status: 404 })))
+    server.use(
+      http.get(`${baseURL}/checkins/missing`, () => new HttpResponse(null, { status: 404 }))
+    )
 
     const { container } = renderBanner()
 
@@ -122,8 +130,10 @@ describe('PendingCheckinBanner', () => {
     useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
     server.use(
       http.get(`${baseURL}/checkins/checkin-1`, () =>
-        HttpResponse.json(statusPayload({ validationStatus: 2, xpAwarded: 50, geoPointsAwarded: 10 })),
-      ),
+        HttpResponse.json(
+          statusPayload({ validationStatus: 2, xpAwarded: 50, geoPointsAwarded: 10 })
+        )
+      )
     )
 
     renderBanner()

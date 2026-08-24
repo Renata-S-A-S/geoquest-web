@@ -41,7 +41,7 @@ describe('uploadCheckinPhoto', () => {
         const form = await request.formData()
         receivedFieldNames = Array.from(form.keys())
         return HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/abc.jpg' })
-      }),
+      })
     )
 
     const photoUrl = await uploadCheckinPhoto(new Blob(['fake-jpeg-bytes'], { type: 'image/jpeg' }))
@@ -59,13 +59,13 @@ describe('createCheckin', () => {
         const body = (await request.json()) as Record<string, unknown>
         receivedKeys = Object.keys(body)
         return HttpResponse.json({ checkInId: 'checkin-123' }, { status: 202 })
-      }),
+      })
     )
 
     const checkInId = await createCheckin(validCreateCheckinPayload)
 
     expect(receivedKeys.sort()).toEqual(
-      ['placeId', 'latitude', 'longitude', 'gpsAccuracyMeters', 'photoUrl'].sort(),
+      ['placeId', 'latitude', 'longitude', 'gpsAccuracyMeters', 'photoUrl'].sort()
     )
     expect(receivedKeys).not.toContain('gpsContextData')
     expect(checkInId).toBe('checkin-123')
@@ -84,8 +84,8 @@ describe('getCheckinStatus', () => {
           geoPointsAwarded: 0,
           rejectionReason: null,
           createdAt: '2026-08-24T00:00:00Z',
-        }),
-      ),
+        })
+      )
     )
 
     const status = await getCheckinStatus('checkin-123')
@@ -95,33 +95,41 @@ describe('getCheckinStatus', () => {
   })
 
   it('surfaces a 404 as a rejected promise, not a parsed status', async () => {
-    server.use(http.get(`${baseURL}/checkins/missing`, () => new HttpResponse(null, { status: 404 })))
+    server.use(
+      http.get(`${baseURL}/checkins/missing`, () => new HttpResponse(null, { status: 404 }))
+    )
 
     await expect(getCheckinStatus('missing')).rejects.toMatchObject({ response: { status: 404 } })
   })
 })
 
 describe('mapCreateCheckinError', () => {
-  it.each(['OutOfRadius', 'HardBlock24Hours', 'PlaceInactive', 'GpsAccuracyExceeded', 'PlaceNotFound'] as const)(
-    'maps a 400 CreateCheckInCommand.%s title to its rule',
-    async (rule) => {
-      server.use(
-        http.post(`${baseURL}/checkins`, () =>
-          HttpResponse.json({ title: `CreateCheckInCommand.${rule}` }, { status: 400 }),
-        ),
+  it.each([
+    'OutOfRadius',
+    'HardBlock24Hours',
+    'PlaceInactive',
+    'GpsAccuracyExceeded',
+    'PlaceNotFound',
+  ] as const)('maps a 400 CreateCheckInCommand.%s title to its rule', async (rule) => {
+    server.use(
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ title: `CreateCheckInCommand.${rule}` }, { status: 400 })
       )
+    )
 
-      const error = await captureCreateCheckinError()
+    const error = await captureCreateCheckinError()
 
-      expect(mapCreateCheckinError(error)).toEqual({ rule })
-    },
-  )
+    expect(mapCreateCheckinError(error)).toEqual({ rule })
+  })
 
   it('falls back to the detail message for an unrecognized 400 title', async () => {
     server.use(
       http.post(`${baseURL}/checkins`, () =>
-        HttpResponse.json({ title: 'CreateCheckInCommand.SomethingElse', detail: 'huh' }, { status: 400 }),
-      ),
+        HttpResponse.json(
+          { title: 'CreateCheckInCommand.SomethingElse', detail: 'huh' },
+          { status: 400 }
+        )
+      )
     )
 
     const error = await captureCreateCheckinError()

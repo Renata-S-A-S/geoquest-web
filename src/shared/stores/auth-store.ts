@@ -59,6 +59,6 @@ export const useAuthStore = create<AuthState>()(
       name: 'geoquest.auth',
       version: 1,
       storage: createJSONStorage(() => localStorage),
-    },
-  ),
+    }
+  )
 )

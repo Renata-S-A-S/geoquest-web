@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CheckinPage } from '@/features/checkin/checkin-page'
-import { useCheckin, type CheckinState, type UseCheckinResult } from '@/features/checkin/use-checkin'
+import {
+  useCheckin,
+  type CheckinState,
+  type UseCheckinResult,
+} from '@/features/checkin/use-checkin'
 
 /**
  * Props-driven per design testing strategy: `useCheckin` is mocked entirely
@@ -25,7 +29,7 @@ function renderPage() {
   return render(
     <MemoryRouter>
       <CheckinPage />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 
@@ -89,7 +93,7 @@ describe('CheckinPage', () => {
     renderPage()
     expect(screen.getByText('No pudimos validar la foto.')).toBeInTheDocument()
     expect(
-      screen.queryByText('Estás demasiado lejos del lugar. Acercate y probá de nuevo.'),
+      screen.queryByText('Estás demasiado lejos del lugar. Acercate y probá de nuevo.')
     ).not.toBeInTheDocument()
   })
 
@@ -97,7 +101,7 @@ describe('CheckinPage', () => {
     mockUseCheckin({ kind: 'rejected-rule', rule: 'OutOfRadius' })
     renderPage()
     expect(
-      screen.getByText('Estás demasiado lejos del lugar. Acercate y probá de nuevo.'),
+      screen.getByText('Estás demasiado lejos del lugar. Acercate y probá de nuevo.')
     ).toBeInTheDocument()
   })
 

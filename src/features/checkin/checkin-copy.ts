@@ -12,7 +12,8 @@ export const CHECKIN_RULE_REJECTION_MESSAGES: Record<CheckinRuleRejection, strin
   OutOfRadius: 'Estás demasiado lejos del lugar. Acercate y probá de nuevo.',
   HardBlock24Hours: 'Ya hiciste check-in acá en las últimas 24 horas.',
   PlaceInactive: 'Este lugar no está disponible por ahora.',
-  GpsAccuracyExceeded: 'La señal GPS no es lo bastante precisa. Salí a un espacio abierto y reintentá.',
+  GpsAccuracyExceeded:
+    'La señal GPS no es lo bastante precisa. Salí a un espacio abierto y reintentá.',
   PlaceNotFound: 'No encontramos este lugar.',
 }
 

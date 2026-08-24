@@ -66,12 +66,7 @@ export function installAuthInterceptors(client: AxiosInstance): void {
       if (!axios.isAxiosError(error)) throw error
 
       const config = error.config as RetriableConfig | undefined
-      if (
-        error.response?.status !== 401 ||
-        !config ||
-        config._retry ||
-        isSkipped(config.url)
-      ) {
+      if (error.response?.status !== 401 || !config || config._retry || isSkipped(config.url)) {
         throw error
       }
 
@@ -87,6 +82,6 @@ export function installAuthInterceptors(client: AxiosInstance): void {
 
       config.headers.set('Authorization', `Bearer ${accessToken}`)
       return client.request(config)
-    },
+    }
   )
 }
