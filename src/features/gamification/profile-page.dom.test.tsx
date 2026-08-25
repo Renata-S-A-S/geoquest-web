@@ -75,6 +75,7 @@ describe('ProfilePage', () => {
     renderPage()
 
     expect(await screen.findByText('No pudimos cargar tu perfil.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
     expect(screen.queryByText('nachomed')).not.toBeInTheDocument()
   })
 
@@ -87,7 +88,8 @@ describe('ProfilePage', () => {
     renderPage()
 
     expect(await screen.findByText('No pudimos cargar tu identidad.')).toBeInTheDocument()
-    expect(screen.getByText('Traveler')).toBeInTheDocument()
+    // currentLevel: 'Traveler' -> gamification.json levels.Traveler under es
+    expect(screen.getByText('Viajero')).toBeInTheDocument()
     expect(screen.getByText('3 días de racha')).toBeInTheDocument()
   })
 
@@ -105,7 +107,7 @@ describe('ProfilePage', () => {
     renderPage()
 
     expect(await screen.findByText('nachomed')).toBeInTheDocument()
-    expect(screen.getByText('Traveler')).toBeInTheDocument()
+    expect(screen.getByText('Viajero')).toBeInTheDocument()
     await waitFor(() => expect(leaderboardCalls).toBe(0))
   })
 })

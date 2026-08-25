@@ -1,3 +1,4 @@
+import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { INTEREST_CATALOG } from '@/features/gamification/interests-catalog'
 import { categorySchema } from '@/shared/schemas/gamification'
@@ -39,5 +40,27 @@ describe('INTEREST_CATALOG', () => {
     expect(labels).not.toContain('Café')
     expect(labels).not.toContain('Deporte')
     expect(labels).not.toContain('Música')
+  })
+
+  /**
+   * WU11 (i18n) — labelKey resolves through the shared gamification.json
+   * dictionary, in BOTH languages, and matches the (deprecated) static
+   * `label` under `es` — proving the dictionary is the real source of
+   * truth `edit-profile-page.tsx` (PR4c) will read from next.
+   */
+  it('every labelKey resolves under the gamification namespace to the es label, for es', () => {
+    for (const entry of INTEREST_CATALOG) {
+      expect(i18next.t(entry.labelKey, { ns: 'gamification' })).toBe(entry.label)
+    }
+  })
+
+  it('every labelKey resolves to a real, non-empty EN translation distinct from the raw key', async () => {
+    await i18next.changeLanguage('en')
+    for (const entry of INTEREST_CATALOG) {
+      const enLabel = i18next.t(entry.labelKey, { ns: 'gamification' })
+      expect(enLabel).not.toBe(entry.labelKey)
+      expect(enLabel.length).toBeGreaterThan(0)
+    }
+    await i18next.changeLanguage('es')
   })
 })
