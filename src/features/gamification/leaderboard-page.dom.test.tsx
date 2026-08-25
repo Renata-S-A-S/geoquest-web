@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
+import i18next from 'i18next'
+import { act } from 'react'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import { LeaderboardPage } from './leaderboard-page'
@@ -104,5 +106,84 @@ describe('LeaderboardPage', () => {
     renderPage()
 
     await waitFor(() => expect(screen.getByText(/todav[ií]a no hay/i)).toBeInTheDocument())
+  })
+
+  it('shows a load-error message and retry button when the leaderboard request fails', async () => {
+    server.use(
+      http.get(`${baseURL}/gaming/leaderboard`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    renderPage()
+
+    await waitFor(() =>
+      expect(screen.getByText('No pudimos cargar el ranking.')).toBeInTheDocument()
+    )
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+
+  it('gamification EN-switch: title, empty state, load error, and per-row XP suffix all render real English strings', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    server.use(
+      http.get(`${baseURL}/gaming/leaderboard`, () =>
+        HttpResponse.json({
+          weekStartUtc: '2026-08-24T00:00:00Z',
+          top: [entry({ explorerId: 'a', rank: 1, username: 'ana', weeklyXP: 120 })],
+          me: null,
+        })
+      )
+    )
+
+    renderPage()
+
+    expect(await screen.findByText('Weekly ranking')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('ana')).toBeInTheDocument())
+    expect(screen.getByText('120 XP')).toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
+  })
+
+  it('gamification EN-switch: empty state renders real English strings', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    server.use(
+      http.get(`${baseURL}/gaming/leaderboard`, () =>
+        HttpResponse.json({ weekStartUtc: '2026-08-24T00:00:00Z', top: [], me: null })
+      )
+    )
+
+    renderPage()
+
+    expect(await screen.findByText('No ranking yet')).toBeInTheDocument()
+    expect(screen.getByText('Be the first this week by checking in.')).toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
+  })
+
+  it('gamification EN-switch: load-error message and retry button render real English strings', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    server.use(
+      http.get(`${baseURL}/gaming/leaderboard`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    renderPage()
+
+    expect(await screen.findByText("We couldn't load the ranking.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
   })
 })

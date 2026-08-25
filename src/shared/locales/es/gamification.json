@@ -26,5 +26,13 @@
     "weeklyXp": "XP semanal",
     "longestStreak": "Racha máxima",
     "loadError": "No pudimos cargar tu perfil."
+  },
+  "leaderboard": {
+    "loadError": "No pudimos cargar el ranking.",
+    "retry": "Reintentar",
+    "title": "Ranking semanal",
+    "emptyTitle": "Todavía no hay ranking",
+    "emptyDescription": "Sé el primero de la semana haciendo check-in.",
+    "xp": "{{xp}} XP"
   }
 }

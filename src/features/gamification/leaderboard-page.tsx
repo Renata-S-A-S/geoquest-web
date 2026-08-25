@@ -1,4 +1,5 @@
 import { Trophy } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { Avatar } from '@/shared/components/ui/avatar'
 import { Button } from '@/shared/components/ui/button'
 import { Skeleton } from '@/shared/components/ui/skeleton'
@@ -16,6 +17,7 @@ import { buildLeaderboardRows, type LeaderboardRow } from '@/features/gamificati
  * Visible List").
  */
 export function LeaderboardPage() {
+  const { t } = useTranslation('gamification')
   const { data, isPending, isError, refetch } = useLeaderboard()
 
   if (isPending) {
@@ -31,9 +33,9 @@ export function LeaderboardPage() {
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 p-6 text-center">
-        <span className="font-sans text-xs text-ink">No pudimos cargar el ranking.</span>
+        <span className="font-sans text-xs text-ink">{t('leaderboard.loadError')}</span>
         <Button variant="primary" onClick={() => refetch()}>
-          Reintentar
+          {t('leaderboard.retry')}
         </Button>
       </div>
     )
@@ -45,13 +47,13 @@ export function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-3 p-4">
-      <b className="font-display text-base text-ink">Ranking semanal</b>
+      <b className="font-display text-base text-ink">{t('leaderboard.title')}</b>
 
       {data.top.length === 0 ? (
         <EmptyState
           icon={Trophy}
-          title="Todavía no hay ranking"
-          description="Sé el primero de la semana haciendo check-in."
+          title={t('leaderboard.emptyTitle')}
+          description={t('leaderboard.emptyDescription')}
         />
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -71,6 +73,8 @@ export function LeaderboardPage() {
 }
 
 function LeaderboardRowItem({ row }: { row: LeaderboardRow }) {
+  const { t } = useTranslation('gamification')
+
   return (
     <li
       data-testid={`leaderboard-row-${row.explorerId}`}
@@ -83,7 +87,9 @@ function LeaderboardRowItem({ row }: { row: LeaderboardRow }) {
       <span className="w-8 font-mono text-[11px] font-bold text-muted">#{row.rank}</span>
       <Avatar initial={row.username.charAt(0).toUpperCase()} src={row.avatarUrl} size="sm" />
       <span className="flex-1 font-sans text-xs font-bold text-ink">{row.username}</span>
-      <span className="font-mono text-[11px] text-muted">{row.weeklyXP} XP</span>
+      <span className="font-mono text-[11px] text-muted">
+        {t('leaderboard.xp', { xp: row.weeklyXP })}
+      </span>
     </li>
   )
 }
