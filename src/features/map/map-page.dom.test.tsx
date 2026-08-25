@@ -282,7 +282,7 @@ describe('MapPage — map view (token present)', () => {
     renderMapPage()
 
     await waitFor(() => expect(screen.getByTestId('map')).toBeInTheDocument())
-    expect(screen.getByTestId('marker-1')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
     expect(screen.getByTestId('marker-2')).toBeInTheDocument()
     expect(screen.queryByTestId('map-unavailable')).not.toBeInTheDocument()
   })
