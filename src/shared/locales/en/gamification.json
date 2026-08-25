@@ -26,5 +26,26 @@
     "weeklyXp": "Weekly XP",
     "longestStreak": "Longest streak",
     "loadError": "We couldn't load your profile."
+  },
+  "editProfile": {
+    "photoLabel": "Profile photo",
+    "changePhoto": "Change profile photo",
+    "undoPhotoChange": "Cancel",
+    "removePhoto": "Remove photo",
+    "undoRemove": "Undo",
+    "avatarTooLarge": "The image exceeds the 5 MB limit.",
+    "usernameLabel": "Username",
+    "usernameCooldownHint": "You can change it again in {{days}} day(s).",
+    "usernameFormatError": "Alphanumeric and underscore, 3-20 characters.",
+    "interestsLabel": "Interests",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "logout": "Log out",
+    "logoutConfirmTitle": "Log out?",
+    "logoutConfirmDescription": "You'll need to sign in again."
+  },
+  "errors": {
+    "network": "We couldn't connect to the server. Try again.",
+    "generic": "We couldn't save the changes. Try again in a few minutes."
   }
 }

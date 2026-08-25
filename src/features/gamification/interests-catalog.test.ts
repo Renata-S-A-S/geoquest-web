@@ -30,30 +30,25 @@ describe('INTEREST_CATALOG', () => {
     ])
   })
 
-  it('maps HistoriaCultura to a Spanish "Historia y cultura" label', () => {
+  it('maps HistoriaCultura to a Spanish "Historia y cultura" label via the gamification dictionary', () => {
     const entry = INTEREST_CATALOG.find((e) => e.value === 'HistoriaCultura')
-    expect(entry?.label).toBe('Historia y cultura')
+    expect(i18next.t(entry!.labelKey, { ns: 'gamification' })).toBe('Historia y cultura')
   })
 
   it('never includes a design-mock placeholder label', () => {
-    const labels = INTEREST_CATALOG.map((entry) => entry.label)
+    const labels = INTEREST_CATALOG.map((entry) =>
+      i18next.t(entry.labelKey, { ns: 'gamification' })
+    )
     expect(labels).not.toContain('Café')
     expect(labels).not.toContain('Deporte')
     expect(labels).not.toContain('Música')
   })
 
   /**
-   * WU11 (i18n) — labelKey resolves through the shared gamification.json
-   * dictionary, in BOTH languages, and matches the (deprecated) static
-   * `label` under `es` — proving the dictionary is the real source of
-   * truth `edit-profile-page.tsx` (PR4c) will read from next.
+   * WU11 (i18n) PR4c — `label` (the deprecated static field) was removed
+   * once `edit-profile-page.tsx` migrated its render to `labelKey`; the
+   * dictionary itself is the only source of truth now.
    */
-  it('every labelKey resolves under the gamification namespace to the es label, for es', () => {
-    for (const entry of INTEREST_CATALOG) {
-      expect(i18next.t(entry.labelKey, { ns: 'gamification' })).toBe(entry.label)
-    }
-  })
-
   it('every labelKey resolves to a real, non-empty EN translation distinct from the raw key', async () => {
     await i18next.changeLanguage('en')
     for (const entry of INTEREST_CATALOG) {

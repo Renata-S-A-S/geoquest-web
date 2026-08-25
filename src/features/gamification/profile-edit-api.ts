@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { TFunction } from 'i18next'
 import { apiClient } from '@/shared/lib/api-client'
 import { problemDetailsSchema } from '@/shared/schemas/auth'
 import {
@@ -100,19 +101,20 @@ export interface ProfilePatchError {
   message: string
 }
 
-const GENERIC_ERROR_MESSAGE = 'No pudimos guardar los cambios. Intentá de nuevo en unos minutos.'
-
 /**
- * Maps `PATCH /explorers/me` errors. Unlike `mapCreateCheckinError`, the
- * `title` IS the error code (no prefix to strip). The server `detail`
- * already carries the exact user-facing Spanish message (e.g. the cooldown
- * error includes the precomputed remaining-days count), so it always wins
- * over a hardcoded fallback when present.
+ * Maps `PATCH /explorers/me` errors, translated via `t` (namespace
+ * `gamification`, WU11 PR4c — mirrors `mapLoginError`'s factory-call
+ * pattern). Unlike `mapCreateCheckinError`, the `title` IS the error code
+ * (no prefix to strip). The server `detail` already carries the exact
+ * user-facing message (e.g. the cooldown error includes the precomputed
+ * remaining-days count) in whatever language the backend returns it — that
+ * passthrough stays untouched, only the static fallback strings are
+ * translated.
  */
-export function mapProfilePatchError(error: unknown): ProfilePatchError {
+export function mapProfilePatchError(error: unknown, t: TFunction): ProfilePatchError {
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      return { code: 'Unknown', message: 'No pudimos conectar con el servidor. Intentá de nuevo.' }
+      return { code: 'Unknown', message: t('errors.network') }
     }
 
     const problem = problemDetailsSchema.safeParse(error.response.data)
@@ -122,9 +124,9 @@ export function mapProfilePatchError(error: unknown): ProfilePatchError {
 
     return {
       code: code as ProfilePatchErrorCode | 'Unknown',
-      message: detail ?? GENERIC_ERROR_MESSAGE,
+      message: detail ?? t('errors.generic'),
     }
   }
 
-  return { code: 'Unknown', message: GENERIC_ERROR_MESSAGE }
+  return { code: 'Unknown', message: t('errors.generic') }
 }

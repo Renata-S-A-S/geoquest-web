@@ -3,7 +3,9 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
+import type { TFunction } from 'i18next'
 import { Avatar } from '@/shared/components/ui/avatar'
 import { InputField } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
@@ -19,14 +21,23 @@ import { useExplorerProfile, useUpdateProfile } from '@/features/gamification/qu
 import { mapProfilePatchError } from '@/features/gamification/profile-edit-api'
 import type { AvatarChange, Category, ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
-const editUsernameSchema = z.object({
-  username: z
-    .string()
-    .regex(/^[A-Za-z0-9_]{3,20}$/, 'Alfanumérico y guion bajo, 3-20 caracteres.')
-    .optional()
-    .or(z.literal('')),
-})
-type EditProfileFormValues = z.infer<typeof editUsernameSchema>
+/**
+ * Factory function, not a static schema (WU11 PR4c i18n migration, mirrors
+ * `createLoginSchema`): zod bakes its message strings in at construction
+ * time, so a schema built once at module load would freeze its validation
+ * copy in whatever language was active on first import. `EditProfileForm`
+ * rebuilds it from the current `t` on every render instead.
+ */
+function createEditUsernameSchema(t: TFunction) {
+  return z.object({
+    username: z
+      .string()
+      .regex(/^[A-Za-z0-9_]{3,20}$/, t('editProfile.usernameFormatError'))
+      .optional()
+      .or(z.literal('')),
+  })
+}
+type EditProfileFormValues = z.infer<ReturnType<typeof createEditUsernameSchema>>
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
@@ -48,6 +59,7 @@ const MAX_AVATAR_BYTES = 5 * 1024 * 1024
  * reachable across all 3 branches too.
  */
 export function EditProfilePage() {
+  const { t } = useTranslation('gamification')
   const queryClient = useQueryClient()
   const logout = useAuthStore((state) => state.logout)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -65,16 +77,15 @@ export function EditProfilePage() {
         <div className="flex flex-col gap-4 border-t border-border pt-4">
           <LanguageSwitcher />
           <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>
-            Cerrar sesión
+            {t('editProfile.logout')}
           </Button>
         </div>
       </div>
       {confirmOpen && (
         <ConfirmationModal
-          title="¿Cerrar sesión?"
-          description="Vas a necesitar iniciar sesión de nuevo."
-          confirmLabel="Cerrar sesión"
-          cancelLabel="Cancelar"
+          title={t('editProfile.logoutConfirmTitle')}
+          description={t('editProfile.logoutConfirmDescription')}
+          confirmLabel={t('editProfile.logout')}
           onConfirm={handleConfirmLogout}
           onCancel={() => setConfirmOpen(false)}
         />
@@ -107,9 +118,9 @@ export function EditProfilePage() {
     return (
       <>
         <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <span className="font-sans text-xs text-ink">No pudimos cargar tu perfil.</span>
+          <span className="font-sans text-xs text-ink">{t('profile.loadError')}</span>
           <Button variant="primary" onClick={() => meQuery.refetch()}>
-            Reintentar
+            {t('profile.retry')}
           </Button>
         </div>
         {logoutSection}
@@ -134,6 +145,7 @@ export function EditProfilePage() {
  * combine) all seed their initial state from `me`.
  */
 function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
+  const { t } = useTranslation('gamification')
   const navigate = useNavigate()
   const cooldown = usernameCooldown(me.usernameChangedAt)
   const [selectedInterests, setSelectedInterests] = useState<Category[]>(me.interests)
@@ -159,7 +171,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
     handleSubmit,
     formState: { errors },
   } = useForm<EditProfileFormValues>({
-    resolver: zodResolver(editUsernameSchema),
+    resolver: zodResolver(createEditUsernameSchema(t)),
     defaultValues: { username: me.username },
   })
 
@@ -174,7 +186,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
     if (!file) return
 
     if (file.size > MAX_AVATAR_BYTES) {
-      setAvatarError('La imagen supera los 5 MB permitidos.')
+      setAvatarError(t('editProfile.avatarTooLarge'))
       event.target.value = ''
       return
     }
@@ -204,7 +216,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
       },
       {
         onSuccess: () => navigate('/perfil'),
-        onError: (error) => setFormError(mapProfilePatchError(error).message),
+        onError: (error) => setFormError(mapProfilePatchError(error, t).message),
       }
     )
   }
@@ -213,22 +225,22 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
     <>
       <form className="flex flex-col gap-4 p-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="flex flex-col gap-1.5">
-          <b className="font-sans text-[11px] font-bold text-ink">Foto de perfil</b>
+          <b className="font-sans text-[11px] font-bold text-ink">{t('editProfile.photoLabel')}</b>
           <div className="flex items-center gap-3">
             <Avatar
               initial={me.username.charAt(0).toUpperCase()}
               src={displayedAvatarUrl}
-              alt="Foto de perfil"
+              alt={t('editProfile.photoLabel')}
               size="lg"
             />
             <div className="flex flex-col gap-1">
               <label className="font-sans text-[11px] font-bold text-teal">
-                Cambiar foto de perfil
+                {t('editProfile.changePhoto')}
                 <input
                   type="file"
                   accept="image/*"
                   className="sr-only"
-                  aria-label="Cambiar foto de perfil"
+                  aria-label={t('editProfile.changePhoto')}
                   onChange={handleFileChange}
                 />
               </label>
@@ -238,7 +250,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
                   className="text-left font-sans text-[10px] text-muted"
                   onClick={handleUndoAvatarChange}
                 >
-                  Cancelar
+                  {t('editProfile.undoPhotoChange')}
                 </button>
               )}
               {me.avatarUrl && avatarChange.kind !== 'remove' && (
@@ -247,7 +259,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
                   className="text-left font-sans text-[10px] text-alert"
                   onClick={handleRemoveAvatar}
                 >
-                  Quitar foto
+                  {t('editProfile.removePhoto')}
                 </button>
               )}
               {avatarChange.kind === 'remove' && (
@@ -256,7 +268,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
                   className="text-left font-sans text-[10px] text-muted"
                   onClick={handleUndoAvatarChange}
                 >
-                  Deshacer
+                  {t('editProfile.undoRemove')}
                 </button>
               )}
               {avatarError && (
@@ -267,18 +279,20 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
         </div>
 
         <InputField
-          label="Nombre de usuario"
+          label={t('editProfile.usernameLabel')}
           disabled={cooldown.locked}
           hint={
             cooldown.locked
-              ? `Podés cambiarlo de nuevo en ${cooldown.daysRemaining} día(s).`
+              ? t('editProfile.usernameCooldownHint', { days: cooldown.daysRemaining })
               : errors.username?.message
           }
           {...register('username')}
         />
 
         <div className="flex flex-col gap-1.5">
-          <b className="font-sans text-[11px] font-bold text-ink">Intereses</b>
+          <b className="font-sans text-[11px] font-bold text-ink">
+            {t('editProfile.interestsLabel')}
+          </b>
           <div className="flex flex-wrap gap-2">
             {INTEREST_CATALOG.map((entry) => {
               const selected = selectedInterests.includes(entry.value)
@@ -289,7 +303,9 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
                   aria-pressed={selected}
                   onClick={() => toggleInterest(entry.value)}
                 >
-                  <Pill variant={selected ? 'solid' : 'outline'}>{entry.label}</Pill>
+                  <Pill variant={selected ? 'solid' : 'outline'}>
+                    {t(entry.labelKey, { ns: 'gamification' })}
+                  </Pill>
                 </button>
               )
             })}
@@ -299,7 +315,7 @@ function EditProfileForm({ me }: { me: ExplorerProfileResponse }) {
         {formError && <Toast variant="error" message={formError} />}
 
         <Button type="submit" variant="primary" disabled={updateProfile.isPending}>
-          {updateProfile.isPending ? 'Guardando…' : 'Guardar cambios'}
+          {updateProfile.isPending ? t('editProfile.saving') : t('editProfile.save')}
         </Button>
       </form>
     </>
