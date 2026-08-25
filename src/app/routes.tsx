@@ -6,6 +6,7 @@ import { CheckinPage } from '@/features/checkin/checkin-page'
 import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
+import { MapPage } from '@/features/map/map-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -19,8 +20,9 @@ import { ProtectedRoute } from './protected-route'
  * en `ProtectedRoute` (WU7, issue #7) — sin sesión real todavía, usa el stub
  * de `useAuthStore` para decidir si deja pasar o manda a /login. `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
- * reales; `mapa` y `rutas` siguen siendo placeholder — llegan en WUs
- * futuras. La ruta índice `/premios` (bare) también sigue siendo
+ * reales; `/` (WU003b PR1b) renderiza `MapPage` — lista de lugares cercanos
+ * en modo "list-first", el mapa real llega en PR2. `rutas` sigue siendo
+ * placeholder — llega en WUs futuras. La ruta índice `/premios` (bare) también sigue siendo
  * placeholder: WU10b (issue closure) repuntó la nav de "Premios" a
  * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
  * navegación — se conserva reservada para la futura pantalla de
@@ -35,7 +37,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: '/', element: <RoutePlaceholder label="mapa — pendiente" /> },
+          { path: '/', element: <MapPage /> },
           { path: '/rutas', element: <RoutePlaceholder label="rutas — pendiente" /> },
           { path: '/premios', element: <RoutePlaceholder label="premios — pendiente" /> },
           { path: '/premios/leaderboard', element: <LeaderboardPage /> },
