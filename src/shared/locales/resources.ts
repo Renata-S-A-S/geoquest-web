@@ -2,6 +2,8 @@ import esCommon from './es/common.json'
 import enCommon from './en/common.json'
 import esCheckin from './es/checkin.json'
 import enCheckin from './en/checkin.json'
+import esAuth from './es/auth.json'
+import enAuth from './en/auth.json'
 
 /**
  * Single shared resource bundle + namespace registry, reused by the app's
@@ -9,9 +11,9 @@ import enCheckin from './en/checkin.json'
  * Each feature slice adds one import pair here and one entry in `ns`.
  */
 export const resources = {
-  es: { common: esCommon, checkin: esCheckin },
-  en: { common: enCommon, checkin: enCheckin },
+  es: { common: esCommon, checkin: esCheckin, auth: esAuth },
+  en: { common: enCommon, checkin: enCheckin, auth: enAuth },
 } as const
 
-export const ns = ['common', 'checkin'] as const
+export const ns = ['common', 'checkin', 'auth'] as const
 export const defaultNS = 'common' as const

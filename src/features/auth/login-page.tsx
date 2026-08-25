@@ -3,13 +3,14 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout } from '@/shared/components/auth-layout'
 import { InputField } from '@/shared/components/ui/input'
 import { Button } from '@/shared/components/ui/button'
 import { Toast } from '@/shared/components/toast'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { loginRequest, mapLoginError } from './auth-api'
-import { loginSchema, type LoginFormValues } from './login-schema'
+import { createLoginSchema, type LoginFormValues } from './login-schema'
 
 /**
  * Pantalla de login — WU8 (UI, issue #8) + WU6 (cliente API real, issue #6).
@@ -21,6 +22,7 @@ import { loginSchema, type LoginFormValues } from './login-schema'
  * (ver comentario en su handler, más abajo).
  */
 export function LoginPage() {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const login = useAuthStore((state) => state.login)
   const [formError, setFormError] = useState<string | null>(null)
@@ -28,7 +30,7 @@ export function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginFormValues>({ resolver: zodResolver(createLoginSchema(t)) })
 
   const loginMutation = useMutation({
     mutationFn: loginRequest,
@@ -38,7 +40,7 @@ export function LoginPage() {
       navigate('/')
     },
     onError: (error) => {
-      setFormError(mapLoginError(error))
+      setFormError(mapLoginError(error, t))
     },
   })
 
@@ -68,23 +70,23 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Iniciar sesión"
-      tagline="Explorá Medellín. Ganá en el camino."
+      title={t('title')}
+      tagline={t('tagline')}
       coordinates="6.2442°N · 75.5812°W"
       city="MED"
       neighborhood="LAURELES"
       footer={
         <div className="pt-1">
           <span className="block text-center font-sans text-xs text-muted md:hidden">
-            ¿Nuevo?{' '}
+            {t('signup.promptShort')}{' '}
             <a href="/registro" className="font-bold text-teal hover:underline">
-              Crear cuenta
+              {t('signup.cta')}
             </a>
           </span>
           <span className="hidden text-center font-sans text-xs text-muted lg:block">
-            ¿Nuevo por acá?{' '}
+            {t('signup.promptLong')}{' '}
             <a href="/registro" className="font-bold text-teal hover:underline">
-              Crear cuenta
+              {t('signup.cta')}
             </a>
           </span>
         </div>
@@ -92,14 +94,14 @@ export function LoginPage() {
     >
       <form className="flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)} noValidate>
         <InputField
-          label="Correo electrónico"
+          label={t('form.emailLabel')}
           type="email"
           autoComplete="email"
           hint={errors.email?.message}
           {...register('email')}
         />
         <InputField
-          label="Contraseña"
+          label={t('form.passwordLabel')}
           type="password"
           autoComplete="current-password"
           hint={errors.password?.message}
@@ -112,18 +114,18 @@ export function LoginPage() {
           disabled={loginMutation.isPending}
           className="mt-1 w-full"
         >
-          {loginMutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}
+          {loginMutation.isPending ? t('form.submitPending') : t('form.submit')}
         </Button>
       </form>
 
       <div className="flex items-center gap-2" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
-        <span className="font-sans text-[11px] text-muted">o</span>
+        <span className="font-sans text-[11px] text-muted">{t('divider')}</span>
         <span className="h-px flex-1 bg-border" />
       </div>
 
       <Button type="button" variant="social" className="w-full" onClick={handleGoogleContinue}>
-        Continuar con Google
+        {t('google')}
       </Button>
     </AuthLayout>
   )
