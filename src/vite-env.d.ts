@@ -12,6 +12,15 @@ interface ImportMetaEnv {
   readonly VITE_MAPBOX_TOKEN?: string
 
   /**
+   * Overrides para el centro por defecto del mapa (WU003b) cuando el GPS del
+   * dispositivo se deniega o expira — ver `src/features/map/map-config.ts`.
+   * Ambos deben estar presentes y ser números válidos para tomar efecto; si
+   * falta alguno o no son parseables, el fallback es Medellín.
+   */
+  readonly VITE_MAP_DEFAULT_LAT?: string
+  readonly VITE_MAP_DEFAULT_LNG?: string
+
+  /**
    * Overrides para el lugar semilla del flujo de check-in demo (WU9, issue
    * #9) — ver `src/features/checkin/checkin-config.ts`. Sin ellos, el
    * fallback de desarrollo apunta al lugar semilla confirmado contra el
