@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw'
+import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import {
@@ -10,6 +11,7 @@ import {
 import type { ProfilePatchInput } from '@/shared/schemas/gamification'
 
 const baseURL = 'http://localhost:5219'
+const t = i18next.getFixedT('es', 'gamification')
 
 function fields(form: FormData): string[] {
   return Array.from(form.keys())
@@ -152,7 +154,7 @@ describe('mapProfilePatchError', () => {
 
       const error = await captureError(noopInput)
 
-      expect(mapProfilePatchError(error)).toEqual({ code, message: `detail for ${code}` })
+      expect(mapProfilePatchError(error, t)).toEqual({ code, message: `detail for ${code}` })
     }
   )
 
@@ -165,22 +167,22 @@ describe('mapProfilePatchError', () => {
 
     const error = await captureError(noopInput)
 
-    expect(mapProfilePatchError(error)).toEqual({ code: 'Unknown', message: 'huh' })
+    expect(mapProfilePatchError(error, t)).toEqual({ code: 'Unknown', message: 'huh' })
   })
 
-  it('returns a network-error message when there is no response', async () => {
+  it('returns the translated network-error message when there is no response', async () => {
     server.use(http.patch(`${baseURL}/explorers/me`, () => HttpResponse.error()))
 
     const error = await captureError(noopInput)
 
-    expect(mapProfilePatchError(error)).toEqual({
+    expect(mapProfilePatchError(error, t)).toEqual({
       code: 'Unknown',
       message: 'No pudimos conectar con el servidor. Intentá de nuevo.',
     })
   })
 
-  it('returns the same non-axios fallback message for an unrelated error', () => {
-    expect(mapProfilePatchError(new Error('boom'))).toEqual({
+  it('returns the same translated non-axios fallback message for an unrelated error', () => {
+    expect(mapProfilePatchError(new Error('boom'), t)).toEqual({
       code: 'Unknown',
       message: 'No pudimos guardar los cambios. Intentá de nuevo en unos minutos.',
     })

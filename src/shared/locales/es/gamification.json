@@ -27,6 +27,27 @@
     "longestStreak": "Racha máxima",
     "loadError": "No pudimos cargar tu perfil."
   },
+  "editProfile": {
+    "photoLabel": "Foto de perfil",
+    "changePhoto": "Cambiar foto de perfil",
+    "undoPhotoChange": "Cancelar",
+    "removePhoto": "Quitar foto",
+    "undoRemove": "Deshacer",
+    "avatarTooLarge": "La imagen supera los 5 MB permitidos.",
+    "usernameLabel": "Nombre de usuario",
+    "usernameCooldownHint": "Podés cambiarlo de nuevo en {{days}} día(s).",
+    "usernameFormatError": "Alfanumérico y guion bajo, 3-20 caracteres.",
+    "interestsLabel": "Intereses",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "logout": "Cerrar sesión",
+    "logoutConfirmTitle": "¿Cerrar sesión?",
+    "logoutConfirmDescription": "Vas a necesitar iniciar sesión de nuevo."
+  },
+  "errors": {
+    "network": "No pudimos conectar con el servidor. Intentá de nuevo.",
+    "generic": "No pudimos guardar los cambios. Intentá de nuevo en unos minutos."
+  },
   "leaderboard": {
     "loadError": "No pudimos cargar el ranking.",
     "retry": "Reintentar",

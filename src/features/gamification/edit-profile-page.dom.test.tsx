@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http, delay } from 'msw'
+import i18next from 'i18next'
+import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useAuthStore } from '@/shared/stores/auth-store'
@@ -417,6 +419,114 @@ describe('EditProfilePage pending state', () => {
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
     expect(screen.queryByLabelText('Nombre de usuario')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /guardar/i })).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * WU11 (i18n) PR4c — `gamification` namespace EN-switch coverage for
+ * `/perfil/editar`. Mirrors `profile-view.dom.test.tsx`'s single
+ * changeLanguage('en') + real-EN-string-assertions pattern. Covers the
+ * form's static copy, the interest pills (now read from
+ * `interests-catalog.ts`'s `labelKey` through `t()`, not the deprecated
+ * static `label`), the avatar actions, and the logout/confirmation copy
+ * that lives in the `EditProfilePage` container (D10).
+ */
+describe('EditProfilePage gamification EN-switch', () => {
+  afterEach(async () => {
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
+  })
+
+  it('renders real English copy for form labels, interest pills, avatar actions, and logout/confirmation text', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json(
+          meResponse({
+            interests: ['Aventura'],
+            avatarUrl: 'https://cdn.example.com/avatars/a.jpg',
+          })
+        )
+      )
+    )
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    await screen.findByLabelText('Username')
+
+    expect(screen.getByText('Profile photo')).toBeInTheDocument()
+    expect(screen.getByLabelText('Change profile photo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Remove photo' })).toBeInTheDocument()
+    expect(screen.getByText('Interests')).toBeInTheDocument()
+    // Interest pill label resolved through interests-catalog.ts's labelKey,
+    // not the deprecated static `label` field (removed in this PR).
+    expect(screen.getByRole('button', { name: 'Adventure' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }))
+
+    expect(screen.getByText('Log out?')).toBeInTheDocument()
+    expect(screen.getByText("You'll need to sign in again.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+  })
+
+  it('renders the translated network error message when a PATCH fails', async () => {
+    server.use(
+      http.patch(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json({ title: 'Something.Else' }, { status: 400 })
+      )
+    )
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    await screen.findByLabelText('Username')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(
+      await screen.findByText("We couldn't save the changes. Try again in a few minutes.")
+    ).toBeInTheDocument()
+  })
+
+  it('renders translated retry copy on the error-state branch', async () => {
+    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(await screen.findByText("We couldn't load your profile.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 })
 
