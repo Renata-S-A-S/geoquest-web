@@ -16,7 +16,6 @@ import {
   uploadCheckinPhoto,
   type CheckinRuleRejection,
 } from '@/features/checkin/checkin-api'
-import { SEED_PLACE_ID, SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 import { nextPollDelayMs } from '@/features/checkin/poll-schedule'
 import { ValidationStatus } from '@/shared/schemas/checkin'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
@@ -28,7 +27,7 @@ export type CheckinState =
   | { kind: 'sending'; step: 'upload' | 'create' }
   | { kind: 'pending'; checkInId: string }
   | { kind: 'pending-review'; checkInId: string }
-  | { kind: 'approved'; xpAwarded: number; geoPointsAwarded: number }
+  | { kind: 'approved'; xpAwarded: number; geoPointsAwarded: number; placeName: string }
   | { kind: 'rejected-content' }
   | { kind: 'rejected-rule'; rule: CheckinRuleRejection }
   | { kind: 'error'; message: string }
@@ -90,16 +89,24 @@ export function useCheckin(): UseCheckinResult {
         .then((status) => {
           if (unmountedRef.current) return
           if (status.validationStatus === ValidationStatus.Approved) {
+            // Design decisions #10/#11: capture `placeName` from the store
+            // BEFORE clearing it — `clearSelectedPlace()` empties
+            // `selectedPlace`, so the terminal-state UI needs its own copy
+            // rather than a live read at render time.
+            const placeName = useCheckinStore.getState().selectedPlace?.placeName ?? ''
             useCheckinStore.getState().clearPending()
+            useCheckinStore.getState().clearSelectedPlace()
             setState({
               kind: 'approved',
               xpAwarded: status.xpAwarded,
               geoPointsAwarded: status.geoPointsAwarded,
+              placeName,
             })
             return
           }
           if (status.validationStatus === ValidationStatus.Rejected) {
             useCheckinStore.getState().clearPending()
+            useCheckinStore.getState().clearSelectedPlace()
             setState({ kind: 'rejected-content' })
             return
           }
@@ -156,7 +163,11 @@ export function useCheckin(): UseCheckinResult {
 
   const submitCheckin = useCallback(async () => {
     const position = positionRef.current
-    if (!position) {
+    // `checkin-page.tsx`'s redirect guard already blocks mounting this hook
+    // without a `selectedPlace` (design decision #12), but `submitCheckin`
+    // stays defensive in case the guard's snapshot goes stale mid-flow.
+    const selectedPlace = useCheckinStore.getState().selectedPlace
+    if (!position || !selectedPlace) {
       setState({ kind: 'error', message: t('errors.unexpected') })
       return
     }
@@ -168,7 +179,7 @@ export function useCheckin(): UseCheckinResult {
       if (unmountedRef.current) return
       setState({ kind: 'sending', step: 'create' })
       const checkInId = await createCheckin({
-        placeId: SEED_PLACE_ID,
+        placeId: selectedPlace.placeId,
         latitude: position.latitude,
         longitude: position.longitude,
         gpsAccuracyMeters: position.gpsAccuracyMeters,
@@ -178,7 +189,7 @@ export function useCheckin(): UseCheckinResult {
       // Design decision #4: persist as soon as `checkInId` exists (the
       // `202`), not only at the poll deadline — recoverable even if the tab
       // closes mid-poll.
-      useCheckinStore.getState().setPending({ checkInId, placeName: SEED_PLACE_NAME })
+      useCheckinStore.getState().setPending({ checkInId, placeName: selectedPlace.placeName })
       setState({ kind: 'pending', checkInId })
       armPolling(checkInId)
     } catch (error) {

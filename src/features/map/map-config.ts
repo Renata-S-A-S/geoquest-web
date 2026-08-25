@@ -25,10 +25,10 @@ export interface Coordinates {
 }
 
 /**
- * Medellín fallback — reuses the same coordinate already verified as a real
- * seed place in this project (`checkin-config.ts`'s `SEED_PLACE_ID` =
- * "El Cielo", lat 6.2234 / lng -75.5802), so the fallback center sits inside
- * the actual seeded-places cluster rather than an arbitrary unverified point.
+ * Medellín fallback — matches "El Cielo", a real seeded place confirmed
+ * against the running dev backend (lat 6.2234 / lng -75.5802), so the
+ * fallback center sits inside the actual seeded-places cluster rather than
+ * an arbitrary unverified point.
  */
 const FALLBACK_CENTER: Coordinates = { lat: 6.2234, lng: -75.5802 }
 

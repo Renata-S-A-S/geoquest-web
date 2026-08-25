@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, type ReactNode } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CameraSlash, WarningCircle } from '@phosphor-icons/react'
 import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
 import { Stamp } from '@/shared/components/stamp'
-import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 import {
   getCheckinRuleRejectionMessage,
   getGenericContentRejectionMessage,
 } from '@/features/checkin/checkin-copy'
 import { useCheckin } from '@/features/checkin/use-checkin'
+import { useCheckinStore } from '@/shared/stores/checkin-store'
 
 /**
  * Pantalla de check-in — WU9 (issue #9), PR3. Puramente presentacional:
@@ -23,13 +23,26 @@ import { useCheckin } from '@/features/checkin/use-checkin'
  * (`rejected-content`) muestra siempre el mismo mensaje genérico — nunca se
  * expone `rejectionReason` (spec "Typed Rejection Messaging").
  *
- * All copy reads from the `checkin` i18n namespace (WU11) — `SEED_PLACE_NAME`,
- * `XP`, and `GeoPoints` stay untranslated (data/brand terms, not UI copy).
+ * All copy reads from the `checkin` i18n namespace (WU11) — the captured
+ * `placeName`, `XP`, and `GeoPoints` stay untranslated (data/brand terms,
+ * not UI copy).
+ *
+ * WU003b (map discovery, PR3) — redirects to `/` when there is no place
+ * selected. Reads a snapshot of `selectedPlace` taken ONCE at mount (design
+ * decision #12), mirroring `pending-checkin-banner.tsx`'s own `pending`
+ * snapshot: a reactive selector would yank the user off the
+ * approved/rejected result screen the instant `clearSelectedPlace()` fires
+ * mid-flow (design decision #11).
  */
 export function CheckinPage() {
   const navigate = useNavigate()
   const { t } = useTranslation('checkin')
+  const [selectedPlaceSnapshot] = useState(() => useCheckinStore.getState().selectedPlace)
   const { state, videoRef, capture, retry } = useCheckin()
+
+  if (!selectedPlaceSnapshot) {
+    return <Navigate to="/" replace />
+  }
 
   switch (state.kind) {
     case 'requesting-permissions':
@@ -93,11 +106,11 @@ export function CheckinPage() {
       return (
         <CenteredState>
           <Stamp size={52} color="coral" className="mb-2.5">
-            {SEED_PLACE_NAME}
+            {state.placeName}
           </Stamp>
           <b className="font-display text-base text-teal">+{state.xpAwarded} XP</b>
           <span className="mb-3 mt-0.5 font-sans text-[10.5px] text-muted">
-            +{state.geoPointsAwarded} GeoPoints · {SEED_PLACE_NAME}
+            +{state.geoPointsAwarded} GeoPoints · {state.placeName}
           </span>
           <Button variant="secondary" onClick={() => navigate('/perfil')}>
             {t('actions.viewProfile')}

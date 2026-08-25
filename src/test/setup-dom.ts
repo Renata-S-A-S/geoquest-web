@@ -13,6 +13,7 @@ afterEach(async () => {
   // wiped by the blanket `localStorage.clear()` right below (Phase 1 apply
   // note: this line was deferred until `checkin-store.ts` existed — PR4).
   useCheckinStore.getState().clearPending()
+  useCheckinStore.getState().clearSelectedPlace()
   window.localStorage.clear()
   // MANDATORY: the i18next singleton leaks its active language across tests
   // in the same file otherwise (design D-C) — `localStorage.clear()` above

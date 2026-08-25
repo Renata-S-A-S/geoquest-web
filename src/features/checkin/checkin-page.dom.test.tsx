@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18next from 'i18next'
 import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,6 +9,9 @@ import {
   type CheckinState,
   type UseCheckinResult,
 } from '@/features/checkin/use-checkin'
+import { useCheckinStore } from '@/shared/stores/checkin-store'
+
+const fakeSelectedPlace = { placeId: 'place-1', placeName: 'El Cielo' }
 
 /**
  * Props-driven per design testing strategy: `useCheckin` is mocked entirely
@@ -35,8 +38,29 @@ function renderPage() {
   )
 }
 
+/**
+ * WU003b (PR3) — mounts `CheckinPage` at `/checkin` alongside a real `/`
+ * route so the redirect-guard tests can assert where navigation actually
+ * lands, not just that the check-in form disappeared.
+ */
+function renderAtCheckinRoute() {
+  return render(
+    <MemoryRouter initialEntries={['/checkin']}>
+      <Routes>
+        <Route path="/checkin" element={<CheckinPage />} />
+        <Route path="/" element={<div>home-route</div>} />
+      </Routes>
+    </MemoryRouter>
+  )
+}
+
 describe('CheckinPage', () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => {
+    vi.resetAllMocks()
+    // Default: a place is selected, matching the normal navigation-from-map
+    // flow. Individual tests override this to exercise the redirect guard.
+    useCheckinStore.setState({ selectedPlace: fakeSelectedPlace })
+  })
 
   it('renders the requesting-permissions loading copy', () => {
     mockUseCheckin({ kind: 'requesting-permissions' })
@@ -83,11 +107,12 @@ describe('CheckinPage', () => {
     expect(screen.getByText('Tu check-in quedó en revisión manual')).toBeInTheDocument()
   })
 
-  it('renders the approved state with the awarded xp and geo points', () => {
-    mockUseCheckin({ kind: 'approved', xpAwarded: 50, geoPointsAwarded: 10 })
+  it('renders the approved state with the awarded xp, geo points, and captured place name', () => {
+    mockUseCheckin({ kind: 'approved', xpAwarded: 50, geoPointsAwarded: 10, placeName: 'El Cielo' })
     renderPage()
     expect(screen.getByText('+50 XP')).toBeInTheDocument()
     expect(screen.getByText(/\+10 GeoPoints/)).toBeInTheDocument()
+    expect(screen.getAllByText('El Cielo').length).toBeGreaterThan(0)
   })
 
   it('renders the generic content-moderation message for rejected-content, never a rule-specific message', () => {
@@ -138,5 +163,32 @@ describe('CheckinPage', () => {
     expect(
       screen.getByText("You're too far from the place. Get closer and try again.")
     ).toBeInTheDocument()
+  })
+
+  it('redirects to / when there is no selectedPlace snapshot at mount', () => {
+    useCheckinStore.setState({ selectedPlace: null })
+    mockUseCheckin({ kind: 'camera' })
+
+    renderAtCheckinRoute()
+
+    expect(screen.getByText('home-route')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Tomar foto de check-in' })).not.toBeInTheDocument()
+  })
+
+  it('does not redirect if selectedPlace clears mid-flow after mount (mount-time snapshot, not reactive)', () => {
+    useCheckinStore.setState({ selectedPlace: fakeSelectedPlace })
+    mockUseCheckin({ kind: 'approved', xpAwarded: 50, geoPointsAwarded: 10, placeName: 'El Cielo' })
+
+    renderAtCheckinRoute()
+
+    // Simulates `clearSelectedPlace()` firing mid-flow once the check-in
+    // resolves (design decision #11) — the guard must ignore this because
+    // it already captured its snapshot at mount (design decision #12).
+    act(() => {
+      useCheckinStore.getState().clearSelectedPlace()
+    })
+
+    expect(screen.queryByText('home-route')).not.toBeInTheDocument()
+    expect(screen.getByText('+50 XP')).toBeInTheDocument()
   })
 })

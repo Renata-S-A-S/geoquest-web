@@ -11,7 +11,6 @@ import {
 } from '@/features/checkin/media/capture-photo'
 import { requestPosition } from '@/features/checkin/media/request-position'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
-import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 
 /**
  * Design decision #9: mock the two browser-touching media adapters entirely
@@ -38,6 +37,8 @@ const baseURL = 'http://localhost:5219'
 const fakeStream = { getTracks: () => [] } as unknown as MediaStream
 const fakePosition = { latitude: 6.2234, longitude: -75.5802, gpsAccuracyMeters: 12.5 }
 const fakeBlob = new Blob(['jpeg-bytes'], { type: 'image/jpeg' })
+/** WU003b — replaces the old `SEED_PLACE_ID`/`SEED_PLACE_NAME` constants. */
+const fakeSelectedPlace = { placeId: 'place-42', placeName: 'Parque Arví' }
 
 function statusPayload(overrides: Record<string, unknown> = {}) {
   return {
@@ -58,8 +59,13 @@ function mockHappyPermissions() {
   vi.mocked(captureFrame).mockResolvedValue(fakeBlob)
 }
 
+function seedSelectedPlace() {
+  useCheckinStore.getState().setSelectedPlace(fakeSelectedPlace)
+}
+
 async function renderInCameraState() {
   mockHappyPermissions()
+  seedSelectedPlace()
   const hook = renderHook(() => useCheckin())
   await waitFor(() => expect(hook.result.current.state).toEqual({ kind: 'camera' }))
   return hook
@@ -149,7 +155,7 @@ describe('useCheckin', () => {
       expect(result.current.state).toEqual({ kind: 'pending', checkInId: 'checkin-1' })
       expect(useCheckinStore.getState().pending).toMatchObject({
         checkInId: 'checkin-1',
-        placeName: SEED_PLACE_NAME,
+        placeName: fakeSelectedPlace.placeName,
       })
 
       await act(async () => {
@@ -159,11 +165,45 @@ describe('useCheckin', () => {
         kind: 'approved',
         xpAwarded: 50,
         geoPointsAwarded: 10,
+        placeName: fakeSelectedPlace.placeName,
       })
       expect(useCheckinStore.getState().pending).toBeNull()
+      // Design decisions #10/#11: `selectedPlace` is cleared exactly once on
+      // the approved terminal state, after its `placeName` was captured into
+      // the returned state above.
+      expect(useCheckinStore.getState().selectedPlace).toBeNull()
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('reads placeId from checkinStore.selectedPlace for the POST /checkins body, not a seed constant', async () => {
+    const { result } = await renderInCameraState()
+
+    let capturedPlaceId: string | undefined
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, async ({ request }) => {
+        const body = (await request.json()) as { placeId: string }
+        capturedPlaceId = body.placeId
+        return HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      })
+    )
+
+    act(() => result.current.capture())
+
+    await waitFor(() => expect(capturedPlaceId).toBe(fakeSelectedPlace.placeId))
+  })
+
+  it('errors out defensively if selectedPlace is missing at submit time (guard-bypass safety net)', async () => {
+    const { result } = await renderInCameraState()
+    useCheckinStore.getState().clearSelectedPlace()
+
+    act(() => result.current.capture())
+
+    await waitFor(() => expect(result.current.state.kind).toBe('error'))
   })
 
   it('poll status 1 (PendingManualReview) -> pending-review, no further poll requests', async () => {
@@ -198,6 +238,9 @@ describe('useCheckin', () => {
       // Design decision #4: pending-review keeps the persisted entry (never
       // clears it) so the follow-up banner can still resolve it later.
       expect(useCheckinStore.getState().pending).toMatchObject({ checkInId: 'checkin-1' })
+      // pending-review is NOT a terminal state — selectedPlace must stay set
+      // so the flow can still resolve to approved/rejected later.
+      expect(useCheckinStore.getState().selectedPlace).toEqual(fakeSelectedPlace)
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(60_000)
@@ -304,6 +347,9 @@ describe('useCheckin', () => {
       expect(result.current.state).toEqual({ kind: 'rejected-rule', rule: 'OutOfRadius' })
     )
     expect(result.current.state.kind).not.toBe('rejected-content')
+    // A rule rejection (immediate 400, not a poll terminal state) allows
+    // retrying the same place — selectedPlace must NOT be cleared here.
+    expect(useCheckinStore.getState().selectedPlace).toEqual(fakeSelectedPlace)
   })
 
   it('poll status 3 (Rejected) -> rejected-content, with no rejectionReason leaked into state', async () => {
@@ -341,6 +387,9 @@ describe('useCheckin', () => {
         'nudity-detected-should-never-leak'
       )
       expect(useCheckinStore.getState().pending).toBeNull()
+      // Content rejection IS a terminal state — selectedPlace must clear
+      // (design decision #11), same as approved.
+      expect(useCheckinStore.getState().selectedPlace).toBeNull()
     } finally {
       vi.useRealTimers()
     }
