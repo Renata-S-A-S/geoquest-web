@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Button } from '@/shared/components/ui/button'
 import { useProfile, useExplorerProfile } from '@/features/gamification/queries'
@@ -20,6 +21,7 @@ import type { BadgeAward } from '@/shared/schemas/gamification'
  * query — for the badge detail modal.
  */
 export function ProfilePage() {
+  const { t } = useTranslation('gamification')
   const profileQuery = useProfile()
   const meQuery = useExplorerProfile()
   const [selectedBadge, setSelectedBadge] = useState<BadgeAward | null>(null)
@@ -37,9 +39,9 @@ export function ProfilePage() {
   if (profileQuery.isError) {
     return (
       <div className="flex flex-col items-center gap-3 p-6 text-center">
-        <span className="font-sans text-xs text-ink">No pudimos cargar tu perfil.</span>
+        <span className="font-sans text-xs text-ink">{t('profile.loadError')}</span>
         <Button variant="primary" onClick={() => profileQuery.refetch()}>
-          Reintentar
+          {t('profile.retry')}
         </Button>
       </div>
     )
