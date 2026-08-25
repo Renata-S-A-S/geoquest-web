@@ -6,6 +6,8 @@ import esAuth from './es/auth.json'
 import enAuth from './en/auth.json'
 import esGamification from './es/gamification.json'
 import enGamification from './en/gamification.json'
+import esMap from './es/map.json'
+import enMap from './en/map.json'
 
 /**
  * Single shared resource bundle + namespace registry, reused by the app's
@@ -13,9 +15,21 @@ import enGamification from './en/gamification.json'
  * Each feature slice adds one import pair here and one entry in `ns`.
  */
 export const resources = {
-  es: { common: esCommon, checkin: esCheckin, auth: esAuth, gamification: esGamification },
-  en: { common: enCommon, checkin: enCheckin, auth: enAuth, gamification: enGamification },
+  es: {
+    common: esCommon,
+    checkin: esCheckin,
+    auth: esAuth,
+    gamification: esGamification,
+    map: esMap,
+  },
+  en: {
+    common: enCommon,
+    checkin: enCheckin,
+    auth: enAuth,
+    gamification: enGamification,
+    map: enMap,
+  },
 } as const
 
-export const ns = ['common', 'checkin', 'auth', 'gamification'] as const
+export const ns = ['common', 'checkin', 'auth', 'gamification', 'map'] as const
 export const defaultNS = 'common' as const

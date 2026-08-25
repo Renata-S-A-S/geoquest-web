@@ -1,0 +1,34 @@
+{
+  "title": "Cerca de ti",
+  "search": {
+    "placeholder": "Buscar un lugar",
+    "clear": "Limpiar búsqueda"
+  },
+  "list": {
+    "distance": "{{distance}} de distancia",
+    "points": "+{{points}} pts",
+    "selectAria": "Hacer check-in en {{name}}",
+    "emptyTitle": "No hay lugares cerca",
+    "emptyDescription": "No encontramos lugares cerca de tu ubicación todavía.",
+    "noMatchesTitle": "Sin resultados",
+    "noMatchesDescription": "Ningún lugar coincide con tu búsqueda."
+  },
+  "place": {
+    "checkIn": "Check-in",
+    "category": "Categoría"
+  },
+  "errors": {
+    "loadError": "No pudimos cargar los lugares cercanos.",
+    "retry": "Reintentar"
+  },
+  "location": {
+    "denied": "No pudimos acceder a tu ubicación.",
+    "usingDefault": "Mostrando lugares cerca de una ubicación predeterminada."
+  },
+  "mapUnavailable": {
+    "title": "Mapa no disponible",
+    "missingToken": "El mapa todavía no está configurado.",
+    "loadFailed": "No pudimos cargar el mapa.",
+    "listHint": "Podés seguir explorando y haciendo check-in desde la lista."
+  }
+}

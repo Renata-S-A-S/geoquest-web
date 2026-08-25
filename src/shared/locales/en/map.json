@@ -1,0 +1,34 @@
+{
+  "title": "Near you",
+  "search": {
+    "placeholder": "Search a place",
+    "clear": "Clear search"
+  },
+  "list": {
+    "distance": "{{distance}} away",
+    "points": "+{{points}} pts",
+    "selectAria": "Check in at {{name}}",
+    "emptyTitle": "No places nearby",
+    "emptyDescription": "We couldn't find any places near your location yet.",
+    "noMatchesTitle": "No results",
+    "noMatchesDescription": "No place matches your search."
+  },
+  "place": {
+    "checkIn": "Check in",
+    "category": "Category"
+  },
+  "errors": {
+    "loadError": "We couldn't load nearby places.",
+    "retry": "Retry"
+  },
+  "location": {
+    "denied": "We couldn't access your location.",
+    "usingDefault": "Showing places near a default location."
+  },
+  "mapUnavailable": {
+    "title": "Map unavailable",
+    "missingToken": "The map isn't configured yet.",
+    "loadFailed": "We couldn't load the map.",
+    "listHint": "You can keep exploring and checking in from the list."
+  }
+}
