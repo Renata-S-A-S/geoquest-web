@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import i18next from 'i18next'
+import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { BadgeDetailModal } from './badge-detail-modal'
 
@@ -52,5 +54,23 @@ describe('BadgeDetailModal', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
 
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('gamification EN-switch: awarded date renders using the active (en-US) locale, not hardcoded es-CO', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    render(<BadgeDetailModal badge={badge} onClose={vi.fn()} />)
+
+    // 2026-08-20 -> "20 de agosto de 2026" under es-CO vs "August 19/20, 2026"
+    // under en-US (exact day depends on the runner's local timezone offset
+    // from the UTC source timestamp — not what this test proves).
+    expect(screen.getByText(/^August \d{1,2}, 2026$/)).toBeInTheDocument()
+    expect(screen.queryByText(/de agosto de/)).not.toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
   })
 })

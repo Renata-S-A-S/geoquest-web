@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { TornPanel } from '@/shared/components/torn-panel'
+import { useActiveLocale } from '@/shared/lib/locale'
 import type { BadgeAward } from '@/shared/schemas/gamification'
 
 export interface BadgeDetailModalProps {
@@ -26,7 +27,10 @@ export function BadgeDetailModal({ badge, onClose }: BadgeDetailModalProps) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  const awardedAt = new Date(badge.awardedAtUtc).toLocaleDateString('es-CO', {
+  // Subscribed read (design D-D) — re-renders the formatted date on language
+  // change, unlike the pure `getActiveLocale()`.
+  const locale = useActiveLocale()
+  const awardedAt = new Date(badge.awardedAtUtc).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

@@ -26,5 +26,13 @@
     "weeklyXp": "Weekly XP",
     "longestStreak": "Longest streak",
     "loadError": "We couldn't load your profile."
+  },
+  "leaderboard": {
+    "loadError": "We couldn't load the ranking.",
+    "retry": "Retry",
+    "title": "Weekly ranking",
+    "emptyTitle": "No ranking yet",
+    "emptyDescription": "Be the first this week by checking in.",
+    "xp": "{{xp}} XP"
   }
 }
