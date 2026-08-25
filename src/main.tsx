@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/shared/lib/i18n'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import { App } from './App'
 import './index.css'
 
