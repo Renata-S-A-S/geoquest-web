@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { TFunction } from 'i18next'
 import { apiClient } from '@/shared/lib/api-client'
 import {
   loginRequestSchema,
@@ -16,23 +17,27 @@ export async function loginRequest(payload: LoginRequest): Promise<LoginResponse
 }
 
 /**
- * Mapea errores de `POST /auth/login` al copy en español que ve el usuario.
- * Contrato de errores confirmado contra el backend real: problem+json
- * (RFC7807) vía `Results.Problem` — `{ title, detail, status }`.
+ * Mapea errores de `POST /auth/login` al copy que ve el usuario, traducido
+ * vía `t` (namespace `auth`, WU11 PR2). Contrato de errores confirmado
+ * contra el backend real: problem+json (RFC7807) vía `Results.Problem` —
+ * `{ title, detail, status }`.
  *
- *   401 title="Identity.InvalidCredentials" -> "Credenciales inválidas"
- *   403 title="Identity.AccountLockedOut"    -> usa el `detail` real (tiene info útil)
- *   400 title="Validation.Failed"            -> usa el `detail` real
+ *   401 title="Identity.InvalidCredentials" -> mensaje estático traducido
+ *   403 title="Identity.AccountLockedOut"    -> usa el `detail` real si vino (sin traducir — es texto del servidor)
+ *   400 title="Validation.Failed"            -> usa el `detail` real si vino (sin traducir — es texto del servidor)
+ *
+ * Solo las ramas estáticas/fallback pasan por `t()` — el passthrough de
+ * `detail` del servidor queda tal cual, fuera de alcance de esta migración.
  *
  * Matchea primero por `title` (más preciso, es el campo semántico de
  * problem+json) y cae al status HTTP como respaldo si el título no vino o
  * no es el esperado.
  */
-export function mapLoginError(error: unknown): string {
+export function mapLoginError(error: unknown, t: TFunction): string {
   if (axios.isAxiosError(error)) {
     if (!error.response) {
       // Sin respuesta = red caída, backend abajo, o bloqueado por CORS.
-      return 'No pudimos conectar con el servidor. Intentá de nuevo.'
+      return t('errors.network')
     }
 
     const problem = problemDetailsSchema.safeParse(error.response.data)
@@ -41,15 +46,15 @@ export function mapLoginError(error: unknown): string {
     const status = error.response.status
 
     if (title === 'Identity.InvalidCredentials' || status === 401) {
-      return 'Credenciales inválidas'
+      return t('errors.invalidCredentials')
     }
     if (title === 'Identity.AccountLockedOut' || status === 403) {
-      return detail ?? 'Tu cuenta está bloqueada temporalmente.'
+      return detail ?? t('errors.accountLocked')
     }
     if (title === 'Validation.Failed' || status === 400) {
-      return detail ?? 'Revisá los datos ingresados.'
+      return detail ?? t('errors.validationFailed')
     }
   }
 
-  return 'No pudimos iniciar sesión. Intentá de nuevo en unos minutos.'
+  return t('errors.generic')
 }
