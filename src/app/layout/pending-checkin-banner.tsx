@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
+import i18next from 'i18next'
 import { X } from '@phosphor-icons/react'
 import { getCheckinStatus } from '@/features/checkin/checkin-api'
-import { GENERIC_CONTENT_REJECTION_MESSAGE } from '@/features/checkin/checkin-copy'
+import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { ValidationStatus } from '@/shared/schemas/checkin'
+
+/**
+ * Fixed to the `checkin` namespace, dynamic language (WU11 i18n migration —
+ * `checkin-copy.ts` moved from a static `Record` to a `t()`-backed function,
+ * see its own doc comment). This component's OTHER hardcoded strings
+ * (aria-label, the approved-outcome copy) are intentionally left untouched
+ * here — their migration to `common`/`checkin` namespaces is a separate,
+ * dedicated work unit.
+ */
+const tCheckin = i18next.getFixedT(null, 'checkin')
 
 type PendingOutcome = 'pending' | 'approved' | 'rejected'
 
@@ -72,7 +83,7 @@ export function PendingCheckinBanner() {
           XP · +{data.geoPointsAwarded} GeoPoints
         </p>
       ) : (
-        <p className="font-sans text-xs text-ink">{GENERIC_CONTENT_REJECTION_MESSAGE}</p>
+        <p className="font-sans text-xs text-ink">{getGenericContentRejectionMessage(tCheckin)}</p>
       )}
       <button
         type="button"

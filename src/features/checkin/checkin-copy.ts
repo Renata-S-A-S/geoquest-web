@@ -1,21 +1,33 @@
+import type { TFunction } from 'i18next'
 import type { CheckinRuleRejection } from '@/features/checkin/checkin-api'
 
 /**
- * Rule -> user-facing Spanish copy (spec "Typed Rejection Messaging").
- * Reserved EXCLUSIVELY for synchronous 400 business-rule rejections at
- * `POST /checkins`. AI/content-based rejections (async poll
- * `validationStatus === Rejected`) MUST use `GENERIC_CONTENT_REJECTION_MESSAGE`
+ * Rule -> `checkin` namespace translation key (spec "Typed Rejection
+ * Messaging"). Reserved EXCLUSIVELY for synchronous 400 business-rule
+ * rejections at `POST /checkins`. AI/content-based rejections (async poll
+ * `validationStatus === Rejected`) MUST use `getGenericContentRejectionMessage`
  * instead — `rejectionReason` is never read or rendered (design decision #5:
  * discriminate by transport, not by that string).
+ *
+ * Exposed as `t()`-backed functions rather than a static `Record`: a plain
+ * object literal of strings is resolved once at module load and can never
+ * react to a later `i18next.changeLanguage()` call (WU11 i18n migration).
+ * Callers pass in the `t` from their own `useTranslation('checkin')` so the
+ * returned message stays in sync with the component's active language.
  */
-export const CHECKIN_RULE_REJECTION_MESSAGES: Record<CheckinRuleRejection, string> = {
-  OutOfRadius: 'Estás demasiado lejos del lugar. Acercate y probá de nuevo.',
-  HardBlock24Hours: 'Ya hiciste check-in acá en las últimas 24 horas.',
-  PlaceInactive: 'Este lugar no está disponible por ahora.',
-  GpsAccuracyExceeded:
-    'La señal GPS no es lo bastante precisa. Salí a un espacio abierto y reintentá.',
-  PlaceNotFound: 'No encontramos este lugar.',
+const RULE_MESSAGE_KEY: Record<CheckinRuleRejection, string> = {
+  OutOfRadius: 'rejection.outOfRadius',
+  HardBlock24Hours: 'rejection.hardBlock24Hours',
+  PlaceInactive: 'rejection.placeInactive',
+  GpsAccuracyExceeded: 'rejection.gpsAccuracyExceeded',
+  PlaceNotFound: 'rejection.placeNotFound',
+}
+
+export function getCheckinRuleRejectionMessage(t: TFunction, rule: CheckinRuleRejection): string {
+  return t(RULE_MESSAGE_KEY[rule])
 }
 
 /** Generic content-moderation message — the only copy ever shown for an AI/content rejection. */
-export const GENERIC_CONTENT_REJECTION_MESSAGE = 'No pudimos validar la foto.'
+export function getGenericContentRejectionMessage(t: TFunction): string {
+  return t('rejection.contentGeneric')
+}

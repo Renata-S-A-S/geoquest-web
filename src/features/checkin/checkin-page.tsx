@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CameraSlash, WarningCircle } from '@phosphor-icons/react'
 import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
 import { Stamp } from '@/shared/components/stamp'
 import { SEED_PLACE_NAME } from '@/features/checkin/checkin-config'
 import {
-  CHECKIN_RULE_REJECTION_MESSAGES,
-  GENERIC_CONTENT_REJECTION_MESSAGE,
+  getCheckinRuleRejectionMessage,
+  getGenericContentRejectionMessage,
 } from '@/features/checkin/checkin-copy'
 import { useCheckin } from '@/features/checkin/use-checkin'
 
@@ -21,9 +22,13 @@ import { useCheckin } from '@/features/checkin/use-checkin'
  * un mensaje específico y accionable; rechazo por IA/contenido
  * (`rejected-content`) muestra siempre el mismo mensaje genérico — nunca se
  * expone `rejectionReason` (spec "Typed Rejection Messaging").
+ *
+ * All copy reads from the `checkin` i18n namespace (WU11) — `SEED_PLACE_NAME`,
+ * `XP`, and `GeoPoints` stay untranslated (data/brand terms, not UI copy).
  */
 export function CheckinPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation('checkin')
   const { state, videoRef, capture, retry } = useCheckin()
 
   switch (state.kind) {
@@ -31,7 +36,7 @@ export function CheckinPage() {
       return (
         <CenteredState>
           <Spinner size={34} className="mb-2.5" />
-          <b className="font-sans text-xs text-ink">Pidiendo acceso a la cámara y al GPS…</b>
+          <b className="font-sans text-xs text-ink">{t('permissions.requesting')}</b>
         </CenteredState>
       )
 
@@ -41,14 +46,14 @@ export function CheckinPage() {
           <CameraSlash size={30} weight="fill" className="mb-2 text-alert" />
           <b className="px-5 text-center font-sans text-xs text-ink">
             {state.device === 'camera'
-              ? 'Necesitamos acceso a tu cámara'
-              : 'Necesitamos acceso a tu ubicación'}
+              ? t('permissions.cameraDenied')
+              : t('permissions.locationDenied')}
           </b>
           <span className="mb-3 mt-1 px-6 text-center font-sans text-[10px] text-muted">
-            Habilitá el permiso en la configuración del navegador y volvé a intentar.
+            {t('permissions.deniedHint')}
           </span>
           <Button variant="primary" onClick={retry}>
-            Reintentar
+            {t('actions.retry')}
           </Button>
         </CenteredState>
       )
@@ -57,8 +62,8 @@ export function CheckinPage() {
       return (
         <CenteredState>
           <Spinner size={34} className="mb-2.5" />
-          <b className="font-sans text-xs text-ink">Validando tu check-in…</b>
-          <span className="font-sans text-[10px] text-muted">Puede tardar unos segundos</span>
+          <b className="font-sans text-xs text-ink">{t('sending.validating')}</b>
+          <span className="font-sans text-[10px] text-muted">{t('sending.validatingHint')}</span>
         </CenteredState>
       )
 
@@ -66,24 +71,20 @@ export function CheckinPage() {
       return (
         <CenteredState>
           <Spinner size={34} className="mb-2.5" />
-          <b className="font-sans text-xs text-ink">Estamos revisando tu foto…</b>
-          <span className="font-sans text-[10px] text-muted">
-            Esto puede tardar hasta 2 minutos
-          </span>
+          <b className="font-sans text-xs text-ink">{t('pending.reviewing')}</b>
+          <span className="font-sans text-[10px] text-muted">{t('pending.reviewingHint')}</span>
         </CenteredState>
       )
 
     case 'pending-review':
       return (
         <CenteredState>
-          <b className="px-5 text-center font-sans text-xs text-ink">
-            Tu check-in quedó en revisión manual
-          </b>
+          <b className="px-5 text-center font-sans text-xs text-ink">{t('pendingReview.title')}</b>
           <span className="mb-3 mt-1 px-6 text-center font-sans text-[10px] text-muted">
-            Te avisaremos apenas tengamos el resultado.
+            {t('pendingReview.hint')}
           </span>
           <Button variant="secondary" onClick={() => navigate('/perfil')}>
-            Ver mi perfil
+            {t('actions.viewProfile')}
           </Button>
         </CenteredState>
       )
@@ -99,7 +100,7 @@ export function CheckinPage() {
             +{state.geoPointsAwarded} GeoPoints · {SEED_PLACE_NAME}
           </span>
           <Button variant="secondary" onClick={() => navigate('/perfil')}>
-            Ver mi perfil
+            {t('actions.viewProfile')}
           </Button>
         </CenteredState>
       )
@@ -109,10 +110,10 @@ export function CheckinPage() {
         <CenteredState>
           <WarningCircle size={30} weight="fill" className="mb-2 text-alert" />
           <b className="px-5 text-center font-sans text-xs text-ink">
-            {GENERIC_CONTENT_REJECTION_MESSAGE}
+            {getGenericContentRejectionMessage(t)}
           </b>
           <Button variant="primary" className="mt-3" onClick={retry}>
-            Intentar de nuevo
+            {t('actions.tryAgain')}
           </Button>
         </CenteredState>
       )
@@ -122,10 +123,10 @@ export function CheckinPage() {
         <CenteredState>
           <WarningCircle size={30} weight="fill" className="mb-2 text-alert" />
           <b className="px-5 text-center font-sans text-xs text-ink">
-            {CHECKIN_RULE_REJECTION_MESSAGES[state.rule]}
+            {getCheckinRuleRejectionMessage(t, state.rule)}
           </b>
           <Button variant="primary" className="mt-3" onClick={retry}>
-            Intentar de nuevo
+            {t('actions.tryAgain')}
           </Button>
         </CenteredState>
       )
@@ -136,7 +137,7 @@ export function CheckinPage() {
           <WarningCircle size={30} weight="fill" className="mb-2 text-alert" />
           <b className="px-5 text-center font-sans text-xs text-ink">{state.message}</b>
           <Button variant="primary" className="mt-3" onClick={retry}>
-            Intentar de nuevo
+            {t('actions.tryAgain')}
           </Button>
         </CenteredState>
       )
@@ -157,7 +158,7 @@ export function CheckinPage() {
           <div className="flex justify-center pb-10 pt-4">
             <button
               type="button"
-              aria-label="Tomar foto de check-in"
+              aria-label={t('camera.captureLabel')}
               onClick={capture}
               className="h-16 w-16 rounded-full border-[3px] border-coral bg-white"
             />

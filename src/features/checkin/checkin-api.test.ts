@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw'
+import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import {
@@ -151,5 +152,18 @@ describe('mapCreateCheckinError', () => {
     expect(mapCreateCheckinError(new Error('boom'))).toEqual({
       message: 'No pudimos procesar el check-in. Intentá de nuevo en unos minutos.',
     })
+  })
+
+  it('translates the static fallback messages to English after the active language changes (EN-switch)', async () => {
+    await i18next.changeLanguage('en')
+    server.use(http.post(`${baseURL}/checkins`, () => HttpResponse.error()))
+
+    const error = await captureCreateCheckinError()
+
+    expect(mapCreateCheckinError(error)).toEqual({
+      message: "We couldn't connect to the server. Try again.",
+    })
+
+    await i18next.changeLanguage('es')
   })
 })
