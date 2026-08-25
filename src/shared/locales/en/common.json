@@ -2,5 +2,11 @@
   "nav": { "map": "Map", "routes": "Routes", "rewards": "Rewards", "profile": "Profile" },
   "aria": { "dismiss": "Dismiss notice", "loading": "Loading" },
   "actions": { "cancel": "Cancel" },
-  "language": { "label": "Language" }
+  "language": { "label": "Language" },
+  "notifications": {
+    "checkinApproved": "Check-in approved at {{placeName}}!",
+    "xpAndPoints": "+{{xp}} XP · +{{geoPoints}} GeoPoints",
+    "updateAvailable": "New version available",
+    "update": "Update"
+  }
 }
