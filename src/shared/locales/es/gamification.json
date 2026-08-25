@@ -47,5 +47,13 @@
   "errors": {
     "network": "No pudimos conectar con el servidor. Intentá de nuevo.",
     "generic": "No pudimos guardar los cambios. Intentá de nuevo en unos minutos."
+  },
+  "leaderboard": {
+    "loadError": "No pudimos cargar el ranking.",
+    "retry": "Reintentar",
+    "title": "Ranking semanal",
+    "emptyTitle": "Todavía no hay ranking",
+    "emptyDescription": "Sé el primero de la semana haciendo check-in.",
+    "xp": "{{xp}} XP"
   }
 }

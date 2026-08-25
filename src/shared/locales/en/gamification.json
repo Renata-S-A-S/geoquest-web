@@ -47,5 +47,13 @@
   "errors": {
     "network": "We couldn't connect to the server. Try again.",
     "generic": "We couldn't save the changes. Try again in a few minutes."
+  },
+  "leaderboard": {
+    "loadError": "We couldn't load the ranking.",
+    "retry": "Retry",
+    "title": "Weekly ranking",
+    "emptyTitle": "No ranking yet",
+    "emptyDescription": "Be the first this week by checking in.",
+    "xp": "{{xp}} XP"
   }
 }
