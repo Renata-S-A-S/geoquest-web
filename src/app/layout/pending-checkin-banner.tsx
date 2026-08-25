@@ -3,18 +3,17 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import i18next from 'i18next'
 import { X } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { getCheckinStatus } from '@/features/checkin/checkin-api'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { ValidationStatus } from '@/shared/schemas/checkin'
 
 /**
- * Fixed to the `checkin` namespace, dynamic language (WU11 i18n migration —
- * `checkin-copy.ts` moved from a static `Record` to a `t()`-backed function,
- * see its own doc comment). This component's OTHER hardcoded strings
- * (aria-label, the approved-outcome copy) are intentionally left untouched
- * here — their migration to `common`/`checkin` namespaces is a separate,
- * dedicated work unit.
+ * Fixed to the `checkin` namespace, dynamic language (PR3a — `checkin-copy.ts`
+ * moved from a static `Record` to a `t()`-backed function). Used only for the
+ * rejection-message lookup below; every other string in this component reads
+ * `t` from `useTranslation()` for reactivity (PR3b).
  */
 const tCheckin = i18next.getFixedT(null, 'checkin')
 
@@ -50,6 +49,7 @@ function classifyOutcome(validationStatus: ValidationStatus): PendingOutcome {
  * for this apply batch — see apply-progress "Deviations from design".
  */
 export function PendingCheckinBanner() {
+  const { t } = useTranslation()
   const [snapshot] = useState(() => useCheckinStore.getState().pending)
   const [dismissed, setDismissed] = useState(false)
   const clearPending = useCheckinStore((state) => state.clearPending)
@@ -79,15 +79,17 @@ export function PendingCheckinBanner() {
     <div className="mx-3 mt-3 flex items-center justify-between gap-3 rounded-md border border-border bg-white px-3 py-2.5">
       {outcome === 'approved' ? (
         <p className="font-sans text-xs text-ink">
-          <b className="text-teal">¡Check-in aprobado en {snapshot.placeName}!</b> +{data.xpAwarded}{' '}
-          XP · +{data.geoPointsAwarded} GeoPoints
+          <b className="text-teal">
+            {t('notifications.checkinApproved', { placeName: snapshot.placeName })}
+          </b>{' '}
+          {t('notifications.xpAndPoints', { xp: data.xpAwarded, geoPoints: data.geoPointsAwarded })}
         </p>
       ) : (
         <p className="font-sans text-xs text-ink">{getGenericContentRejectionMessage(tCheckin)}</p>
       )}
       <button
         type="button"
-        aria-label="Cerrar aviso"
+        aria-label={t('aria.dismiss')}
         onClick={() => setDismissed(true)}
         className="shrink-0 text-muted"
       >

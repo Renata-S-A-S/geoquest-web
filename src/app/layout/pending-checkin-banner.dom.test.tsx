@@ -2,13 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
+import { act } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
 import { PendingCheckinBanner } from './pending-checkin-banner'
 
-/** Same fixed-namespace `t` pattern as the component under test (WU11 i18n migration). */
+/** Same fixed-namespace `t` pattern as the component under test (PR3a). */
 const tCheckin = i18next.getFixedT('es', 'checkin')
 
 const baseURL = 'http://localhost:5219'
@@ -146,5 +147,29 @@ describe('PendingCheckinBanner', () => {
     screen.getByRole('button', { name: /cerrar/i }).click()
 
     await waitFor(() => expect(screen.queryByText(/50 XP/)).not.toBeInTheDocument())
+  })
+
+  it('renders the approved outcome and the shared dismiss aria-label in English after switching language', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    server.use(
+      http.get(`${baseURL}/checkins/checkin-1`, () =>
+        HttpResponse.json(
+          statusPayload({ validationStatus: 2, xpAwarded: 50, geoPointsAwarded: 10 })
+        )
+      )
+    )
+
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    renderBanner()
+
+    await waitFor(() =>
+      expect(screen.getByText(/Check-in approved at El Cielo/)).toBeInTheDocument()
+    )
+    expect(screen.getByText(/50 XP/)).toBeInTheDocument()
+    expect(screen.getByText(/10 GeoPoints/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Dismiss notice' })).toBeInTheDocument()
   })
 })

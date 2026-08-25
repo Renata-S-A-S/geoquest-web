@@ -1,4 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import i18next from 'i18next'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { PwaUpdatePrompt, UpdatePromptBanner } from './pwa-update-prompt'
@@ -78,6 +80,24 @@ describe('PwaUpdatePrompt', () => {
 
     expect(setNeedRefresh).toHaveBeenCalledWith(false)
     expect(updateServiceWorker).not.toHaveBeenCalled()
+  })
+
+  it('renders the English copy and shares the dismiss aria-label with the check-in banner after switching language', async () => {
+    mockRegisterSW(true)
+
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    render(<PwaUpdatePrompt />)
+
+    expect(screen.getByText('New version available')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Dismiss notice' })).toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
   })
 
   it('unmounts once the hook reflects needRefresh=false after dismissal', () => {
