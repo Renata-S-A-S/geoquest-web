@@ -1,4 +1,5 @@
 import axios from 'axios'
+import i18next from 'i18next'
 import { apiClient } from '@/shared/lib/api-client'
 import { problemDetailsSchema } from '@/shared/schemas/auth'
 import {
@@ -64,11 +65,17 @@ export type CreateCheckinError = { rule: CheckinRuleRejection } | { message: str
  * 400, unknown title, or network failure falls back to a generic message —
  * never the AI/content moderation copy, which is reserved for the async
  * poll path (design decision #5, discriminate by transport).
+ *
+ * The static fallback strings below read from the global `i18next` singleton
+ * (WU11 i18n migration) rather than a hook, since this is a plain function
+ * with no React context — same "non-React caller" pattern as
+ * `locale.ts`'s `getActiveLocale()`. `detail` (server free text) is passed
+ * through verbatim and is intentionally out of scope for translation.
  */
 export function mapCreateCheckinError(error: unknown): CreateCheckinError {
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      return { message: 'No pudimos conectar con el servidor. Intentá de nuevo.' }
+      return { message: i18next.t('errors.network', { ns: 'checkin' }) }
     }
 
     const problem = problemDetailsSchema.safeParse(error.response.data)
@@ -80,8 +87,8 @@ export function mapCreateCheckinError(error: unknown): CreateCheckinError {
     }
 
     const detail = problem.success ? problem.data.detail : undefined
-    return { message: detail ?? 'No pudimos procesar el check-in. Intentá de nuevo.' }
+    return { message: detail ?? i18next.t('errors.unprocessable', { ns: 'checkin' }) }
   }
 
-  return { message: 'No pudimos procesar el check-in. Intentá de nuevo en unos minutos.' }
+  return { message: i18next.t('errors.unexpected', { ns: 'checkin' }) }
 }

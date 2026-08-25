@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   MediaPermissionError,
   PhotoTooLargeError,
@@ -39,9 +40,6 @@ export interface UseCheckinResult {
   retry: () => void
 }
 
-const GENERIC_ERROR_MESSAGE = 'No pudimos procesar el check-in. Intentá de nuevo en unos minutos.'
-const PHOTO_TOO_LARGE_MESSAGE = 'La foto es demasiado grande. Probá de nuevo.'
-
 /**
  * WU9 (issue #9), PR3 — orchestrates the whole check-in flow: permission
  * acquisition, capture + submit, and client-limited status polling
@@ -49,8 +47,13 @@ const PHOTO_TOO_LARGE_MESSAGE = 'La foto es demasiado grande. Probá de nuevo.'
  * and `media/request-position.ts` so this hook is fully mockable without a
  * real camera or GPS (design decision #9) — `checkin-api.ts` itself is
  * NEVER mocked, only intercepted at the wire level via MSW.
+ *
+ * Error copy reads from the `checkin` i18n namespace (WU11): this is itself
+ * a hook, so it can call `useTranslation` directly and stay reactive to
+ * language changes, unlike the plain-function fallbacks in `checkin-api.ts`.
  */
 export function useCheckin(): UseCheckinResult {
+  const { t } = useTranslation('checkin')
   const [state, setState] = useState<CheckinState>({ kind: 'requesting-permissions' })
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -130,9 +133,9 @@ export function useCheckin(): UseCheckinResult {
         setState({ kind: 'permission-denied', device: error.device })
         return
       }
-      setState({ kind: 'error', message: GENERIC_ERROR_MESSAGE })
+      setState({ kind: 'error', message: t('errors.unexpected') })
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     // Reset on every (re)mount, not just at first render: React 18
@@ -154,7 +157,7 @@ export function useCheckin(): UseCheckinResult {
   const submitCheckin = useCallback(async () => {
     const position = positionRef.current
     if (!position) {
-      setState({ kind: 'error', message: GENERIC_ERROR_MESSAGE })
+      setState({ kind: 'error', message: t('errors.unexpected') })
       return
     }
 
@@ -181,7 +184,7 @@ export function useCheckin(): UseCheckinResult {
     } catch (error) {
       if (unmountedRef.current) return
       if (error instanceof PhotoTooLargeError) {
-        setState({ kind: 'error', message: PHOTO_TOO_LARGE_MESSAGE })
+        setState({ kind: 'error', message: t('errors.photoTooLarge') })
         return
       }
       const mapped = mapCreateCheckinError(error)
@@ -191,7 +194,7 @@ export function useCheckin(): UseCheckinResult {
         setState({ kind: 'error', message: mapped.message })
       }
     }
-  }, [armPolling])
+  }, [armPolling, t])
 
   const capture = useCallback(() => {
     if (state.kind !== 'camera') return

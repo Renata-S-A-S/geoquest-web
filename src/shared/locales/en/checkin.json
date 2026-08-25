@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "requesting": "Requesting camera and GPS access…",
+    "cameraDenied": "We need access to your camera",
+    "locationDenied": "We need access to your location",
+    "deniedHint": "Enable the permission in your browser settings and try again."
+  },
+  "sending": {
+    "validating": "Validating your check-in…",
+    "validatingHint": "This can take a few seconds"
+  },
+  "pending": {
+    "reviewing": "We're reviewing your photo…",
+    "reviewingHint": "This can take up to 2 minutes"
+  },
+  "pendingReview": {
+    "title": "Your check-in is under manual review",
+    "hint": "We'll let you know as soon as we have a result."
+  },
+  "camera": {
+    "captureLabel": "Take check-in photo"
+  },
+  "actions": {
+    "retry": "Retry",
+    "viewProfile": "View my profile",
+    "tryAgain": "Try again"
+  },
+  "rejection": {
+    "outOfRadius": "You're too far from the place. Get closer and try again.",
+    "hardBlock24Hours": "You already checked in here in the last 24 hours.",
+    "placeInactive": "This place isn't available right now.",
+    "gpsAccuracyExceeded": "GPS signal isn't accurate enough. Go to an open space and retry.",
+    "placeNotFound": "We couldn't find this place.",
+    "contentGeneric": "We couldn't validate the photo."
+  },
+  "errors": {
+    "network": "We couldn't connect to the server. Try again.",
+    "unprocessable": "We couldn't process the check-in. Try again.",
+    "unexpected": "We couldn't process the check-in. Try again in a few minutes.",
+    "photoTooLarge": "The photo is too large. Try again."
+  }
+}

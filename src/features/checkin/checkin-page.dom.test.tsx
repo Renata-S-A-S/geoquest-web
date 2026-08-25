@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import i18next from 'i18next'
+import { act } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CheckinPage } from '@/features/checkin/checkin-page'
 import {
@@ -112,5 +114,29 @@ describe('CheckinPage', () => {
     expect(screen.getByText('Algo salió mal')).toBeInTheDocument()
     screen.getByRole('button', { name: 'Intentar de nuevo' }).click()
     expect(retry).toHaveBeenCalledOnce()
+  })
+
+  it('renders English copy after the active language switches (EN-switch test)', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    mockUseCheckin({ kind: 'camera' })
+    renderPage()
+
+    expect(screen.getByRole('button', { name: 'Take check-in photo' })).toBeInTheDocument()
+  })
+
+  it('translates the typed rule rejection message to English (EN-switch test)', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    mockUseCheckin({ kind: 'rejected-rule', rule: 'OutOfRadius' })
+    renderPage()
+
+    expect(
+      screen.getByText("You're too far from the place. Get closer and try again.")
+    ).toBeInTheDocument()
   })
 })

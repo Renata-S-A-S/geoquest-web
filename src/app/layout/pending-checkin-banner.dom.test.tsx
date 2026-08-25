@@ -1,11 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
+import i18next from 'i18next'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
-import { GENERIC_CONTENT_REJECTION_MESSAGE } from '@/features/checkin/checkin-copy'
+import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
 import { PendingCheckinBanner } from './pending-checkin-banner'
+
+/** Same fixed-namespace `t` pattern as the component under test (WU11 i18n migration). */
+const tCheckin = i18next.getFixedT('es', 'checkin')
 
 const baseURL = 'http://localhost:5219'
 
@@ -87,7 +91,7 @@ describe('PendingCheckinBanner', () => {
     renderBanner()
 
     await waitFor(() =>
-      expect(screen.getByText(GENERIC_CONTENT_REJECTION_MESSAGE)).toBeInTheDocument()
+      expect(screen.getByText(getGenericContentRejectionMessage(tCheckin))).toBeInTheDocument()
     )
     expect(screen.queryByText(/nudity-should-never-leak/)).not.toBeInTheDocument()
     expect(useCheckinStore.getState().pending).toBeNull()
