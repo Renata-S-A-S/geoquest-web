@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import i18next from 'i18next'
+import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ReactElement } from 'react'
 import { ProfileView } from './profile-view'
@@ -30,10 +32,37 @@ describe('ProfileView', () => {
     expect(screen.getByText('320 / 1000 XP')).toBeInTheDocument()
   })
 
-  it('renders the server-sent currentLevel as the level label text', () => {
+  it('renders the server-sent currentLevel translated to the active (default es) language label', () => {
     renderView(<ProfileView profile={baseProfile} />)
 
+    // gamification.json levels.Traveler -> "Viajero" under es (spec "Server
+    // Enum Translation and Free-Text Detail Boundary" — currentLevel is a
+    // closed enum, not free text, so it MUST be translated, unlike a
+    // server-sent `detail` string).
+    expect(screen.getByText('Viajero')).toBeInTheDocument()
+    expect(screen.queryByText('Traveler')).not.toBeInTheDocument()
+  })
+
+  it('gamification EN-switch: currentLevel/nextLevel, streak, XP captions, and the identity error all render real English strings', async () => {
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+
+    renderView(<ProfileView profile={baseProfile} identityError onRetryIdentity={vi.fn()} />)
+
+    // currentLevel (Traveler) and nextLevel (Adventurer) both translate —
+    // under en the label happens to equal the raw server enum name, but it
+    // is reached through t(), not hardcoded, proving both languages work.
     expect(screen.getByText('Traveler')).toBeInTheDocument()
+    expect(screen.getByText('Adventurer')).toBeInTheDocument()
+    expect(screen.getByText('320 / 1000 XP')).toBeInTheDocument()
+    expect(screen.getByText('3-day streak')).toBeInTheDocument()
+    expect(screen.getByText("We couldn't load your identity.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+
+    await act(async () => {
+      await i18next.changeLanguage('es')
+    })
   })
 
   it('renders the current streak', () => {

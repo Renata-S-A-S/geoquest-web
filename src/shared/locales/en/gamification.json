@@ -1,0 +1,30 @@
+{
+  "interests": {
+    "Gastronomia": "Food & Gastronomy",
+    "Naturaleza": "Nature",
+    "HistoriaCultura": "History & Culture",
+    "Aventura": "Adventure",
+    "Arte": "Art",
+    "Alojamiento": "Lodging"
+  },
+  "levels": {
+    "Explorer": "Explorer",
+    "Traveler": "Traveler",
+    "Adventurer": "Adventurer",
+    "Wanderer": "Wanderer",
+    "Legend": "Legend"
+  },
+  "profile": {
+    "identityError": "We couldn't load your identity.",
+    "retry": "Retry",
+    "defaultUsername": "Explorer",
+    "editAria": "Edit profile",
+    "streak": "{{count}}-day streak",
+    "maxLevel": "Max level",
+    "xpProgress": "{{current}} / {{total}} XP",
+    "maxLevelXp": "Max level · {{xp}} XP",
+    "weeklyXp": "Weekly XP",
+    "longestStreak": "Longest streak",
+    "loadError": "We couldn't load your profile."
+  }
+}
