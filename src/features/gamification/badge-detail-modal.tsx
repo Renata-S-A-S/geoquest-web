@@ -39,7 +39,7 @@ export function BadgeDetailModal({ badge, onClose }: BadgeDetailModalProps) {
   return (
     <div
       data-testid="badge-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-6"
       onClick={onClose}
     >
       <div className="relative w-[220px]" onClick={(event) => event.stopPropagation()}>

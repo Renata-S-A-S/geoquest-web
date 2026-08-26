@@ -15,7 +15,7 @@ const pillVariants = cva(
     variants: {
       variant: {
         tint: 'bg-surface-teal text-teal',
-        solid: 'bg-teal text-cream',
+        solid: 'bg-teal text-on-brand',
         outline: 'border border-border text-muted',
         alert: 'border border-alert bg-surface-alert text-alert',
         success: 'border-[1.5px] border-teal bg-surface-raised text-ink',

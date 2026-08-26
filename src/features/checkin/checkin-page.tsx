@@ -158,7 +158,7 @@ export function CheckinPage() {
     case 'camera':
     default:
       return (
-        <div className="flex h-dvh flex-col bg-ink">
+        <div className="flex h-dvh flex-col bg-surface-inverse">
           <div className="relative flex-1">
             <video
               ref={videoRef}

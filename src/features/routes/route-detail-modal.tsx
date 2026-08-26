@@ -68,7 +68,7 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
   return (
     <div
       data-testid="route-detail-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 lg:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-scrim lg:items-center"
       onClick={handleClose}
     >
       <div className="w-full lg:w-[460px]" onClick={(event) => event.stopPropagation()}>

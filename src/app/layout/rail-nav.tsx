@@ -21,10 +21,10 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
   const railItems = NAV_ITEMS.filter((item) => item.id !== 'profile')
 
   return (
-    <nav className="hidden h-full w-[74px] flex-col items-center justify-between rounded-md bg-ink py-4 lg:flex">
+    <nav className="hidden h-full w-[74px] flex-col items-center justify-between rounded-md bg-surface-inverse py-4 lg:flex">
       <div className="flex flex-col items-center gap-[22px]">
         <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-teal">
-          <b className="font-display text-sm text-cream">G</b>
+          <b className="font-display text-sm text-on-inverse">G</b>
         </div>
         <div className="flex flex-col items-center gap-[18px]">
           {railItems.map(({ to, labelKey, icon: Icon }) => (
@@ -35,7 +35,7 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center gap-[3px] font-sans text-[8px]',
-                  isActive ? 'font-bold text-teal' : 'text-cream/55'
+                  isActive ? 'font-bold text-teal' : 'text-on-inverse/55'
                 )
               }
             >
@@ -47,7 +47,7 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
       </div>
       <NavLink to="/perfil" className="flex flex-col items-center gap-1">
         <Avatar initial={avatarInitial} size="sm" />
-        <span className="font-mono text-[7px] text-cream/60">{points.toLocaleString(locale)}</span>
+        <span className="font-mono text-[7px] text-on-inverse/60">{points.toLocaleString(locale)}</span>
       </NavLink>
     </nav>
   )
