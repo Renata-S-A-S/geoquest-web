@@ -11,6 +11,12 @@
     "reward": "+{{points}} pts on completion",
     "close": "Close"
   },
+  "stopDetail": {
+    "close": "Close stop details",
+    "checkIn": "Check in",
+    "errorTitle": "We couldn't load this place",
+    "errorDescription": "Try again in a moment."
+  },
   "start": {
     "action": "Start route",
     "starting": "Starting…",

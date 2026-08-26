@@ -11,6 +11,12 @@
     "reward": "+{{points}} pts al completar la ruta",
     "close": "Cerrar"
   },
+  "stopDetail": {
+    "close": "Cerrar detalle de la parada",
+    "checkIn": "Registrar check-in",
+    "errorTitle": "No pudimos cargar este lugar",
+    "errorDescription": "Intentá de nuevo en un momento."
+  },
   "start": {
     "action": "Iniciar ruta",
     "starting": "Iniciando…",
