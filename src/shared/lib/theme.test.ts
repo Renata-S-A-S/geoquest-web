@@ -19,18 +19,10 @@ describe('isThemeMode', () => {
     expect(isThemeMode(mode)).toBe(true)
   })
 
-  it.each([
-    'auto',
-    'Light',
-    '',
-    null,
-    undefined,
-    0,
-    1,
-    {},
-    [],
-    ['light'],
-  ])('rejects %j', (value) => {
-    expect(isThemeMode(value)).toBe(false)
-  })
+  it.each(['auto', 'Light', '', null, undefined, 0, 1, {}, [], ['light']])(
+    'rejects %j',
+    (value) => {
+      expect(isThemeMode(value)).toBe(false)
+    }
+  )
 })
