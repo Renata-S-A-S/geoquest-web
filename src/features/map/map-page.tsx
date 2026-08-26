@@ -138,6 +138,7 @@ export function MapPage() {
               center={centerResult.center}
               places={places}
               selectedPlaceId={selectedPlaceId}
+              userLocation={centerResult.source === 'gps' ? centerResult.center : null}
               onSelectPlace={handlePinSelect}
               onError={() => setMapFailed(true)}
             />
