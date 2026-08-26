@@ -54,11 +54,14 @@ const clipPaths = {
     'polygon(0% 0%,92% 0%,97% 4%,90% 8%,97% 12%,90% 16%,97% 20%,90% 24%,97% 28%,90% 32%,97% 36%,90% 40%,97% 44%,90% 48%,97% 52%,90% 56%,97% 60%,90% 64%,97% 68%,90% 72%,97% 76%,90% 80%,97% 84%,90% 88%,97% 92%,92% 96%,0% 100%)',
 } as const
 
-/** Hex 1:1 con `tailwind.config.ts` — `filter` no puede resolver tokens de Tailwind. */
-const backingHex = {
-  ink: '#10262B',
-  coral: '#FF7A59',
-  teal: '#0EA5A0',
+/** `var(--color-*)`, no hex — `filter` no puede resolver clases de Tailwind,
+ * pero SÍ puede leer custom properties, así que el eco sigue el tema activo
+ * (`@theme static` en `index.css` garantiza que estas variables existen en
+ * `:root` aunque el scanner de utilidades nunca vea este `var()` inline). */
+const backingVar = {
+  ink: 'var(--color-ink)',
+  coral: 'var(--color-coral)',
+  teal: 'var(--color-teal)',
 } as const
 
 /**
@@ -107,7 +110,7 @@ export function TornPanel({
     // nunca `absolute`), así que no dispara el colapso — el wrapper del
     // filtro no necesita tamaño propio.
     return (
-      <div style={{ filter: backingFilter(edge, backingHex[backing]) }}>
+      <div style={{ filter: backingFilter(edge, backingVar[backing]) }}>
         <div
           className={cn('relative bg-white', className)}
           style={{ ...clipStyle, ...style }}
@@ -125,7 +128,7 @@ export function TornPanel({
   return (
     <div
       className={className}
-      style={{ filter: backingFilter(edge, backingHex[backing]) }}
+      style={{ filter: backingFilter(edge, backingVar[backing]) }}
       {...props}
     >
       <div className="relative h-full w-full bg-white" style={{ ...clipStyle, ...style }} />
