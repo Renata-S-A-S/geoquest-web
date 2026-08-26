@@ -61,7 +61,11 @@ vi.mock('react-map-gl', () => ({
     anchor?: string
     onClick?: (event: { originalEvent: MouseEvent }) => void
   }) => (
-    <button type="button" data-anchor={anchor} onClick={(event) => onClick?.({ originalEvent: event })}>
+    <button
+      type="button"
+      data-anchor={anchor}
+      onClick={(event) => onClick?.({ originalEvent: event })}
+    >
       {children}
     </button>
   ),
@@ -291,7 +295,10 @@ describe('MapPage — map view (token present)', () => {
     // Regression: MapPin is a teardrop whose tip — not its center — marks the
     // coordinate, so the Marker must anchor at "bottom" or every pin renders
     // offset from its real location (reported against Jardín Botánico).
-    expect(screen.getByTestId('marker-1').closest('button')).toHaveAttribute('data-anchor', 'bottom')
+    expect(screen.getByTestId('marker-1').closest('button')).toHaveAttribute(
+      'data-anchor',
+      'bottom'
+    )
   })
 
   it('tapping a pin shows the selected-place card as a preview, without storing or navigating', async () => {
