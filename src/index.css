@@ -37,12 +37,6 @@
   --color-surface-placeholder: #dcd6c8;
   --color-surface-raised: #ffffff;
 
-  /* TEMPORARY: still referenced by `bg-white`/`border-white` (28 occurrences
-     across 23 files) until the sweep to `surface-raised` lands in the next
-     phase. `--color-*: initial` above would otherwise remove it outright and
-     break every one of those usages in this same commit. */
-  --color-white: #ffffff;
-
   /* Literal-dark roles — see design D-3. These do NOT simply invert. */
   --color-surface-inverse: #10262b;
   --color-on-inverse: #fff9f2;

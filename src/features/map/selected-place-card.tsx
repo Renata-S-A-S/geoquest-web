@@ -34,7 +34,7 @@ export function SelectedPlaceCard({ place, onCheckIn, onDismiss }: SelectedPlace
   return (
     <div
       data-testid="selected-place-card"
-      className="absolute bottom-3 left-1/2 z-10 w-[min(340px,calc(100%-1.5rem))] -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-white shadow-lg"
+      className="absolute bottom-3 left-1/2 z-10 w-[min(340px,calc(100%-1.5rem))] -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-surface-raised shadow-lg"
     >
       <div className="relative aspect-video w-full bg-surface-teal">
         {showImage ? (

@@ -38,7 +38,7 @@ export function SearchResultsDropdown({
   return (
     <div
       data-testid="search-results-dropdown"
-      className="absolute inset-x-0 top-full z-20 mt-1.5 max-h-[340px] overflow-y-auto rounded-lg border border-border bg-white p-1.5 shadow-lg"
+      className="absolute inset-x-0 top-full z-20 mt-1.5 max-h-[340px] overflow-y-auto rounded-lg border border-border bg-surface-raised p-1.5 shadow-lg"
     >
       {isSearching ? (
         <div className="flex flex-col gap-1.5 p-1" aria-live="polite">

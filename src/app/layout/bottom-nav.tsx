@@ -11,7 +11,7 @@ export function BottomNav() {
   const { t } = useTranslation()
 
   return (
-    <nav className="flex justify-around border-t border-border bg-white px-1 pb-1.5 pt-2 lg:hidden">
+    <nav className="flex justify-around border-t border-border bg-surface-raised px-1 pb-1.5 pt-2 lg:hidden">
       {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => (
         <NavLink
           key={to}

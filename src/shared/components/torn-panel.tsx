@@ -96,7 +96,7 @@ export function TornPanel({
   if (!backing) {
     return (
       <div
-        className={cn('relative bg-white', className)}
+        className={cn('relative bg-surface-raised', className)}
         style={{ ...clipStyle, ...style }}
         {...props}
       >
@@ -112,7 +112,7 @@ export function TornPanel({
     return (
       <div style={{ filter: backingFilter(edge, backingVar[backing]) }}>
         <div
-          className={cn('relative bg-white', className)}
+          className={cn('relative bg-surface-raised', className)}
           style={{ ...clipStyle, ...style }}
           {...props}
         >
@@ -131,7 +131,7 @@ export function TornPanel({
       style={{ filter: backingFilter(edge, backingVar[backing]) }}
       {...props}
     >
-      <div className="relative h-full w-full bg-white" style={{ ...clipStyle, ...style }} />
+      <div className="relative h-full w-full bg-surface-raised" style={{ ...clipStyle, ...style }} />
     </div>
   )
 }

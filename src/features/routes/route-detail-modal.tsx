@@ -123,7 +123,7 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
                     <li
                       key={stop.placeId}
                       data-testid="route-detail-stop"
-                      className="rounded-md border border-border bg-white"
+                      className="rounded-md border border-border bg-surface-raised"
                     >
                       <button
                         type="button"

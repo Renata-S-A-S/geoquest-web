@@ -80,7 +80,7 @@ function LeaderboardRowItem({ row }: { row: LeaderboardRow }) {
       data-testid={`leaderboard-row-${row.explorerId}`}
       data-me={row.isMe}
       className={cn(
-        'flex items-center gap-2.5 rounded-md border border-border bg-white px-3 py-2',
+        'flex items-center gap-2.5 rounded-md border border-border bg-surface-raised px-3 py-2',
         row.isMe && 'border-teal bg-surface-teal'
       )}
     >

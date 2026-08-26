@@ -22,7 +22,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'h-9 rounded-xs border border-border bg-white px-2.5 font-sans text-xs text-ink',
+            'h-9 rounded-xs border border-border bg-surface-raised px-2.5 font-sans text-xs text-ink',
             'placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal/40',
             className
           )}

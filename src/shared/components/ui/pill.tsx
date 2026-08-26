@@ -18,7 +18,7 @@ const pillVariants = cva(
         solid: 'bg-teal text-cream',
         outline: 'border border-border text-muted',
         alert: 'border border-alert bg-surface-alert text-alert',
-        success: 'border-[1.5px] border-teal bg-white text-ink',
+        success: 'border-[1.5px] border-teal bg-surface-raised text-ink',
       },
     },
     defaultVariants: {

@@ -18,7 +18,7 @@ const MY_LOCATION_FLY_ZOOM = 16.5
  * against the rest of the redesign) with our own, matching the "center on me"
  * button's already-established style. */
 const MAP_CONTROL_BUTTON_CLASS =
-  'absolute right-2.5 z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md bg-white text-ink shadow-md hover:bg-paper'
+  'absolute right-2.5 z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md bg-surface-raised text-ink shadow-md hover:bg-paper'
 
 /**
  * WU003b (map discovery) PR2 — task 3.2. Thin, declarative `react-map-gl`
@@ -138,7 +138,7 @@ export function MapView({
             className="relative flex h-4 w-4 items-center justify-center"
           >
             <span className="absolute h-full w-full animate-ping rounded-full bg-teal/40" />
-            <span className="relative h-3 w-3 rounded-full border-2 border-white bg-teal shadow-[0_0_2px_rgba(16,38,43,0.4)]" />
+            <span className="relative h-3 w-3 rounded-full border-2 border-surface-raised bg-teal shadow-marker" />
           </span>
         </Marker>
       )}
