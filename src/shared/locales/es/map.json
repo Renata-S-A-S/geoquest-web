@@ -2,7 +2,9 @@
   "title": "Cerca de ti",
   "search": {
     "placeholder": "Buscar un lugar",
-    "clear": "Limpiar búsqueda"
+    "clear": "Limpiar búsqueda",
+    "searching": "Buscando…",
+    "selectAria": "Ver {{name}} en el mapa"
   },
   "list": {
     "distance": "{{distance}} de distancia",
