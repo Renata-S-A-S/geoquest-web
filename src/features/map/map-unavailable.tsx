@@ -27,7 +27,7 @@ export function MapUnavailable({ reason, className }: MapUnavailableProps) {
       data-testid="map-unavailable"
       data-reason={reason}
       className={cn(
-        'flex flex-col items-center gap-2 rounded-md border border-dashed border-border bg-white p-4 text-center',
+        'flex flex-col items-center gap-2 rounded-md border border-dashed border-border bg-surface-raised p-4 text-center',
         className
       )}
     >

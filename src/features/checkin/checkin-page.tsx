@@ -173,7 +173,7 @@ export function CheckinPage() {
               type="button"
               aria-label={t('camera.captureLabel')}
               onClick={capture}
-              className="h-16 w-16 rounded-full border-[3px] border-coral bg-white"
+              className="h-16 w-16 rounded-full border-[3px] border-coral bg-surface-raised"
             />
           </div>
         </div>

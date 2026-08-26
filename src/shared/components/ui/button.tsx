@@ -13,7 +13,7 @@ const buttonVariants = cva(
       variant: {
         primary: 'bg-teal text-cream hover:bg-teal/90',
         secondary: 'border-teal text-teal bg-transparent hover:bg-teal/10',
-        social: 'border-border bg-white text-ink hover:bg-paper',
+        social: 'border-border bg-surface-raised text-ink hover:bg-paper',
         destructive: 'border-alert text-alert bg-transparent hover:bg-alert/10',
       },
     },

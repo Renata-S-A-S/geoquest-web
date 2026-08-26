@@ -122,7 +122,7 @@ export function MapPage() {
       <InterestsNudgeBanner />
 
       {centerResult?.source === 'default' && (
-        <div className="mx-4 mt-3 shrink-0 rounded-md border border-border bg-white px-3 py-2 font-sans text-[10.5px] text-muted">
+        <div className="mx-4 mt-3 shrink-0 rounded-md border border-border bg-surface-raised px-3 py-2 font-sans text-[10.5px] text-muted">
           {t('location.usingDefault')}
         </div>
       )}

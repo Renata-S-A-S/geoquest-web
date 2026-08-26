@@ -34,7 +34,7 @@ export function PlaceSearchBar({ value, onChange, onFocus, className }: PlaceSea
         onFocus={onFocus}
         placeholder={t('search.placeholder')}
         aria-label={t('search.placeholder')}
-        className="h-9 w-full rounded-xs border border-border bg-white pl-8 pr-8 font-sans text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal/40"
+        className="h-9 w-full rounded-xs border border-border bg-surface-raised pl-8 pr-8 font-sans text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal/40"
       />
       {value.length > 0 && (
         <button

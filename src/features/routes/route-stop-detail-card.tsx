@@ -83,7 +83,7 @@ export function RouteStopDetailCard({ placeId, onDismiss }: RouteStopDetailCardP
   return (
     <div
       data-testid="route-stop-detail-card"
-      className="overflow-hidden rounded-lg border border-border bg-white shadow-lg"
+      className="overflow-hidden rounded-lg border border-border bg-surface-raised shadow-lg"
     >
       <div className="relative aspect-video w-full bg-surface-teal">
         {showImage ? (

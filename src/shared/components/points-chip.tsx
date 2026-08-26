@@ -14,7 +14,7 @@ export function PointsChip({ points, className }: PointsChipProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-border bg-white px-[9px] py-1 font-mono text-[11px] font-bold text-ink',
+        'inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-[9px] py-1 font-mono text-[11px] font-bold text-ink',
         className
       )}
     >
