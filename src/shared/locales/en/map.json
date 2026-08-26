@@ -17,7 +17,8 @@
   },
   "place": {
     "checkIn": "Check in",
-    "category": "Category"
+    "category": "Category",
+    "dismissSelection": "Clear selection"
   },
   "errors": {
     "loadError": "We couldn't load nearby places.",

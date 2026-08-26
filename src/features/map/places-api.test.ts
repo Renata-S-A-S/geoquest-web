@@ -22,6 +22,7 @@ const nearbyPayload = [
     longitude: -75.571,
     distanceMeters: 1707.9393969,
     pointsReward: 50,
+    photos: ['http://localhost:9000/geoquest-checkins/places/10000000-0000-0000-0000-000000000019.jpg'],
   },
 ]
 

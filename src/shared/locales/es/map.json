@@ -17,7 +17,8 @@
   },
   "place": {
     "checkIn": "Check-in",
-    "category": "Categoría"
+    "category": "Categoría",
+    "dismissSelection": "Quitar selección"
   },
   "errors": {
     "loadError": "No pudimos cargar los lugares cercanos.",

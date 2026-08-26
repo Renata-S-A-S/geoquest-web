@@ -25,6 +25,10 @@ export const nearbyPlaceSchema = z.object({
   longitude: z.number(),
   distanceMeters: z.number(),
   pointsReward: z.number(),
+  /** Seed data today is placeholder MinIO URLs (`http://localhost:9000/...`)
+   * that mostly don't resolve to a real object yet — consumers must render a
+   * graceful fallback on load failure, never assume the first URL is real. */
+  photos: z.array(z.string()).default([]),
 })
 export type NearbyPlace = z.infer<typeof nearbyPlaceSchema>
 
