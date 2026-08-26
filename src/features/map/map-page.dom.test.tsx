@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
@@ -54,12 +54,14 @@ vi.mock('react-map-gl', () => ({
   ),
   Marker: ({
     children,
+    anchor,
     onClick,
   }: {
     children?: ReactNode
+    anchor?: string
     onClick?: (event: { originalEvent: MouseEvent }) => void
   }) => (
-    <button type="button" onClick={(event) => onClick?.({ originalEvent: event })}>
+    <button type="button" data-anchor={anchor} onClick={(event) => onClick?.({ originalEvent: event })}>
       {children}
     </button>
   ),
@@ -79,6 +81,7 @@ function nearbyPlace(overrides: Record<string, unknown> = {}) {
     longitude: DEFAULT_CENTER.lng,
     distanceMeters: 850,
     pointsReward: 50,
+    photos: [],
     ...overrides,
   }
 }
@@ -197,6 +200,7 @@ describe('MapPage', () => {
 
     expect(screen.queryByText('El Cielo')).not.toBeInTheDocument()
     expect(screen.getByText('Parque Arví')).toBeInTheDocument()
+    expect(screen.queryByTestId('search-results-dropdown')).not.toBeInTheDocument()
   })
 
   it('selecting a place stores it and navigates to /checkin', async () => {
@@ -242,23 +246,21 @@ describe('MapPage', () => {
 })
 
 /**
- * PR2 — task 3.3. Token-present group: `configState.hasMapboxToken = true`
- * makes `map-page.tsx` mount `MapView` instead of `MapUnavailable`.
+ * PR2 — task 3.3, restructured for the search-first map redesign.
+ * Token-present group: `configState.hasMapboxToken = true` makes
+ * `map-page.tsx` mount `MapView` instead of `MapUnavailable`.
  * `react-map-gl` is mocked file-wide above (jsdom cannot render WebGL) as a
  * `data-testid="map"` div with one `data-testid="marker-{id}"` button per
  * `Marker`, plus a `data-testid="map-error-trigger"` button that invokes the
  * `Map`'s `onError` callback on demand.
  *
- * Tapping a pin only highlights the matching list item (no store write, no
- * navigation) — list-row clicks keep PR1b's single-step select+navigate
- * behavior unchanged (`place-list-panel.tsx` is out of PR2's scope and its
- * whole row is one click target, so decoupling select-from-navigate on the
- * list side isn't possible without touching that file). Both surfaces read
- * and write the SAME `selectedPlaceId` state in `map-page.tsx`, so the
- * "list -> pin" direction of the sync is exercised by the same code path
- * proven here for "pin -> list"; a list click's highlight is not
- * independently observable in the DOM because it batches with the
- * synchronous navigation away from `MapPage` (documented in apply-progress).
+ * The always-visible place list is gone once the map is shown — that's the
+ * redesign's whole point (map dominant, list only as the unavailable-map
+ * fallback below). Tapping a pin, or picking a row from the search
+ * dropdown, is a lightweight PREVIEW: it sets `selectedPlaceId` and shows
+ * `SelectedPlaceCard` (no store write, no navigation) — replacing the old
+ * "highlighted list row" assertions, which no longer apply with no list on
+ * screen. Only the card's own "Check-in" button commits.
  */
 describe('MapPage — map view (token present)', () => {
   beforeEach(() => {
@@ -285,9 +287,14 @@ describe('MapPage — map view (token present)', () => {
     await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
     expect(screen.getByTestId('marker-2')).toBeInTheDocument()
     expect(screen.queryByTestId('map-unavailable')).not.toBeInTheDocument()
+
+    // Regression: MapPin is a teardrop whose tip — not its center — marks the
+    // coordinate, so the Marker must anchor at "bottom" or every pin renders
+    // offset from its real location (reported against Jardín Botánico).
+    expect(screen.getByTestId('marker-1').closest('button')).toHaveAttribute('data-anchor', 'bottom')
   })
 
-  it('tapping a pin highlights the matching list item without storing or navigating', async () => {
+  it('tapping a pin shows the selected-place card as a preview, without storing or navigating', async () => {
     vi.mocked(resolveMapCenter).mockResolvedValue({
       center: { lat: 6.211, lng: -75.571 },
       source: 'gps',
@@ -303,15 +310,13 @@ describe('MapPage — map view (token present)', () => {
     await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
     fireEvent.click(screen.getByTestId('marker-1'))
 
-    expect(screen.getByRole('button', { name: /el cielo/i })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    )
+    const card = await screen.findByTestId('selected-place-card')
+    expect(card).toHaveTextContent('El Cielo')
     expect(useCheckinStore.getState().selectedPlace).toBeNull()
     expect(screen.queryByTestId('checkin-stub')).not.toBeInTheDocument()
   })
 
-  it('moves the highlight when a different pin is tapped', async () => {
+  it('moves the selected-place card when a different pin is tapped', async () => {
     vi.mocked(resolveMapCenter).mockResolvedValue({
       center: { lat: 6.211, lng: -75.571 },
       source: 'gps',
@@ -329,23 +334,13 @@ describe('MapPage — map view (token present)', () => {
 
     await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
     fireEvent.click(screen.getByTestId('marker-1'))
-    expect(screen.getByRole('button', { name: /el cielo/i })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    )
+    expect(await screen.findByTestId('selected-place-card')).toHaveTextContent('El Cielo')
 
     fireEvent.click(screen.getByTestId('marker-2'))
-    expect(screen.getByRole('button', { name: /el cielo/i })).toHaveAttribute(
-      'aria-pressed',
-      'false'
-    )
-    expect(screen.getByRole('button', { name: /parque arví/i })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    )
+    expect(screen.getByTestId('selected-place-card')).toHaveTextContent('Parque Arví')
   })
 
-  it('still stores the place and navigates when selecting from the list with the map mounted', async () => {
+  it('still stores the place and navigates when confirming Check-in from the selected-place card', async () => {
     vi.mocked(resolveMapCenter).mockResolvedValue({
       center: { lat: 6.211, lng: -75.571 },
       source: 'gps',
@@ -359,8 +354,10 @@ describe('MapPage — map view (token present)', () => {
     renderMapPage()
 
     await waitFor(() => expect(screen.getByTestId('marker-42')).toBeInTheDocument())
+    fireEvent.click(screen.getByTestId('marker-42'))
 
-    fireEvent.click(screen.getByRole('button', { name: /el cielo/i }))
+    const card = await screen.findByTestId('selected-place-card')
+    fireEvent.click(within(card).getByRole('button', { name: 'Check-in' }))
 
     await waitFor(() => expect(screen.getByTestId('checkin-stub')).toBeInTheDocument())
     expect(useCheckinStore.getState().selectedPlace).toEqual({
@@ -384,5 +381,58 @@ describe('MapPage — map view (token present)', () => {
     const unavailable = await screen.findByTestId('map-unavailable')
     expect(unavailable).toHaveAttribute('data-reason', 'loadFailed')
     expect(screen.getByText('El Cielo')).toBeInTheDocument()
+  })
+
+  it('shows a debounced "searching" state before dropdown results, and selecting a result previews it on the map', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () =>
+        HttpResponse.json([
+          nearbyPlace({ placeId: '1', name: 'El Cielo' }),
+          nearbyPlace({ placeId: '2', name: 'Parque Arví' }),
+        ])
+      )
+    )
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'arv' } })
+
+    const dropdown = screen.getByTestId('search-results-dropdown')
+    expect(within(dropdown).queryByText('Parque Arví')).not.toBeInTheDocument()
+
+    await waitFor(() => expect(within(dropdown).getByText('Parque Arví')).toBeInTheDocument())
+
+    fireEvent.click(within(dropdown).getByRole('button', { name: /parque arví/i }))
+
+    expect(screen.queryByTestId('search-results-dropdown')).not.toBeInTheDocument()
+    const card = await screen.findByTestId('selected-place-card')
+    expect(card).toHaveTextContent('Parque Arví')
+    expect(useCheckinStore.getState().selectedPlace).toBeNull()
+  })
+
+  it('shows a no-matches state in the dropdown when the search has no results', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () =>
+        HttpResponse.json([nearbyPlace({ placeId: '1', name: 'El Cielo' })])
+      )
+    )
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'zzz-no-match' } })
+
+    await waitFor(() => expect(screen.getByText('Sin resultados')).toBeInTheDocument())
   })
 })

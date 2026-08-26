@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import i18next from 'i18next'
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -6,10 +6,13 @@ import { PlaceListPanel } from './place-list-panel'
 import type { NearbyPlace } from '@/shared/schemas/places'
 
 /**
- * WU003b (map discovery) PR1b — task 2.3. Search is a pure client-side
- * filter over the already-fetched `places` prop (design decision #3): no
- * network mock is set up here, so a passing "search filters" assertion
- * proves filtering never triggers a request.
+ * WU003b (map discovery) PR1b — task 2.3, restructured for the
+ * search-first map redesign: `PlaceListPanel` no longer owns the search
+ * input or its state (moved to `place-search-bar.tsx` / `map-page.tsx`);
+ * it takes `query` as a controlled prop and stays responsible only for the
+ * list rendering. Filtering coverage below re-renders with a different
+ * `query` prop instead of typing into a textbox — there is no textbox in
+ * this component anymore.
  */
 
 function place(overrides: Partial<NearbyPlace> = {}): NearbyPlace {
@@ -33,6 +36,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[place()]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -46,13 +50,14 @@ describe('PlaceListPanel', () => {
     expect(screen.getByText('850 m de distancia')).toBeInTheDocument()
   })
 
-  it('filters the list client-side as the user types, with no network involved', () => {
-    render(
+  it('filters the list by the query prop, with no network involved', () => {
+    const { rerender } = render(
       <PlaceListPanel
         places={[
           place({ placeId: '1', name: 'El Cielo' }),
           place({ placeId: '2', name: 'Parque Arví' }),
         ]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -64,7 +69,20 @@ describe('PlaceListPanel', () => {
     expect(screen.getByText('El Cielo')).toBeInTheDocument()
     expect(screen.getByText('Parque Arví')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'arvi' } })
+    rerender(
+      <PlaceListPanel
+        places={[
+          place({ placeId: '1', name: 'El Cielo' }),
+          place({ placeId: '2', name: 'Parque Arví' }),
+        ]}
+        query="arvi"
+        isLoading={false}
+        isError={false}
+        onRetry={vi.fn()}
+        selectedPlaceId={null}
+        onSelect={vi.fn()}
+      />
+    )
 
     expect(screen.queryByText('El Cielo')).not.toBeInTheDocument()
     expect(screen.getByText('Parque Arví')).toBeInTheDocument()
@@ -74,6 +92,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -85,10 +104,11 @@ describe('PlaceListPanel', () => {
     expect(screen.getByText('No hay lugares cerca')).toBeInTheDocument()
   })
 
-  it('shows a distinct no-matches state when a search filters out every place', () => {
+  it('shows a distinct no-matches state when the query filters out every place', () => {
     render(
       <PlaceListPanel
         places={[place()]}
+        query="zzz-no-match"
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -96,8 +116,6 @@ describe('PlaceListPanel', () => {
         onSelect={vi.fn()}
       />
     )
-
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'zzz-no-match' } })
 
     expect(screen.getByText('Sin resultados')).toBeInTheDocument()
     expect(screen.queryByText('No hay lugares cerca')).not.toBeInTheDocument()
@@ -108,6 +126,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[place({ placeId: '42', name: 'El Cielo' })]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -126,6 +145,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[place({ placeId: '42', name: 'El Cielo' })]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -144,6 +164,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[]}
+        query=""
         isLoading={true}
         isError={false}
         onRetry={vi.fn()}
@@ -153,7 +174,6 @@ describe('PlaceListPanel', () => {
     )
 
     expect(screen.queryByText('No hay lugares cerca')).not.toBeInTheDocument()
-    expect(screen.queryByRole('textbox')).toBeInTheDocument()
   })
 
   it('shows a load-error message and calls onRetry when the retry button is pressed', () => {
@@ -161,6 +181,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[]}
+        query=""
         isLoading={false}
         isError={true}
         onRetry={onRetry}
@@ -174,7 +195,7 @@ describe('PlaceListPanel', () => {
     expect(onRetry).toHaveBeenCalledTimes(1)
   })
 
-  it('map EN-switch: title and empty state render real English strings', async () => {
+  it('map EN-switch: the empty state renders real English strings', async () => {
     await act(async () => {
       await i18next.changeLanguage('en')
     })
@@ -182,6 +203,7 @@ describe('PlaceListPanel', () => {
     render(
       <PlaceListPanel
         places={[]}
+        query=""
         isLoading={false}
         isError={false}
         onRetry={vi.fn()}
@@ -190,7 +212,6 @@ describe('PlaceListPanel', () => {
       />
     )
 
-    expect(screen.getByText('Near you')).toBeInTheDocument()
     expect(screen.getByText('No places nearby')).toBeInTheDocument()
 
     await act(async () => {

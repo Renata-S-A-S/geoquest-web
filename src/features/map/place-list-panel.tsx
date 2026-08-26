@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { MagnifyingGlass, MapPin, X } from '@phosphor-icons/react'
+import { MapPin } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { EmptyState } from '@/shared/components/empty-state'
@@ -10,16 +9,19 @@ import { categoryLabelKey, type NearbyPlace } from '@/shared/schemas/places'
 import { filterPlaces, formatDistance } from '@/features/map/place-filter'
 
 /**
- * WU003b (map discovery) PR1b — task 2.3/2.4. Search is a pure client-side
- * filter (design decision #3): `places` is the full, already-fetched list;
- * this component owns the search-query state and filters locally, so
- * filtering never triggers a new network call. Distinguishes an
- * empty-result-set state (`list.emptyTitle`, no places at all) from a
- * no-matches-after-search state (`list.noMatchesTitle`).
+ * WU003b (map discovery) PR1b — task 2.3/2.4, restructured for the
+ * search-first map redesign: the search input now lives in
+ * `place-search-bar.tsx` (owned by `map-page.tsx`, which also owns the
+ * title); this component takes the query as a controlled prop and stays
+ * responsible only for the list itself — skeleton/error/empty/no-matches/
+ * results — still a pure client-side filter over the already-fetched
+ * `places` (design decision #3: filtering never triggers a new network
+ * call). Rendered as the primary content when the map is unavailable.
  */
 
 export interface PlaceListPanelProps {
   places: NearbyPlace[]
+  query: string
   isLoading: boolean
   isError: boolean
   onRetry: () => void
@@ -30,6 +32,7 @@ export interface PlaceListPanelProps {
 
 export function PlaceListPanel({
   places,
+  query,
   isLoading,
   isError,
   onRetry,
@@ -38,40 +41,10 @@ export function PlaceListPanel({
   className,
 }: PlaceListPanelProps) {
   const { t } = useTranslation('map')
-  const [query, setQuery] = useState('')
-
   const filtered = filterPlaces(places, query)
 
   return (
     <div className={cn('flex flex-col gap-3 p-4', className)}>
-      <b className="font-display text-base text-ink">{t('title')}</b>
-
-      <div className="relative">
-        <MagnifyingGlass
-          size={16}
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
-        />
-        <input
-          type="text"
-          role="textbox"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t('search.placeholder')}
-          aria-label={t('search.placeholder')}
-          className="h-9 w-full rounded-xs border border-border bg-white pl-8 pr-8 font-sans text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal/40"
-        />
-        {query.length > 0 && (
-          <button
-            type="button"
-            aria-label={t('search.clear')}
-            onClick={() => setQuery('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted"
-          >
-            <X size={14} weight="bold" />
-          </button>
-        )}
-      </div>
-
       {isLoading ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-14 w-full" />
