@@ -30,7 +30,9 @@ describe('SelectedPlaceCard', () => {
   })
 
   it('renders the image fallback (never a broken image) when the place has no photos', () => {
-    render(<SelectedPlaceCard place={place({ photos: [] })} onCheckIn={vi.fn()} onDismiss={vi.fn()} />)
+    render(
+      <SelectedPlaceCard place={place({ photos: [] })} onCheckIn={vi.fn()} onDismiss={vi.fn()} />
+    )
 
     expect(screen.getByTestId('selected-place-card-image-fallback')).toBeInTheDocument()
     expect(screen.queryByTestId('selected-place-card-photo')).not.toBeInTheDocument()
