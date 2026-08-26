@@ -59,6 +59,7 @@ export function useCheckin(): UseCheckinResult {
   const positionRef = useRef<GpsReading | null>(null)
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const unmountedRef = useRef(false)
+  const acquisitionPromiseRef = useRef<Promise<void> | null>(null)
 
   const clearPoll = useCallback(() => {
     if (pollTimeoutRef.current !== null) {
@@ -125,23 +126,47 @@ export function useCheckin(): UseCheckinResult {
     scheduleNext(0)
   }, [])
 
-  const acquirePermissions = useCallback(async () => {
+  /**
+   * `acquisitionPromiseRef` makes a concurrent call reuse the in-flight
+   * request instead of starting a second one. This matters beyond the
+   * unmountedRef fix below: React 18 StrictMode's dev-only
+   * mount->cleanup->remount cycle re-runs the mount effect (and therefore
+   * this function) SYNCHRONOUSLY, before the first `getUserMedia()` call
+   * has resolved — the cleanup in between can't stop it either, since
+   * `streamRef.current` is still `null` at that point. Without this guard,
+   * both calls independently reach `getUserMedia()` and end up requesting
+   * the same physical camera twice, concurrently — most webcam drivers
+   * don't serve two live captures cleanly, so the permission indicator
+   * turns on but the resulting video is black/broken (reported via manual
+   * testing, real hardware only — Chromium's fake-device test camera
+   * happily serves concurrent consumers and can't reproduce this).
+   */
+  const acquirePermissions = useCallback((): Promise<void> => {
+    if (acquisitionPromiseRef.current) return acquisitionPromiseRef.current
     setState({ kind: 'requesting-permissions' })
-    try {
-      const [stream, position] = await Promise.all([requestCameraStream(), requestPosition()])
-      if (unmountedRef.current) return
-      streamRef.current = stream
-      positionRef.current = position
-      if (videoRef.current) videoRef.current.srcObject = stream
-      setState({ kind: 'camera' })
-    } catch (error) {
-      if (unmountedRef.current) return
-      if (error instanceof MediaPermissionError) {
-        setState({ kind: 'permission-denied', device: error.device })
-        return
+    const promise = (async () => {
+      try {
+        const [stream, position] = await Promise.all([requestCameraStream(), requestPosition()])
+        if (unmountedRef.current) {
+          stopCameraStream(stream)
+          return
+        }
+        streamRef.current = stream
+        positionRef.current = position
+        setState({ kind: 'camera' })
+      } catch (error) {
+        if (unmountedRef.current) return
+        if (error instanceof MediaPermissionError) {
+          setState({ kind: 'permission-denied', device: error.device })
+          return
+        }
+        setState({ kind: 'error', message: t('errors.unexpected') })
+      } finally {
+        acquisitionPromiseRef.current = null
       }
-      setState({ kind: 'error', message: t('errors.unexpected') })
-    }
+    })()
+    acquisitionPromiseRef.current = promise
+    return promise
   }, [t])
 
   useEffect(() => {
@@ -156,10 +181,26 @@ export function useCheckin(): UseCheckinResult {
     return () => {
       unmountedRef.current = true
       clearPoll()
-      if (streamRef.current) stopCameraStream(streamRef.current)
+      if (streamRef.current) {
+        stopCameraStream(streamRef.current)
+        streamRef.current = null
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The <video> element only mounts once `state.kind` becomes 'camera'
+  // (checkin-page.tsx renders a spinner, not the <video>, for every other
+  // state) — so `videoRef.current` is still null at the moment
+  // `acquirePermissions` resolves and assigns `streamRef.current`. Attaching
+  // the stream there was a no-op that happened to go unnoticed: this effect
+  // re-runs after the 'camera' render commits the real <video> DOM node, and
+  // is what actually wires the stream to the visible feed.
+  useEffect(() => {
+    if (state.kind === 'camera' && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current
+    }
+  }, [state.kind])
 
   const submitCheckin = useCallback(async () => {
     const position = positionRef.current

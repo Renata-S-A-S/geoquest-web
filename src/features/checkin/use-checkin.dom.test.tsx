@@ -1,9 +1,11 @@
 import { StrictMode } from 'react'
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, render, renderHook, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
 import { useCheckin } from '@/features/checkin/use-checkin'
+import { CheckinPage } from '@/features/checkin/checkin-page'
 import {
   MediaPermissionError,
   captureFrame,
@@ -95,6 +97,54 @@ describe('useCheckin', () => {
     const { result } = renderHook(() => useCheckin(), { wrapper: StrictMode })
 
     await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+  })
+
+  it('requests the camera exactly once under StrictMode, not twice concurrently', async () => {
+    // Regression: StrictMode's mount->cleanup->remount cycle re-runs the
+    // mount effect synchronously, before the first getUserMedia() call
+    // resolves. Without reusing the in-flight acquisition, both the
+    // "throwaway" and the "real" mount independently call
+    // requestCameraStream(), so the physical camera gets requested twice
+    // concurrently — most webcam drivers don't serve two live captures
+    // cleanly, so the permission indicator turns on but the video stays
+    // black. jsdom's mocked getUserMedia can't reproduce the hardware
+    // symptom itself, but it can prove the fix: exactly one real call.
+    mockHappyPermissions()
+
+    const { result } = renderHook(() => useCheckin(), { wrapper: StrictMode })
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+
+    expect(requestCameraStream).toHaveBeenCalledTimes(1)
+  })
+
+  it('actually wires the acquired stream to the rendered <video> element (not just internal state)', async () => {
+    // Regression, found by real-browser verification of the StrictMode fix
+    // above: `videoRef.current` is still null when `acquirePermissions`
+    // resolves, because `checkin-page.tsx` only renders the <video> tag
+    // once `state.kind` becomes 'camera' — a render that hasn't happened
+    // yet at that point. The old code assigned `srcObject` there and never
+    // again, so the assignment was silently always a no-op: `state.kind`
+    // correctly reached 'camera' (every other test here only checks
+    // that), but the video element stayed genuinely blank. `use-checkin`'s
+    // own `renderHook` tests can't catch this — they never mount the real
+    // <video> JSX — so this one renders the actual `CheckinPage`.
+    mockHappyPermissions()
+    seedSelectedPlace()
+
+    render(
+      <MemoryRouter>
+        <CheckinPage />
+      </MemoryRouter>
+    )
+
+    const video = await waitFor(() => {
+      const el = document.querySelector('video')
+      expect(el).not.toBeNull()
+      return el as HTMLVideoElement
+    })
+
+    await waitFor(() => expect(video.srcObject).toBe(fakeStream))
   })
 
   it('enters permission-denied{camera} on a camera MediaPermissionError, and retry re-requests permissions', async () => {
