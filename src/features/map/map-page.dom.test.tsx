@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from 'react'
+import { forwardRef, useImperativeHandle, type MouseEvent, type ReactNode } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -35,23 +35,43 @@ vi.mock('@/features/map/map-config', async (importOriginal) => {
   }
 })
 
+// `flyTo` regression (camera didn't follow selection — `initialViewState` is
+// initial-only): `vi.hoisted` so both the mock factory below and the tests
+// can reach the same spies, exposed via a mocked `MapRef` (`useImperativeHandle`).
+// `zoomInSpy`/`zoomOutSpy`/`resetNorthSpy` back the custom control cluster
+// that replaced Mapbox's own `NavigationControl` (off-brand default styling).
+const { flyToSpy, zoomInSpy, zoomOutSpy, resetNorthSpy } = vi.hoisted(() => ({
+  flyToSpy: vi.fn(),
+  zoomInSpy: vi.fn(),
+  zoomOutSpy: vi.fn(),
+  resetNorthSpy: vi.fn(),
+}))
+
 vi.mock('react-map-gl', () => ({
-  Map: ({
-    children,
-    onError,
-  }: {
-    children?: ReactNode
-    onError?: (event: { error: Error }) => void
-  }) => (
-    <div data-testid="map">
-      {children}
-      <button
-        type="button"
-        data-testid="map-error-trigger"
-        onClick={() => onError?.({ error: new Error('boom') })}
-      />
-    </div>
-  ),
+  Map: forwardRef<
+    { flyTo: typeof flyToSpy; zoomIn: typeof zoomInSpy; zoomOut: typeof zoomOutSpy; resetNorth: typeof resetNorthSpy },
+    {
+      children?: ReactNode
+      onError?: (event: { error: Error }) => void
+    }
+  >(({ children, onError }, ref) => {
+    useImperativeHandle(ref, () => ({
+      flyTo: flyToSpy,
+      zoomIn: zoomInSpy,
+      zoomOut: zoomOutSpy,
+      resetNorth: resetNorthSpy,
+    }))
+    return (
+      <div data-testid="map">
+        {children}
+        <button
+          type="button"
+          data-testid="map-error-trigger"
+          onClick={() => onError?.({ error: new Error('boom') })}
+        />
+      </div>
+    )
+  }),
   Marker: ({
     children,
     anchor,
@@ -69,7 +89,6 @@ vi.mock('react-map-gl', () => ({
       {children}
     </button>
   ),
-  NavigationControl: () => null,
 }))
 
 const baseURL = 'http://localhost:5219'
@@ -107,6 +126,10 @@ function renderMapPage() {
 afterEach(() => {
   useCheckinStore.setState({ selectedPlace: null })
   configState.hasMapboxToken = false
+  flyToSpy.mockClear()
+  zoomInSpy.mockClear()
+  zoomOutSpy.mockClear()
+  resetNorthSpy.mockClear()
 })
 
 describe('MapPage', () => {
@@ -301,6 +324,28 @@ describe('MapPage — map view (token present)', () => {
     )
   })
 
+  it('shows a "you are here" dot on a real GPS fix', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])))
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('user-location-marker')).toBeInTheDocument())
+  })
+
+  it('never shows the "you are here" dot on the default-center fallback', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({ center: DEFAULT_CENTER, source: 'default' })
+    server.use(http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])))
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('map')).toBeInTheDocument())
+    expect(screen.queryByTestId('user-location-marker')).not.toBeInTheDocument()
+  })
+
   it('tapping a pin shows the selected-place card as a preview, without storing or navigating', async () => {
     vi.mocked(resolveMapCenter).mockResolvedValue({
       center: { lat: 6.211, lng: -75.571 },
@@ -321,6 +366,119 @@ describe('MapPage — map view (token present)', () => {
     expect(card).toHaveTextContent('El Cielo')
     expect(useCheckinStore.getState().selectedPlace).toBeNull()
     expect(screen.queryByTestId('checkin-stub')).not.toBeInTheDocument()
+  })
+
+  it('flies the camera to the tapped pin, but never on mount and never on deselect', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () =>
+        HttpResponse.json([
+          nearbyPlace({ placeId: '1', name: 'El Cielo', latitude: 6.2234, longitude: -75.5802 }),
+        ])
+      )
+    )
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('marker-1')).toBeInTheDocument())
+    expect(flyToSpy).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('marker-1'))
+    await screen.findByTestId('selected-place-card')
+
+    expect(flyToSpy).toHaveBeenCalledTimes(1)
+    expect(flyToSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ center: [-75.5802, 6.2234], zoom: expect.any(Number) })
+    )
+
+    fireEvent.click(
+      within(screen.getByTestId('selected-place-card')).getByRole('button', {
+        name: 'Quitar selección',
+      })
+    )
+    await waitFor(() => expect(screen.queryByTestId('selected-place-card')).not.toBeInTheDocument())
+
+    // Deselecting stays put — the camera doesn't fly back anywhere.
+    expect(flyToSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('flies the camera to a place selected from the search dropdown', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () =>
+        HttpResponse.json([
+          nearbyPlace({ placeId: '2', name: 'Parque Arví', latitude: 6.2943, longitude: -75.4831 }),
+        ])
+      )
+    )
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('marker-2')).toBeInTheDocument())
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'arvi' } })
+
+    const result = await screen.findByRole('button', { name: /parque arv./i })
+    fireEvent.click(result)
+
+    await waitFor(() => expect(flyToSpy).toHaveBeenCalledTimes(1))
+    expect(flyToSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ center: [-75.4831, 6.2943], zoom: expect.any(Number) })
+    )
+  })
+
+  it('shows a "center on me" button on a real GPS fix, and flies the camera to it on click', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.2442, lng: -75.5812 },
+      source: 'gps',
+    })
+    server.use(http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])))
+
+    renderMapPage()
+
+    const button = await screen.findByTestId('locate-me-button')
+    fireEvent.click(button)
+
+    expect(flyToSpy).toHaveBeenCalledTimes(1)
+    expect(flyToSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ center: [-75.5812, 6.2442], zoom: expect.any(Number) })
+    )
+  })
+
+  it('never shows the "center on me" button on the default-center fallback', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({ center: DEFAULT_CENTER, source: 'default' })
+    server.use(http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])))
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('map')).toBeInTheDocument())
+    expect(screen.queryByTestId('locate-me-button')).not.toBeInTheDocument()
+  })
+
+  it('has its own zoom/compass controls (replacing Mapbox\'s default-styled NavigationControl)', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])))
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByTestId('map')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByTestId('zoom-in-button'))
+    expect(zoomInSpy).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByTestId('zoom-out-button'))
+    expect(zoomOutSpy).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByTestId('reset-north-button'))
+    expect(resetNorthSpy).toHaveBeenCalledTimes(1)
   })
 
   it('moves the selected-place card when a different pin is tapped', async () => {

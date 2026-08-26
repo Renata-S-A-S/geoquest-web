@@ -26,7 +26,13 @@
   },
   "location": {
     "denied": "No pudimos acceder a tu ubicación.",
-    "usingDefault": "Mostrando lugares cerca de una ubicación predeterminada."
+    "usingDefault": "Mostrando lugares cerca de una ubicación predeterminada.",
+    "centerOnMe": "Centrar en mi ubicación"
+  },
+  "controls": {
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "resetNorth": "Reiniciar orientación al norte"
   },
   "mapUnavailable": {
     "title": "Mapa no disponible",

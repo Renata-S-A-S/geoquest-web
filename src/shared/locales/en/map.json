@@ -26,7 +26,13 @@
   },
   "location": {
     "denied": "We couldn't access your location.",
-    "usingDefault": "Showing places near a default location."
+    "usingDefault": "Showing places near a default location.",
+    "centerOnMe": "Center on my location"
+  },
+  "controls": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetNorth": "Reset north orientation"
   },
   "mapUnavailable": {
     "title": "Map unavailable",
