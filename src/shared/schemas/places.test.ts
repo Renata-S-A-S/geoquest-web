@@ -5,6 +5,7 @@ import {
   categoryLabelKey,
   nearbyPlaceSchema,
   nearbyPlacesSchema,
+  placeDetailSchema,
   subcategoryLabelKey,
 } from '@/shared/schemas/places'
 
@@ -84,6 +85,39 @@ describe('nearbyPlacesSchema', () => {
 
   it('rejects an array containing one invalid place', () => {
     expect(() => nearbyPlacesSchema.parse([validPlace, { ...validPlace, category: 99 }])).toThrow()
+  })
+})
+
+describe('placeDetailSchema', () => {
+  const validPlaceDetail = {
+    placeId: '10000000-0000-0000-0000-000000000001',
+    name: 'Plaza Botero',
+    description: 'Plaza pública con 23 esculturas de Fernando Botero.',
+    category: 4,
+    subcategory: 17,
+    latitude: 6.2518,
+    longitude: -75.5636,
+    pointsReward: 50,
+    photos: [],
+  }
+
+  it('accepts the `GET /places/{id}` payload shape (no distanceMeters field)', () => {
+    expect(placeDetailSchema.parse(validPlaceDetail)).toEqual(validPlaceDetail)
+  })
+
+  it('strips an unexpected distanceMeters field rather than failing', () => {
+    const parsed = placeDetailSchema.parse({ ...validPlaceDetail, distanceMeters: 123 })
+    expect(parsed).not.toHaveProperty('distanceMeters')
+  })
+
+  it('rejects a payload missing description', () => {
+    const { description: _description, ...rest } = validPlaceDetail
+    expect(() => placeDetailSchema.parse(rest)).toThrow()
+  })
+
+  it('defaults photos to an empty array when the field is missing', () => {
+    const { photos: _photos, ...rest } = validPlaceDetail
+    expect(placeDetailSchema.parse(rest).photos).toEqual([])
   })
 })
 
