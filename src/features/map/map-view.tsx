@@ -41,6 +41,7 @@ export function MapView({ center, places, selectedPlaceId, onSelectPlace, onErro
             key={place.placeId}
             longitude={place.longitude}
             latitude={place.latitude}
+            anchor="bottom"
             onClick={(event) => {
               event.originalEvent.stopPropagation()
               onSelectPlace(place)
