@@ -1,0 +1,26 @@
+{
+  "title": "Routes",
+  "list": {
+    "stops": "{{count}} stops",
+    "windowDays": "{{count}} days to complete",
+    "reward": "+{{points}} pts"
+  },
+  "detail": {
+    "stopsTitle": "Stops",
+    "windowDays": "{{count}} days to complete once started",
+    "reward": "+{{points}} pts on completion",
+    "close": "Close"
+  },
+  "start": {
+    "action": "Start route",
+    "starting": "Starting…",
+    "successTitle": "Route started!",
+    "successDescription": "You have {{days}} days to complete every stop.",
+    "errors": {
+      "notFound": "We couldn't find this route.",
+      "notPublished": "This route isn't published yet.",
+      "blocked": "We couldn't start the route right now.",
+      "unknown": "Something went wrong starting the route."
+    }
+  }
+}

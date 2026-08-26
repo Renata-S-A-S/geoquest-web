@@ -8,6 +8,8 @@ import esGamification from './es/gamification.json'
 import enGamification from './en/gamification.json'
 import esMap from './es/map.json'
 import enMap from './en/map.json'
+import esRoutes from './es/routes.json'
+import enRoutes from './en/routes.json'
 
 /**
  * Single shared resource bundle + namespace registry, reused by the app's
@@ -21,6 +23,7 @@ export const resources = {
     auth: esAuth,
     gamification: esGamification,
     map: esMap,
+    routes: esRoutes,
   },
   en: {
     common: enCommon,
@@ -28,8 +31,9 @@ export const resources = {
     auth: enAuth,
     gamification: enGamification,
     map: enMap,
+    routes: enRoutes,
   },
 } as const
 
-export const ns = ['common', 'checkin', 'auth', 'gamification', 'map'] as const
+export const ns = ['common', 'checkin', 'auth', 'gamification', 'map', 'routes'] as const
 export const defaultNS = 'common' as const
