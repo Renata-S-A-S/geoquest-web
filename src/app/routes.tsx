@@ -6,6 +6,7 @@ import { CheckinPage } from '@/features/checkin/checkin-page'
 import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
+import { RoutesPage } from '@/features/routes/routes-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -22,8 +23,10 @@ import { ProtectedRoute } from './protected-route'
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
  * sin recrear el contexto WebGL de Mapbox en cada visita (ver el comentario
- * en `app-shell.tsx`). `rutas` sigue siendo
- * placeholder — llega en WUs futuras. La ruta índice `/premios` (bare) también sigue siendo
+ * en `app-shell.tsx`). `/rutas` (Rutas/tours) ya renderiza `RoutesPage` —
+ * ver `features/routes/` (mock display data pendiente de un endpoint de
+ * lectura real en el backend, documentado en `routes-mock-data.ts`).
+ * La ruta índice `/premios` (bare) sigue siendo
  * placeholder: WU10b (issue closure) repuntó la nav de "Premios" a
  * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
  * navegación — se conserva reservada para la futura pantalla de
@@ -39,7 +42,7 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: '/', element: null },
-          { path: '/rutas', element: <RoutePlaceholder label="rutas — pendiente" /> },
+          { path: '/rutas', element: <RoutesPage /> },
           { path: '/premios', element: <RoutePlaceholder label="premios — pendiente" /> },
           { path: '/premios/leaderboard', element: <LeaderboardPage /> },
           { path: '/perfil', element: <ProfilePage /> },

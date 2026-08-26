@@ -1,0 +1,26 @@
+{
+  "title": "Rutas",
+  "list": {
+    "stops": "{{count}} paradas",
+    "windowDays": "{{count}} días para completar",
+    "reward": "+{{points}} pts"
+  },
+  "detail": {
+    "stopsTitle": "Paradas",
+    "windowDays": "{{count}} días para completar desde el inicio",
+    "reward": "+{{points}} pts al completar la ruta",
+    "close": "Cerrar"
+  },
+  "start": {
+    "action": "Iniciar ruta",
+    "starting": "Iniciando…",
+    "successTitle": "¡Ruta iniciada!",
+    "successDescription": "Tenés {{days}} días para completar todas las paradas.",
+    "errors": {
+      "notFound": "No encontramos esta ruta.",
+      "notPublished": "Esta ruta todavía no está publicada.",
+      "blocked": "No pudimos iniciar la ruta en este momento.",
+      "unknown": "Ocurrió un error al iniciar la ruta."
+    }
+  }
+}
