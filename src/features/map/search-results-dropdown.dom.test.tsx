@@ -21,7 +21,12 @@ function place(overrides: Partial<NearbyPlace> = {}): NearbyPlace {
 describe('SearchResultsDropdown', () => {
   it('shows a loading skeleton while searching, hiding results', () => {
     render(
-      <SearchResultsDropdown places={[place()]} query="cielo" isSearching={true} onSelect={vi.fn()} />
+      <SearchResultsDropdown
+        places={[place()]}
+        query="cielo"
+        isSearching={true}
+        onSelect={vi.fn()}
+      />
     )
 
     expect(screen.queryByText('El Cielo')).not.toBeInTheDocument()
