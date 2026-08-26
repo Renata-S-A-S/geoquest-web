@@ -28,6 +28,9 @@ const validPlace = {
   longitude: -75.571,
   distanceMeters: 1707.9393969,
   pointsReward: 50,
+  photos: [
+    'http://localhost:9000/geoquest-checkins/places/10000000-0000-0000-0000-000000000019.jpg',
+  ],
 }
 
 describe('nearbyPlaceSchema', () => {
@@ -62,6 +65,11 @@ describe('nearbyPlaceSchema', () => {
 
   it('rejects a non-integer category', () => {
     expect(() => nearbyPlaceSchema.parse({ ...validPlace, category: 4.5 })).toThrow()
+  })
+
+  it('defaults photos to an empty array when the field is missing', () => {
+    const { photos: _photos, ...rest } = validPlace
+    expect(nearbyPlaceSchema.parse(rest).photos).toEqual([])
   })
 })
 
