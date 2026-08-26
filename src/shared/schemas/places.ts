@@ -36,6 +36,27 @@ export type NearbyPlace = z.infer<typeof nearbyPlaceSchema>
 export const nearbyPlacesSchema = z.array(nearbyPlaceSchema)
 
 /**
+ * `GET /places/{id}` contract — direct by-ID lookup (Rutas stop detail).
+ * Same fields as `nearbyPlaceSchema` MINUS `distanceMeters`: a by-ID lookup
+ * has no reference point to compute a distance from, so the backend never
+ * sends one. If the backend DOES send a `distanceMeters` field (e.g. an
+ * optional/nullable one), Zod silently strips it here — this schema simply
+ * never reads it, by design.
+ */
+export const placeDetailSchema = z.object({
+  placeId: z.string(),
+  name: z.string(),
+  description: z.string(),
+  category: z.number().int().min(0).max(5),
+  subcategory: z.number().int().min(0).max(19),
+  latitude: z.number(),
+  longitude: z.number(),
+  pointsReward: z.number(),
+  photos: z.array(z.string()).default([]),
+})
+export type PlaceDetail = z.infer<typeof placeDetailSchema>
+
+/**
  * `Category.cs` (`SharedKernel.Domain.Taxonomy`) — index = C# enum int
  * value. Exact order confirmed against backend source and cross-checked
  * against live HTTP responses (design doc, "Confirmed backend enum order").
