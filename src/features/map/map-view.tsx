@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Compass, Crosshair, MapPin, Minus, Plus } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Map, Marker, type MapRef } from 'react-map-gl'
-import { MAPBOX_TOKEN, MAP_STYLE_URL, type Coordinates } from '@/features/map/map-config'
+import { MAPBOX_TOKEN, resolveMapStyleUrl, type Coordinates } from '@/features/map/map-config'
+import { useResolvedTheme } from '@/shared/hooks/use-resolved-theme'
 import type { NearbyPlace } from '@/shared/schemas/places'
 
 /** Comfortably closer than the initial `zoom: 13` overview, without being a
@@ -55,6 +56,7 @@ export function MapView({
 }: MapViewProps) {
   const { t } = useTranslation('map')
   const mapRef = useRef<MapRef>(null)
+  const resolvedTheme = useResolvedTheme()
 
   // `initialViewState` (below) is exactly that — initial-only, not reactive.
   // Selecting a place (dropdown result or tapping a pin — same `selectedPlaceId`
@@ -83,7 +85,7 @@ export function MapView({
       ref={mapRef}
       mapboxAccessToken={MAPBOX_TOKEN}
       initialViewState={{ longitude: center.lng, latitude: center.lat, zoom: 13 }}
-      mapStyle={MAP_STYLE_URL}
+      mapStyle={resolveMapStyleUrl(resolvedTheme)}
       style={{ width: '100%', height: '100%' }}
       onError={() => onError()}
     >

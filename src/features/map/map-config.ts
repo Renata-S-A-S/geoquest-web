@@ -8,6 +8,8 @@
  * directly unit-testable without stubbing `import.meta.env`.
  */
 
+import type { ResolvedTheme } from '@/shared/lib/theme'
+
 export const MAPBOX_TOKEN: string | undefined = import.meta.env.VITE_MAPBOX_TOKEN
 
 export function computeHasMapboxToken(token: string | undefined): boolean {
@@ -16,8 +18,15 @@ export function computeHasMapboxToken(token: string | undefined): boolean {
 
 export const hasMapboxToken = computeHasMapboxToken(MAPBOX_TOKEN)
 
-/** Stock style (design confirmed decision 2, proposal) — not a custom brand-token style. */
-export const MAP_STYLE_URL = 'mapbox://styles/mapbox/streets-v12'
+/** Stock styles (design confirmed decision 2, proposal) — not custom brand-token styles. */
+export const MAP_STYLE_URLS: Record<ResolvedTheme, string> = {
+  light: 'mapbox://styles/mapbox/streets-v12',
+  dark: 'mapbox://styles/mapbox/dark-v11',
+}
+
+export function resolveMapStyleUrl(theme: ResolvedTheme): string {
+  return MAP_STYLE_URLS[theme]
+}
 
 export interface Coordinates {
   lat: number
