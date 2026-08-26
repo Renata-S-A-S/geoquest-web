@@ -49,7 +49,12 @@ const { flyToSpy, zoomInSpy, zoomOutSpy, resetNorthSpy } = vi.hoisted(() => ({
 
 vi.mock('react-map-gl', () => ({
   Map: forwardRef<
-    { flyTo: typeof flyToSpy; zoomIn: typeof zoomInSpy; zoomOut: typeof zoomOutSpy; resetNorth: typeof resetNorthSpy },
+    {
+      flyTo: typeof flyToSpy
+      zoomIn: typeof zoomInSpy
+      zoomOut: typeof zoomOutSpy
+      resetNorth: typeof resetNorthSpy
+    },
     {
       children?: ReactNode
       onError?: (event: { error: Error }) => void
@@ -460,7 +465,7 @@ describe('MapPage — map view (token present)', () => {
     expect(screen.queryByTestId('locate-me-button')).not.toBeInTheDocument()
   })
 
-  it('has its own zoom/compass controls (replacing Mapbox\'s default-styled NavigationControl)', async () => {
+  it("has its own zoom/compass controls (replacing Mapbox's default-styled NavigationControl)", async () => {
     vi.mocked(resolveMapCenter).mockResolvedValue({
       center: { lat: 6.211, lng: -75.571 },
       source: 'gps',
