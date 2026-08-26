@@ -2,7 +2,9 @@
   "title": "Near you",
   "search": {
     "placeholder": "Search a place",
-    "clear": "Clear search"
+    "clear": "Clear search",
+    "searching": "Searching…",
+    "selectAria": "View {{name}} on the map"
   },
   "list": {
     "distance": "{{distance}} away",
