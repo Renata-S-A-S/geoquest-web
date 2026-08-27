@@ -47,7 +47,9 @@ export function RailNav({ avatarInitial = 'G', points = 0 }: RailNavProps) {
       </div>
       <NavLink to="/perfil" className="flex flex-col items-center gap-1">
         <Avatar initial={avatarInitial} size="sm" />
-        <span className="font-mono text-[7px] text-on-inverse/60">{points.toLocaleString(locale)}</span>
+        <span className="font-mono text-[7px] text-on-inverse/60">
+          {points.toLocaleString(locale)}
+        </span>
       </NavLink>
     </nav>
   )

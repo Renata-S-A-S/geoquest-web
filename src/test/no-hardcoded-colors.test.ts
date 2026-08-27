@@ -114,8 +114,9 @@ describe('no-hardcoded-colors static scan', () => {
       (path) => !violatingPaths.has(path)
     )
 
-    expect(staleEntries, `Stale allow-list entries (no longer violate): ${staleEntries.join(', ')}`).toHaveLength(
-      0
-    )
+    expect(
+      staleEntries,
+      `Stale allow-list entries (no longer violate): ${staleEntries.join(', ')}`
+    ).toHaveLength(0)
   })
 })
