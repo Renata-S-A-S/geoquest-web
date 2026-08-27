@@ -423,6 +423,58 @@ describe('EditProfilePage pending state', () => {
 })
 
 /**
+ * Phase F — `ThemeSwitcher` is mounted in `logoutSection`, right after
+ * `LanguageSwitcher` (design "Mount point" — same WU11 rationale: that
+ * block renders across all 3 branches so the control stays reachable even
+ * when the profile read fails). One test per branch.
+ */
+describe('EditProfilePage theme switcher', () => {
+  it('renders the theme switcher on the pending branch, before the profile read resolves', async () => {
+    server.use(
+      http.get(`${baseURL}/explorers/me`, async () => {
+        await delay('infinite')
+        return HttpResponse.json(meResponse())
+      })
+    )
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
+  })
+
+  it('renders the theme switcher on the error branch, when GET /explorers/me fails', async () => {
+    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    await screen.findByRole('button', { name: 'Reintentar' })
+    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
+  })
+
+  it('renders the theme switcher on the success branch, alongside the prefilled form', async () => {
+    await renderPage()
+
+    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
+  })
+})
+
+/**
  * WU11 (i18n) PR4c — `gamification` namespace EN-switch coverage for
  * `/perfil/editar`. Mirrors `profile-view.dom.test.tsx`'s single
  * changeLanguage('en') + real-EN-string-assertions pattern. Covers the

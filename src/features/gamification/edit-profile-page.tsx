@@ -14,6 +14,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Toast } from '@/shared/components/toast'
 import { ConfirmationModal } from '@/shared/components/confirmation-modal'
 import { LanguageSwitcher } from '@/shared/components/language-switcher'
+import { ThemeSwitcher } from '@/shared/components/theme-switcher'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { usernameCooldown } from '@/features/gamification/username-cooldown'
 import { INTEREST_CATALOG } from '@/features/gamification/interests-catalog'
@@ -54,9 +55,9 @@ const MAX_AVATAR_BYTES = 5 * 1024 * 1024
  *
  * Logout lives here too (D10), not inside `EditProfileForm`: this screen
  * is the app's only logout affordance, so it must render across all 3
- * branches, including when the profile read fails. `LanguageSwitcher`
- * shares that reasoning (WU11) — it is mounted beside logout so it is
- * reachable across all 3 branches too.
+ * branches, including when the profile read fails. `LanguageSwitcher` and
+ * `ThemeSwitcher` (Phase F) share that reasoning (WU11) — both are mounted
+ * beside logout so they stay reachable across all 3 branches too.
  */
 export function EditProfilePage() {
   const { t } = useTranslation('gamification')
@@ -76,6 +77,7 @@ export function EditProfilePage() {
       <div className="p-4 pt-0">
         <div className="flex flex-col gap-4 border-t border-border pt-4">
           <LanguageSwitcher />
+          <ThemeSwitcher />
           <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>
             {t('editProfile.logout')}
           </Button>
