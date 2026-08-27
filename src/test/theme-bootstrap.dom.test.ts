@@ -127,7 +127,10 @@ describe('index.html theme-bootstrap script (drift guard)', () => {
   })
 
   it('ignores an unrecognised persisted version and still applies the valid mode', () => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ state: { mode: 'dark' }, version: 99 }))
+    window.localStorage.setItem(
+      THEME_STORAGE_KEY,
+      JSON.stringify({ state: { mode: 'dark' }, version: 99 })
+    )
     stubPrefersColorScheme(false)
 
     runBootstrapScript()
