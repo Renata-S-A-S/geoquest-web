@@ -3,6 +3,7 @@
   "aria": { "dismiss": "Dismiss notice", "loading": "Loading" },
   "actions": { "cancel": "Cancel" },
   "language": { "label": "Language" },
+  "theme": { "label": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
   "notifications": {
     "checkinApproved": "Check-in approved at {{placeName}}!",
     "xpAndPoints": "+{{xp}} XP · +{{geoPoints}} GeoPoints",
