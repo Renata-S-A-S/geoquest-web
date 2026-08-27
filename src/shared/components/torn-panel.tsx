@@ -131,7 +131,10 @@ export function TornPanel({
       style={{ filter: backingFilter(edge, backingVar[backing]) }}
       {...props}
     >
-      <div className="relative h-full w-full bg-surface-raised" style={{ ...clipStyle, ...style }} />
+      <div
+        className="relative h-full w-full bg-surface-raised"
+        style={{ ...clipStyle, ...style }}
+      />
     </div>
   )
 }
