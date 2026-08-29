@@ -39,5 +39,10 @@
     "missingToken": "The map isn't configured yet.",
     "loadFailed": "We couldn't load the map.",
     "listHint": "You can keep exploring and checking in from the list."
+  },
+  "interestsNudge": {
+    "message": "You haven't picked your interests yet. Choose them to see more relevant places.",
+    "cta": "Choose interests",
+    "dismiss": "Dismiss"
   }
 }

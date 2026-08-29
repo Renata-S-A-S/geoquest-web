@@ -4,6 +4,7 @@ import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { SplashPage } from '@/features/onboarding/splash-page'
+import { InterestsStepPage } from '@/features/onboarding/interests-step-page'
 import { CheckinPage } from '@/features/checkin/checkin-page'
 import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
@@ -25,9 +26,9 @@ import { ProtectedRoute } from './protected-route'
  * sin sesión nunca completó el onboarding — por eso `/onboarding` (splash) y
  * `/registro` (PR3, recién alcanzable desde acá) son hermanas públicas del
  * árbol, mismo precedente que `/login`. `/onboarding/intereses` (el paso de
- * intereses tras registrarse) NO se cablea en este PR — vive dentro de
- * `ProtectedRoute` pero fuera de `AppShell` (precedente `/checkin`) y su
- * componente + wiring de ruta son responsabilidad de PR5. `/perfil`,
+ * intereses tras registrarse, PR5) SÍ requiere sesión — vive dentro de
+ * `ProtectedRoute` pero fuera de `AppShell` (precedente `/checkin`: flujo
+ * full-bleed sin nav). `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: '/checkin', element: <CheckinPage /> },
+      { path: '/onboarding/intereses', element: <InterestsStepPage /> },
       {
         element: <AppShell />,
         children: [
