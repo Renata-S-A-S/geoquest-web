@@ -7,6 +7,7 @@ import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
 import { RoutesPage } from '@/features/routes/routes-page'
+import { SettingsPage } from '@/features/settings/settings-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -17,8 +18,12 @@ import { ProtectedRoute } from './protected-route'
  * igual que el mock del design system no muestra navbar en esos 4 estados),
  * pero SÍ vive dentro de `ProtectedRoute` — a diferencia de /login, acá sí
  * hace falta sesión (stub) para entrar. El árbol con AppShell está envuelto
- * en `ProtectedRoute` (WU7, issue #7) — sin sesión real todavía, usa el stub
- * de `useAuthStore` para decidir si deja pasar o manda a /login. `/perfil`,
+ * en `ProtectedRoute` (WU7, issue #7) — usa `useAuthStore` para decidir si
+ * deja pasar o manda a /login. `/configuracion` (explorer-onboarding-settings
+ * PR6, design D6/D7) vive dentro de `AppShell` — a diferencia de `/checkin`,
+ * esta pantalla SÍ muestra el nav; es la única pantalla de
+ * logout/preferencias del explorador autenticado (por ahora, scaffold-only:
+ * monta `LanguageSwitcher`, el resto llega en PR7). `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
@@ -47,6 +52,7 @@ export const router = createBrowserRouter([
           { path: '/premios/leaderboard', element: <LeaderboardPage /> },
           { path: '/perfil', element: <ProfilePage /> },
           { path: '/perfil/editar', element: <EditProfilePage /> },
+          { path: '/configuracion', element: <SettingsPage /> },
         ],
       },
     ],
