@@ -1,0 +1,36 @@
+{
+  "title": "Términos y condiciones",
+  "back": "Volver",
+  "lastUpdated": "Última actualización: pendiente",
+  "placeholderNotice": "Este contenido es un placeholder de estructura — el equipo legal todavía no redactó el texto definitivo.",
+  "sections": {
+    "acceptance": {
+      "heading": "1. Aceptación de los términos",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "usage": {
+      "heading": "2. Uso del servicio",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "account": {
+      "heading": "3. Cuentas y registro",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "privacy": {
+      "heading": "4. Privacidad y datos",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "rewards": {
+      "heading": "5. Recompensas y GeoPoints",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "liability": {
+      "heading": "6. Limitación de responsabilidad",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    },
+    "contact": {
+      "heading": "7. Contacto",
+      "body": "[Placeholder — texto legal pendiente de redacción por el equipo de Legal.]"
+    }
+  }
+}

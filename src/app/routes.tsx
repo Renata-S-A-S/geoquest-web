@@ -8,6 +8,7 @@ import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
 import { RoutesPage } from '@/features/routes/routes-page'
 import { SettingsPage } from '@/features/settings/settings-page'
+import { TermsPage } from './terms-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -39,6 +40,7 @@ import { ProtectedRoute } from './protected-route'
  */
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/terminos', element: <TermsPage /> },
   {
     element: <ProtectedRoute />,
     children: [

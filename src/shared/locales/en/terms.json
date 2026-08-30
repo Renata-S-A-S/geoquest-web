@@ -1,0 +1,36 @@
+{
+  "title": "Terms and conditions",
+  "back": "Back",
+  "lastUpdated": "Last updated: pending",
+  "placeholderNotice": "This content is a structural placeholder — Legal hasn't drafted the final text yet.",
+  "sections": {
+    "acceptance": {
+      "heading": "1. Acceptance of terms",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "usage": {
+      "heading": "2. Use of the service",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "account": {
+      "heading": "3. Accounts and registration",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "privacy": {
+      "heading": "4. Privacy and data",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "rewards": {
+      "heading": "5. Rewards and GeoPoints",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "liability": {
+      "heading": "6. Limitation of liability",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    },
+    "contact": {
+      "heading": "7. Contact",
+      "body": "[Placeholder — legal text pending from the Legal team.]"
+    }
+  }
+}
