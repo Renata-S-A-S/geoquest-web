@@ -126,21 +126,20 @@ describe('ProfileView', () => {
     expect(screen.getByText('Primer paso')).toBeInTheDocument()
   })
 
-  it('renders a gear-icon link that navigates to /perfil/editar', () => {
+  it('renders a pencil-icon link that navigates to /perfil/editar', () => {
     renderView(<ProfileView profile={baseProfile} />)
 
     const editLink = screen.getByRole('link', { name: 'Editar perfil' })
     expect(editLink).toHaveAttribute('href', '/perfil/editar')
   })
 
-  it('renders a sibling settings-icon link that navigates to /configuracion (D5 — additive, does not replace the gear link)', () => {
+  it('renders a gear-icon link that navigates to /configuracion (icon semantics fixed post-testing: gear = Settings, pencil = Edit)', () => {
     renderView(<ProfileView profile={baseProfile} />)
 
     const editLink = screen.getByRole('link', { name: 'Editar perfil' })
     const settingsLink = screen.getByRole('link', { name: 'Configuración' })
     expect(settingsLink).toHaveAttribute('href', '/configuracion')
-    // Both links coexist — D5 is explicitly additive, not a replacement of
-    // the asserted gear->edit behavior above.
+    // Both links coexist.
     expect(editLink).toBeInTheDocument()
   })
 })
