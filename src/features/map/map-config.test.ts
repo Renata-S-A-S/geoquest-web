@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_CENTER,
   DEFAULT_RADIUS_M,
-  MAP_STYLE_URL,
   computeHasMapboxToken,
   hasMapboxToken,
   resolveDefaultCenter,
+  resolveMapStyleUrl,
 } from '@/features/map/map-config'
 
 /**
@@ -66,8 +66,12 @@ describe('DEFAULT_RADIUS_M', () => {
   })
 })
 
-describe('MAP_STYLE_URL', () => {
-  it('is a stock Mapbox style, not a custom brand-token style', () => {
-    expect(MAP_STYLE_URL).toBe('mapbox://styles/mapbox/streets-v12')
+describe('resolveMapStyleUrl', () => {
+  it('resolves the light theme to the stock streets style', () => {
+    expect(resolveMapStyleUrl('light')).toBe('mapbox://styles/mapbox/streets-v12')
+  })
+
+  it('resolves the dark theme to the stock dark style', () => {
+    expect(resolveMapStyleUrl('dark')).toBe('mapbox://styles/mapbox/dark-v11')
   })
 })
