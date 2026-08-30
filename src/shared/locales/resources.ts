@@ -39,5 +39,13 @@ export const resources = {
   },
 } as const
 
-export const ns = ['common', 'checkin', 'auth', 'gamification', 'map', 'routes', 'settings'] as const
+export const ns = [
+  'common',
+  'checkin',
+  'auth',
+  'gamification',
+  'map',
+  'routes',
+  'settings',
+] as const
 export const defaultNS = 'common' as const
