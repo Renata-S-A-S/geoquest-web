@@ -30,7 +30,7 @@ export function InterestsNudgeBanner() {
   return (
     <div
       data-testid="interests-nudge-banner"
-      className="mx-4 mt-3 flex shrink-0 items-center gap-2 rounded-md border border-border bg-white px-3 py-2"
+      className="mx-4 mt-3 flex shrink-0 items-center gap-2 rounded-md border border-border bg-surface-raised px-3 py-2"
     >
       <div className="flex flex-1 flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <span className="font-sans text-[10.5px] text-muted">{t('interestsNudge.message')}</span>

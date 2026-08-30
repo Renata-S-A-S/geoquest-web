@@ -56,12 +56,12 @@ export function AuthLayout({
 
       <div className="flex w-full max-w-sm flex-col md:w-full md:max-w-3xl md:flex-row md:overflow-hidden md:rounded-xl md:border md:border-border">
         {/* Panel de marca — desde md */}
-        <div className="relative hidden shrink-0 flex-col justify-between overflow-hidden bg-ink px-7 py-8 text-cream md:flex md:w-[240px] lg:w-[300px]">
+        <div className="relative hidden shrink-0 flex-col justify-between overflow-hidden bg-surface-inverse px-7 py-8 text-on-inverse md:flex md:w-[240px] lg:w-[300px]">
           <TopoBackground tone="dark" />
           <div className="relative z-10 flex flex-col gap-2">
-            <h2 className="font-display text-2xl text-cream">GeoQuest</h2>
+            <h2 className="font-display text-2xl text-on-inverse">GeoQuest</h2>
             {tagline && (
-              <p className="hidden font-sans text-xs leading-snug text-cream/70 lg:block">
+              <p className="hidden font-sans text-xs leading-snug text-on-inverse/70 lg:block">
                 {tagline}
               </p>
             )}

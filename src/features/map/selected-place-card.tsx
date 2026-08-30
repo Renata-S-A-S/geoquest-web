@@ -57,7 +57,7 @@ export function SelectedPlaceCard({ place, onCheckIn, onDismiss }: SelectedPlace
           type="button"
           aria-label={t('place.dismissSelection')}
           onClick={onDismiss}
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ink/55 text-cream"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-scrim text-on-brand"
         >
           <X size={14} weight="bold" />
         </button>
@@ -77,7 +77,7 @@ export function SelectedPlaceCard({ place, onCheckIn, onDismiss }: SelectedPlace
         <button
           type="button"
           onClick={onCheckIn}
-          className="mt-1 w-full rounded-sm bg-teal py-2.5 font-sans text-xs font-bold text-cream"
+          className="mt-1 w-full rounded-sm bg-teal py-2.5 font-sans text-xs font-bold text-on-brand"
         >
           {t('place.checkIn')}
         </button>

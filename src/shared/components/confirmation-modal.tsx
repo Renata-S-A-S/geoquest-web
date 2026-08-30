@@ -45,7 +45,7 @@ export function ConfirmationModal({
   const cancel = cancelLabel ?? t('actions.cancel')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 lg:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-scrim lg:items-center">
       <div className="w-full lg:w-[460px]">
         <TornPanel
           edge="top"
@@ -75,7 +75,7 @@ export function ConfirmationModal({
               variant={destructive ? 'destructive' : 'primary'}
               className={cn(
                 'flex-1 py-[13px] lg:py-3.5 lg:text-[13.5px]',
-                destructive && 'border-alert bg-alert text-cream hover:bg-alert/90'
+                destructive && 'border-alert bg-alert text-on-brand hover:bg-alert/90'
               )}
               onClick={onConfirm}
             >

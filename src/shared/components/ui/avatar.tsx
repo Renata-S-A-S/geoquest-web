@@ -31,7 +31,7 @@ export function Avatar({ initial, src, alt, size = 'md', className }: AvatarProp
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal font-display font-bold text-cream',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-teal font-display font-bold text-on-brand',
         sizeMap[size],
         className
       )}
