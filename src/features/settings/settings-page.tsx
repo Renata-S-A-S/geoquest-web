@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { LanguageSwitcher } from '@/shared/components/language-switcher'
@@ -45,7 +46,8 @@ function PreferenceToggle({ label, checked, onChange }: PreferenceToggleProps) {
  * with `ThemeSwitcher` (D7 — now available on this branch after the
  * theme-system branch merged, resolving PR6's blocking risk), the
  * notification/privacy toggles wired to `settings-store.ts` (D6), a T&C
- * link (placeholder `#` href — target URL still pending PO), and logout.
+ * link to `/terminos` (structural placeholder page — legal copy still
+ * pending from Legal, see `terms-page.tsx`), and logout.
  *
  * Logout mirrors `edit-profile-page.tsx`'s `ConfirmationModal` +
  * `queryClient.clear()` pattern exactly (spec "Single Logout Surface" /
@@ -99,9 +101,9 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <a href="#" className="font-sans text-[11px] font-bold text-teal">
+      <Link to="/terminos" className="w-fit font-sans text-[11px] font-bold text-teal">
         {t('terms')}
-      </a>
+      </Link>
 
       <div className="flex flex-col gap-4 border-t border-border pt-4">
         <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>

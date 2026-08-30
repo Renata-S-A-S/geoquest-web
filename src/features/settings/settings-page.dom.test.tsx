@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { useSettingsStore } from '@/shared/stores/settings-store'
@@ -20,7 +21,9 @@ function renderPage(
 ) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <SettingsPage />
+      <MemoryRouter initialEntries={['/configuracion']}>
+        <SettingsPage />
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }
@@ -91,13 +94,13 @@ describe('SettingsPage preferences (PR7, D6)', () => {
   })
 })
 
-describe('SettingsPage T&C link (PR7)', () => {
-  it('renders a Términos y condiciones link (placeholder href, target URL pending PO)', () => {
+describe('SettingsPage T&C link', () => {
+  it('renders a Términos y condiciones link to /terminos', () => {
     renderPage()
 
     expect(screen.getByRole('link', { name: 'Términos y condiciones' })).toHaveAttribute(
       'href',
-      '#'
+      '/terminos'
     )
   })
 })
