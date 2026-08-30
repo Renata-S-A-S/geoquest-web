@@ -6,7 +6,6 @@ import i18next from 'i18next'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw-server'
-import { useAuthStore } from '@/shared/stores/auth-store'
 import { EditProfilePage } from './edit-profile-page'
 import type { ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
@@ -295,98 +294,68 @@ describe('EditProfilePage avatar upload', () => {
 })
 
 /**
- * WU10b (issue closure) / WU10c (D10) — logout affordance on
- * `/perfil/editar`. Moved up to the `EditProfilePage` container so it
- * renders across all 3 branches — this is the app's only logout
- * affordance, so it must stay reachable even if the profile read fails.
- * The trigger button and the `ConfirmationModal`'s confirm button share the
- * same accessible name ("Cerrar sesión"), so once the modal is open there
- * are TWO matching buttons; tests disambiguate by taking the last match,
- * since the confirmation section renders after the trigger in DOM order.
+ * PR8 (explorer-onboarding-settings, D7) — logout, `ThemeSwitcher`, and
+ * `LanguageSwitcher` all relocated to `/configuracion` (`settings-page.tsx`).
+ * Spec "Single Logout Surface" / "Theme Switcher Relocation": Editar Perfil
+ * MUST NOT expose any of the three controls, on any of its 3 render
+ * branches (pending / error / success). These assertions are non-vacuous —
+ * before this PR's GREEN step, all three controls genuinely render here.
  */
-describe('EditProfilePage logout', () => {
-  beforeEach(() => {
-    useAuthStore.setState({ isAuthenticated: true, accessToken: 'token' })
-  })
-  afterEach(() => {
-    localStorage.clear()
-  })
-
-  it('opens a confirmation modal with the exact logout copy when "Cerrar sesión" is activated', async () => {
+describe('EditProfilePage — no logout, theme, or language controls', () => {
+  it('renders no logout control on the success branch', async () => {
     await renderPage()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-
-    expect(screen.getByText('¿Cerrar sesión?')).toBeInTheDocument()
-    expect(screen.getByText('Vas a necesitar iniciar sesión de nuevo.')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Cerrar sesión' })).toHaveLength(2)
-    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
   })
 
-  it('closes the modal on Cancel, keeps the session active, and never calls logout()', async () => {
-    const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
-    await renderPage()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-
-    expect(screen.queryByText('¿Cerrar sesión?')).not.toBeInTheDocument()
-    expect(useAuthStore.getState().isAuthenticated).toBe(true)
-    expect(logoutSpy).not.toHaveBeenCalled()
-  })
-
-  it('calls logout() on Confirm, flips isAuthenticated to false, and does not unmount the page', async () => {
-    const logoutSpy = vi.spyOn(useAuthStore.getState(), 'logout')
-    await renderPage()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
-    fireEvent.click(confirmButtons[confirmButtons.length - 1])
-
-    expect(logoutSpy).toHaveBeenCalledTimes(1)
-    expect(useAuthStore.getState().isAuthenticated).toBe(false)
-    // The cleared queryClient (D10) drops the cached explorerMe read, so the
-    // container briefly re-shows its pending skeleton before the mounted
-    // query observer refetches and the form reappears — the page itself is
-    // never unmounted or navigated away.
-    expect(await screen.findByLabelText('Nombre de usuario')).toBeInTheDocument()
-  })
-
-  it('clears the QueryClient cache — including the explorerMe read — on confirmed logout', async () => {
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    await renderPage(queryClient)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
-    fireEvent.click(confirmButtons[confirmButtons.length - 1])
-
-    expect(queryClient.getQueryData(['explorer', 'me'])).toBeUndefined()
-  })
-
-  it('never triggers the profile PATCH when opening, cancelling, or confirming logout', async () => {
-    let patchCalls = 0
+  it('renders no logout control on the pending branch, before the profile read resolves', async () => {
     server.use(
-      http.patch(`${baseURL}/explorers/me`, () => {
-        patchCalls += 1
-        return HttpResponse.json({
-          explorerId: 'e1',
-          username: 'nachomed',
-          avatarUrl: null,
-          interests: [],
-          usernameChangedAt: null,
-        })
+      http.get(`${baseURL}/explorers/me`, async () => {
+        await delay('infinite')
+        return HttpResponse.json(meResponse())
       })
     )
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
+  })
+
+  it('renders no logout control on the error branch, when GET /explorers/me fails', async () => {
+    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <MemoryRouter initialEntries={['/perfil/editar']}>
+          <EditProfilePage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+
+    await screen.findByRole('button', { name: 'Reintentar' })
+    expect(screen.queryByRole('button', { name: 'Cerrar sesión' })).not.toBeInTheDocument()
+  })
+
+  it('renders no theme switcher control', async () => {
     await renderPage()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    const confirmButtons = screen.getAllByRole('button', { name: 'Cerrar sesión' })
-    fireEvent.click(confirmButtons[confirmButtons.length - 1])
+    expect(screen.queryByRole('group', { name: 'Tema' })).not.toBeInTheDocument()
+  })
 
-    await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false))
-    expect(patchCalls).toBe(0)
+  it('renders no language switcher control', async () => {
+    await renderPage()
+
+    expect(screen.queryByRole('group', { name: 'Idioma' })).not.toBeInTheDocument()
   })
 })
 
@@ -423,58 +392,6 @@ describe('EditProfilePage pending state', () => {
 })
 
 /**
- * Phase F — `ThemeSwitcher` is mounted in `logoutSection`, right after
- * `LanguageSwitcher` (design "Mount point" — same WU11 rationale: that
- * block renders across all 3 branches so the control stays reachable even
- * when the profile read fails). One test per branch.
- */
-describe('EditProfilePage theme switcher', () => {
-  it('renders the theme switcher on the pending branch, before the profile read resolves', async () => {
-    server.use(
-      http.get(`${baseURL}/explorers/me`, async () => {
-        await delay('infinite')
-        return HttpResponse.json(meResponse())
-      })
-    )
-
-    render(
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <MemoryRouter initialEntries={['/perfil/editar']}>
-          <EditProfilePage />
-        </MemoryRouter>
-      </QueryClientProvider>
-    )
-
-    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
-  })
-
-  it('renders the theme switcher on the error branch, when GET /explorers/me fails', async () => {
-    server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
-
-    render(
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <MemoryRouter initialEntries={['/perfil/editar']}>
-          <EditProfilePage />
-        </MemoryRouter>
-      </QueryClientProvider>
-    )
-
-    await screen.findByRole('button', { name: 'Reintentar' })
-    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
-  })
-
-  it('renders the theme switcher on the success branch, alongside the prefilled form', async () => {
-    await renderPage()
-
-    expect(screen.getByRole('group', { name: 'Tema' })).toBeInTheDocument()
-  })
-})
-
-/**
  * WU11 (i18n) PR4c — `gamification` namespace EN-switch coverage for
  * `/perfil/editar`. Mirrors `profile-view.dom.test.tsx`'s single
  * changeLanguage('en') + real-EN-string-assertions pattern. Covers the
@@ -490,7 +407,7 @@ describe('EditProfilePage gamification EN-switch', () => {
     })
   })
 
-  it('renders real English copy for form labels, interest pills, avatar actions, and logout/confirmation text', async () => {
+  it('renders real English copy for form labels, interest pills, and avatar actions', async () => {
     server.use(
       http.get(`${baseURL}/explorers/me`, () =>
         HttpResponse.json(
@@ -524,13 +441,6 @@ describe('EditProfilePage gamification EN-switch', () => {
     // not the deprecated static `label` field (removed in this PR).
     expect(screen.getByRole('button', { name: 'Adventure' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Log out' }))
-
-    expect(screen.getByText('Log out?')).toBeInTheDocument()
-    expect(screen.getByText("You'll need to sign in again.")).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 
   it('renders the translated network error message when a PATCH fails', async () => {
@@ -587,11 +497,10 @@ describe('EditProfilePage gamification EN-switch', () => {
  * `GET /explorers/me` blocks the form entirely rather than failing open
  * into an unprefilled form: `onSubmit` unconditionally sends
  * `interests: selectedInterests`, and `[]` is a FULL REPLACE server-side,
- * so an unprefilled form is destructive, not merely incomplete. Logout
- * (D10) stays reachable on this branch too.
+ * so an unprefilled form is destructive, not merely incomplete.
  */
 describe('EditProfilePage error state', () => {
-  it('blocks the form and shows a retry affordance when GET /explorers/me fails, without ever firing the PATCH, while logout stays reachable', async () => {
+  it('blocks the form and shows a retry affordance when GET /explorers/me fails, without ever firing the PATCH', async () => {
     server.use(http.get(`${baseURL}/explorers/me`, () => new HttpResponse(null, { status: 500 })))
     let patchCalls = 0
     server.use(
@@ -616,6 +525,5 @@ describe('EditProfilePage error state', () => {
     expect(screen.queryByRole('button', { name: 'Naturaleza' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
     expect(patchCalls).toBe(0)
-    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
   })
 })
