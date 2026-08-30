@@ -14,6 +14,39 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap"
     />
+    <script id="theme-bootstrap">
+      // Pre-paint, synchronous, deliberately NOT type="module" (module scripts are
+      // deferred and would run after first paint -> flash of the wrong theme).
+      // zustand `persist` rehydrates only after React mounts, so it cannot own this.
+      // Shape below is `zustand/middleware`'s createJSONStorage output, verified in
+      // node_modules: JSON.stringify({ state: partialize(get()), version }).
+      // `version` is IGNORED on purpose: `mode` is validated against the literal
+      // union instead, so any future/unknown persisted shape degrades to "system"
+      // rather than throwing before first paint. Kept in sync with
+      // src/shared/lib/theme.ts by src/test/theme-bootstrap.dom.test.ts.
+      ;(function () {
+        try {
+          var mode = 'system'
+          var raw = localStorage.getItem('geoquest.theme')
+          if (raw) {
+            var persisted = JSON.parse(raw)
+            var value = persisted && persisted.state && persisted.state.mode
+            if (value === 'light' || value === 'dark' || value === 'system') mode = value
+          }
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              typeof matchMedia === 'function' &&
+              matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', dark ? '#0A1618' : '#F6F3EC')
+        } catch (error) {
+          // Storage blocked (private mode / disabled cookies) or corrupt JSON —
+          // fall through to the light default rather than blocking first paint.
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
