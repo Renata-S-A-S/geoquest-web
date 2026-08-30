@@ -87,7 +87,7 @@ export function AuthLayout({
             className="absolute inset-0 md:hidden"
             aria-hidden="true"
           />
-          <div className="relative z-10 flex flex-col gap-4 px-6 py-7 md:bg-white md:px-9 md:py-10">
+          <div className="relative z-10 flex flex-col gap-4 px-6 py-7 md:bg-surface-raised md:px-9 md:py-10">
             <h2 className="hidden font-display text-lg text-ink md:block">{title}</h2>
             {children}
             {footer}

@@ -76,7 +76,7 @@ export function PendingCheckinBanner() {
   if (!snapshot || dismissed || !data || outcome === 'pending') return null
 
   return (
-    <div className="mx-3 mt-3 flex items-center justify-between gap-3 rounded-md border border-border bg-white px-3 py-2.5">
+    <div className="mx-3 mt-3 flex items-center justify-between gap-3 rounded-md border border-border bg-surface-raised px-3 py-2.5">
       {outcome === 'approved' ? (
         <p className="font-sans text-xs text-ink">
           <b className="text-teal">

@@ -91,15 +91,15 @@ export function ProfileView({
       </div>
 
       <div className="flex gap-2">
-        <div className="flex-1 rounded-md border border-border bg-white px-3 py-2 text-center">
+        <div className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-2 text-center">
           <b className="block font-display text-sm text-ink">{profile.weeklyXP}</b>
           <span className="font-sans text-[10px] text-muted">{t('profile.weeklyXp')}</span>
         </div>
-        <div className="flex-1 rounded-md border border-border bg-white px-3 py-2 text-center">
+        <div className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-2 text-center">
           <b className="block font-display text-sm text-ink">{profile.geoPointsBalance}</b>
           <span className="font-sans text-[10px] text-muted">GeoPoints</span>
         </div>
-        <div className="flex-1 rounded-md border border-border bg-white px-3 py-2 text-center">
+        <div className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-2 text-center">
           <b className="block font-display text-sm text-ink">{profile.longestStreak}</b>
           <span className="font-sans text-[10px] text-muted">{t('profile.longestStreak')}</span>
         </div>

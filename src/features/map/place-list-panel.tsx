@@ -80,7 +80,7 @@ export function PlaceListPanel({
                 aria-label={t('list.selectAria', { name: place.name })}
                 onClick={() => onSelect(place)}
                 className={cn(
-                  'flex w-full items-center justify-between gap-2 rounded-md border border-border bg-white px-3 py-2.5 text-left',
+                  'flex w-full items-center justify-between gap-2 rounded-md border border-border bg-surface-raised px-3 py-2.5 text-left',
                   place.placeId === selectedPlaceId && 'border-teal bg-surface-teal'
                 )}
               >

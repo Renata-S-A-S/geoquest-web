@@ -17,7 +17,7 @@ export function RouteCard({ route, onSelect }: RouteCardProps) {
       <button
         type="button"
         onClick={() => onSelect(route)}
-        className="flex w-full flex-col gap-2 rounded-md border border-border bg-white p-3.5 text-left"
+        className="flex w-full flex-col gap-2 rounded-md border border-border bg-surface-raised p-3.5 text-left"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
