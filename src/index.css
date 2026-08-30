@@ -1,5 +1,107 @@
 @import 'tailwindcss';
-@config '../tailwind.config.ts';
+
+/* Class-driven, deliberately decoupled from `prefers-color-scheme`: "System"
+   is one of THREE explicit modes, and Light/Dark must beat the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* `static` (not plain `@theme`): `torn-panel.tsx` / `topo-background.tsx`
+   read `var(--color-ink)` from INLINE STYLES, which Tailwind's utility
+   scanner never sees. Without `static` those variables get tree-shaken out
+   of `:root` and both components render with an invalid color. */
+@theme static {
+  /* Closed palette: drop Tailwind's ~250 defaults, re-declare only the two
+     non-color keywords this app actually uses (verified by grep:
+     `border-transparent`, `bg-transparent`, `text-current`). */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Brand */
+  --color-teal: #0ea5a0;
+  --color-coral: #ff7a59;
+  --color-green: #3ecf8e;
+  --color-ink: #10262b;
+  --color-cream: #fff9f2;
+  --color-alert: #e5484d;
+
+  /* Neutrals */
+  --color-border: #e4dfd4;
+  --color-muted: #8a8578;
+  --color-paper: #f6f3ec;
+
+  /* Surfaces */
+  --color-surface-mint: #e1f0e6;
+  --color-surface-teal: #e1f5ee;
+  --color-surface-alert: #fdecec;
+  --color-surface-skeleton: #e9e5dc;
+  --color-surface-placeholder: #dcd6c8;
+  --color-surface-raised: #ffffff;
+
+  /* TEMPORARY: still referenced by `bg-white`/`border-white` (28 occurrences
+     across 23 files) until the sweep to `surface-raised` lands in the next
+     phase. `--color-*: initial` above would otherwise remove it outright and
+     break every one of those usages in this same commit. */
+  --color-white: #ffffff;
+
+  /* Literal-dark roles — see design D-3. These do NOT simply invert. */
+  --color-surface-inverse: #10262b;
+  --color-on-inverse: #fff9f2;
+  --color-on-brand: #fff9f2; /* invariant: sits on `teal`/`alert`, mid-tone in both themes */
+  --color-scrim: color-mix(in srgb, #10262b 55%, transparent);
+
+  /* Alpha is baked into `--shadow-marker` / `--color-scrim` on purpose:
+     a Tailwind `/55` modifier cannot vary per theme. */
+  --shadow-marker: 0 0 2px rgba(16, 38, 43, 0.4);
+
+  --font-display: '"Baloo 2"', sans-serif;
+  --font-sans: '"Nunito"', sans-serif;
+  --font-mono: '"Space Mono"', monospace;
+
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+}
+
+/* UNLAYERED on purpose: `@theme` emits into `@layer theme`, and an unlayered
+   rule beats every layered rule regardless of source order. `.dark` is set on
+   <html>, which is also `:root`, so equal specificity would otherwise leave
+   source order as the only tiebreak. */
+.dark {
+  --color-teal: #2fbfb8;
+  --color-coral: #ff9270;
+  --color-green: #3ecf8e; /* unchanged across themes — founder decision #4 */
+  --color-ink: #f2ede4;
+  --color-cream: #10262b;
+  --color-alert: #ff6b70; /* lifted for WCAG AA — founder decision #3 */
+
+  --color-border: #2a474d;
+  --color-muted: #9fafb2;
+  --color-paper: #0a1618;
+
+  --color-surface-mint: #12302c;
+  --color-surface-teal: #123a38;
+  --color-surface-alert: #3a1d1f;
+  --color-surface-skeleton: #1e3a40;
+  --color-surface-placeholder: #24444a;
+  --color-surface-raised: #17343a;
+
+  --color-surface-inverse: #17343a;
+  --color-on-inverse: #f2ede4;
+  /* --color-on-brand intentionally NOT overridden */
+  --color-scrim: color-mix(in srgb, #0a1618 72%, transparent);
+
+  --shadow-marker: 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Native form controls, scrollbars and caret follow the active theme. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
 
 html {
   scroll-behavior: smooth;
@@ -7,14 +109,15 @@ html {
 
 body {
   margin: 0;
-  background-color: theme('colors.cream');
-  color: theme('colors.ink');
-  font-family: theme('fontFamily.sans');
+  /* `var()`, not `theme()`: `theme()` resolves at BUILD time and can never react. */
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
 h1,
 h2,
 h3 {
-  font-family: theme('fontFamily.display');
+  font-family: var(--font-display);
   margin: 0;
 }

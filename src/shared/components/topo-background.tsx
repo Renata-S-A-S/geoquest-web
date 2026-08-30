@@ -13,7 +13,10 @@ export interface TopoBackgroundProps {
  * interactivo.
  */
 export function TopoBackground({ tone = 'light', className }: TopoBackgroundProps) {
-  const stroke = tone === 'light' ? 'rgba(16,38,43,0.08)' : 'rgba(255,249,242,0.1)'
+  const stroke =
+    tone === 'light'
+      ? 'color-mix(in srgb, var(--color-ink) 8%, transparent)'
+      : 'color-mix(in srgb, var(--color-cream) 10%, transparent)'
   return (
     <svg
       className={cn('pointer-events-none absolute inset-0 h-full w-full', className)}
