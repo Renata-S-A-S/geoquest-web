@@ -132,4 +132,15 @@ describe('ProfileView', () => {
     const editLink = screen.getByRole('link', { name: 'Editar perfil' })
     expect(editLink).toHaveAttribute('href', '/perfil/editar')
   })
+
+  it('renders a sibling settings-icon link that navigates to /configuracion (D5 — additive, does not replace the gear link)', () => {
+    renderView(<ProfileView profile={baseProfile} />)
+
+    const editLink = screen.getByRole('link', { name: 'Editar perfil' })
+    const settingsLink = screen.getByRole('link', { name: 'Configuración' })
+    expect(settingsLink).toHaveAttribute('href', '/configuracion')
+    // Both links coexist — D5 is explicitly additive, not a replacement of
+    // the asserted gear->edit behavior above.
+    expect(editLink).toBeInTheDocument()
+  })
 })

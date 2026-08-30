@@ -1,3 +1,15 @@
 {
-  "title": "Settings"
+  "title": "Settings",
+  "notifications": {
+    "label": "Notifications",
+    "toggle": "Enable notifications"
+  },
+  "privacy": {
+    "label": "Privacy",
+    "toggle": "Share usage data"
+  },
+  "terms": "Terms and conditions",
+  "logout": "Log out",
+  "logoutConfirmTitle": "Log out?",
+  "logoutConfirmDescription": "You'll need to sign in again."
 }

@@ -1,3 +1,15 @@
 {
-  "title": "Configuración"
+  "title": "Configuración",
+  "notifications": {
+    "label": "Notificaciones",
+    "toggle": "Activar notificaciones"
+  },
+  "privacy": {
+    "label": "Privacidad",
+    "toggle": "Compartir datos de uso"
+  },
+  "terms": "Términos y condiciones",
+  "logout": "Cerrar sesión",
+  "logoutConfirmTitle": "¿Cerrar sesión?",
+  "logoutConfirmDescription": "Vas a necesitar iniciar sesión de nuevo."
 }

@@ -19,6 +19,7 @@
     "retry": "Reintentar",
     "defaultUsername": "Explorador",
     "editAria": "Editar perfil",
+    "settingsAria": "Configuración",
     "streak": "{{count}} días de racha",
     "maxLevel": "Nivel máximo",
     "xpProgress": "{{current}} / {{total}} XP",

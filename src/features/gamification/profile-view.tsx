@@ -1,4 +1,4 @@
-import { Fire, Gear } from '@phosphor-icons/react'
+import { Fire, Gear, SlidersHorizontal } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Avatar } from '@/shared/components/ui/avatar'
@@ -66,6 +66,12 @@ export function ProfileView({
             <span>{t('profile.streak', { count: profile.currentStreak })}</span>
           </div>
         </div>
+        {/* D5 (design, PO-confirmed): additive sibling icon link to
+            Configuración — the existing gear->edit link above is an
+            asserted spec behavior and stays untouched. */}
+        <Link to="/configuracion" aria-label={t('profile.settingsAria')} className="text-muted">
+          <SlidersHorizontal size={20} weight="fill" />
+        </Link>
         <Link to="/perfil/editar" aria-label={t('profile.editAria')} className="text-muted">
           <Gear size={20} weight="fill" />
         </Link>
