@@ -4,5 +4,11 @@
     "tagline": "Explore Medellín. Earn along the way.",
     "createAccount": "Create account",
     "hasAccount": "I already have an account"
+  },
+  "interests": {
+    "title": "Choose your interests",
+    "subtitle": "These help us show you relevant places and quests. Pick at least one.",
+    "continue": "Continue",
+    "submitting": "Saving…"
   }
 }

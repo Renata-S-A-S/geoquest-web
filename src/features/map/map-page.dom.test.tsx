@@ -606,3 +606,60 @@ describe('MapPage — map view (token present)', () => {
     await waitFor(() => expect(screen.getByText('Sin resultados')).toBeInTheDocument())
   })
 })
+
+/**
+ * explorer-onboarding-settings PR5 (design D8) — `InterestsNudgeBanner`
+ * mounts unconditionally in `map-page.tsx` and owns its own visibility via
+ * `useExplorerProfile()`. These two tests only prove the wiring itself
+ * (banner reachable from `MapPage`, both directions); the banner's own
+ * behavior (pending, dismiss) is covered by
+ * `interests-nudge-banner.dom.test.tsx`.
+ */
+describe('MapPage — interests nudge banner (PR5, D8)', () => {
+  it('shows the nudge banner when the authenticated explorer has zero interests', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])),
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json({
+          explorerId: 'e1',
+          username: 'nachomed',
+          avatarUrl: null,
+          interests: [],
+          usernameChangedAt: null,
+        })
+      )
+    )
+
+    renderMapPage()
+
+    expect(await screen.findByTestId('interests-nudge-banner')).toBeInTheDocument()
+  })
+
+  it('does not show the nudge banner when the authenticated explorer already has interests', async () => {
+    vi.mocked(resolveMapCenter).mockResolvedValue({
+      center: { lat: 6.211, lng: -75.571 },
+      source: 'gps',
+    })
+    server.use(
+      http.get(`${baseURL}/places/nearby`, () => HttpResponse.json([nearbyPlace()])),
+      http.get(`${baseURL}/explorers/me`, () =>
+        HttpResponse.json({
+          explorerId: 'e1',
+          username: 'nachomed',
+          avatarUrl: null,
+          interests: ['Aventura'],
+          usernameChangedAt: null,
+        })
+      )
+    )
+
+    renderMapPage()
+
+    await waitFor(() => expect(screen.getByText('El Cielo')).toBeInTheDocument())
+    expect(screen.queryByTestId('interests-nudge-banner')).not.toBeInTheDocument()
+  })
+})
