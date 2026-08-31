@@ -5,8 +5,10 @@ import {
   loginRequestSchema,
   loginResponseSchema,
   problemDetailsSchema,
+  registerRequestSchema,
   type LoginRequest,
   type LoginResponse,
+  type RegisterRequest,
 } from '@/shared/schemas/auth'
 
 /** WU6 (issue #6) — llama al `POST /auth/login` real, valida la respuesta con zod. */
@@ -53,6 +55,54 @@ export function mapLoginError(error: unknown, t: TFunction): string {
     }
     if (title === 'Validation.Failed' || status === 400) {
       return detail ?? t('errors.validationFailed')
+    }
+  }
+
+  return t('errors.generic')
+}
+
+/**
+ * `POST /auth/register` — explorer-onboarding-settings PR1. Same shape and
+ * transport as `loginRequest`: the response reuses `loginResponseSchema`
+ * because the backend returns the same `AuthResponse`, so a successful
+ * registration auto-authenticates exactly like login.
+ */
+export async function registerRequest(payload: RegisterRequest): Promise<LoginResponse> {
+  const body = registerRequestSchema.parse(payload)
+  const { data } = await apiClient.post('/auth/register', body)
+  return loginResponseSchema.parse(data)
+}
+
+/**
+ * Mapea errores de `POST /auth/register` al copy que ve el usuario (D4).
+ * Diverge deliberadamente de `mapLoginError` en un solo punto:
+ * `Identity.DuplicateExplorer` SIEMPRE se traduce, nunca pasa el `detail`
+ * real del servidor — ese `detail` viene hardcodeado en español desde el
+ * backend y rompería el locale `en`.
+ *
+ *   409 title="Identity.DuplicateExplorer" -> mensaje estático traducido (NUNCA el detail del server)
+ *   400 title="Validation.Failed"          -> usa el `detail` real si vino (passthrough, igual que login)
+ *   429                                     -> mensaje estático traducido de rate limit
+ */
+export function mapRegisterError(error: unknown, t: TFunction): string {
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return t('errors.network')
+    }
+
+    const problem = problemDetailsSchema.safeParse(error.response.data)
+    const title = problem.success ? problem.data.title : undefined
+    const detail = problem.success ? problem.data.detail : undefined
+    const status = error.response.status
+
+    if (title === 'Identity.DuplicateExplorer') {
+      return t('errors.duplicateExplorer')
+    }
+    if (title === 'Validation.Failed' || status === 400) {
+      return detail ?? t('errors.validationFailed')
+    }
+    if (status === 429) {
+      return t('errors.rateLimited')
     }
   }
 

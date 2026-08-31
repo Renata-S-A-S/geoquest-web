@@ -2,6 +2,9 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './layout/app-shell'
 import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
+import { RegisterPage } from '@/features/auth/register-page'
+import { SplashPage } from '@/features/onboarding/splash-page'
+import { InterestsStepPage } from '@/features/onboarding/interests-step-page'
 import { CheckinPage } from '@/features/checkin/checkin-page'
 import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
@@ -19,11 +22,18 @@ import { ProtectedRoute } from './protected-route'
  * pero SÍ vive dentro de `ProtectedRoute` — a diferencia de /login, acá sí
  * hace falta sesión (stub) para entrar. El árbol con AppShell está envuelto
  * en `ProtectedRoute` (WU7, issue #7) — usa `useAuthStore` para decidir si
- * deja pasar o manda a /login. `/configuracion` (explorer-onboarding-settings
- * PR6, design D6/D7) vive dentro de `AppShell` — a diferencia de `/checkin`,
- * esta pantalla SÍ muestra el nav; es la única pantalla de
- * logout/preferencias del explorador autenticado (por ahora, scaffold-only:
- * monta `LanguageSwitcher`, el resto llega en PR7). `/perfil`,
+ * deja pasar. explorer-onboarding-settings PR4 (design D1): `ProtectedRoute`
+ * ahora manda a `/onboarding` (en vez de siempre `/login`) cuando el visitante
+ * sin sesión nunca completó el onboarding — por eso `/onboarding` (splash) y
+ * `/registro` (PR3, recién alcanzable desde acá) son hermanas públicas del
+ * árbol, mismo precedente que `/login`. `/onboarding/intereses` (el paso de
+ * intereses tras registrarse, PR5) SÍ requiere sesión — vive dentro de
+ * `ProtectedRoute` pero fuera de `AppShell` (precedente `/checkin`: flujo
+ * full-bleed sin nav). `/configuracion` (explorer-onboarding-settings PR6,
+ * design D6/D7) vive dentro de `AppShell` — a diferencia de `/checkin`, esta
+ * pantalla SÍ muestra el nav; es la única pantalla de logout/preferencias
+ * del explorador autenticado (por ahora, scaffold-only: monta
+ * `LanguageSwitcher`, el resto llega en PR7). `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
@@ -38,11 +48,14 @@ import { ProtectedRoute } from './protected-route'
  * Recompensas (Slice 004); no es un cambio funcional, solo documentación.
  */
 export const router = createBrowserRouter([
+  { path: '/onboarding', element: <SplashPage /> },
+  { path: '/registro', element: <RegisterPage /> },
   { path: '/login', element: <LoginPage /> },
   {
     element: <ProtectedRoute />,
     children: [
       { path: '/checkin', element: <CheckinPage /> },
+      { path: '/onboarding/intereses', element: <InterestsStepPage /> },
       {
         element: <AppShell />,
         children: [
