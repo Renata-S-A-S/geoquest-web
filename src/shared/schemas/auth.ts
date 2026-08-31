@@ -21,6 +21,21 @@ export const loginResponseSchema = z.object({
 export type LoginResponse = z.infer<typeof loginResponseSchema>
 
 /**
+ * Contrato REAL de `POST /auth/register` — explorer-onboarding-settings PR1.
+ * `latitude`/`longitude` son opcionales (D3: captura GPS no bloqueante). La
+ * respuesta reutiliza `loginResponseSchema` sin cambios: el backend devuelve
+ * el mismo `AuthResponse` que login, así el registro auto-autentica.
+ */
+export const registerRequestSchema = z.object({
+  username: z.string().min(1).max(64),
+  email: z.string().email().max(256),
+  password: z.string().min(8),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+})
+export type RegisterRequest = z.infer<typeof registerRequestSchema>
+
+/**
  * Contrato REAL de `POST /auth/refresh` — WU6 (issue #6). El body key
  * (`refreshToken`) fue confirmado contra el código fuente del backend. La
  * respuesta reutiliza `loginResponseSchema` (misma forma exacta que login).

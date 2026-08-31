@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_RADIUS_M, hasMapboxToken } from '@/features/map/map-config'
+import { InterestsNudgeBanner } from '@/features/map/interests-nudge-banner'
 import { MapUnavailable } from '@/features/map/map-unavailable'
 import { MapView } from '@/features/map/map-view'
 import { PlaceListPanel } from '@/features/map/place-list-panel'
@@ -31,6 +32,12 @@ const SEARCH_DEBOUNCE_MS = 350
  * `SelectedPlaceCard`, no store write, no navigation). Only the card's own
  * "Check-in" button, or a list-row click in map-unavailable mode, commits
  * via `checkinStore.setSelectedPlace()` and navigates to `/checkin`.
+ *
+ * explorer-onboarding-settings PR5 (design D8) — `InterestsNudgeBanner`
+ * mounts unconditionally at the top; it decides its own visibility (reads
+ * `useExplorerProfile()` internally, renders null unless the authenticated
+ * explorer has zero interests) so this container carries no extra fetch or
+ * branching for it.
  */
 export function MapPage() {
   const { t } = useTranslation('map')
@@ -112,6 +119,8 @@ export function MapPage() {
 
   return (
     <div className="flex h-full flex-col">
+      <InterestsNudgeBanner />
+
       {centerResult?.source === 'default' && (
         <div className="mx-4 mt-3 shrink-0 rounded-md border border-border bg-surface-raised px-3 py-2 font-sans text-[10.5px] text-muted">
           {t('location.usingDefault')}
