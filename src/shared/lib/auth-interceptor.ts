@@ -78,7 +78,7 @@ export function installAuthInterceptors(client: AxiosInstance): void {
         accessToken = await ensureRefresh(config.baseURL)
       } catch {
         // Orden: logout primero, clear después — mismo criterio que el
-        // logout manual de `edit-profile-page.tsx` (issue #42). Limpiar
+        // logout manual de `settings-page.tsx` (issue #42). Limpiar
         // antes dejaría una ventana donde un observer todavía autenticado
         // podría refetchear y repoblar la cache antes de que el estado
         // "no autenticado" surta efecto.

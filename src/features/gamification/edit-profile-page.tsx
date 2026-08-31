@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
@@ -12,10 +11,6 @@ import { Button } from '@/shared/components/ui/button'
 import { Pill } from '@/shared/components/ui/pill'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Toast } from '@/shared/components/toast'
-import { ConfirmationModal } from '@/shared/components/confirmation-modal'
-import { LanguageSwitcher } from '@/shared/components/language-switcher'
-import { ThemeSwitcher } from '@/shared/components/theme-switcher'
-import { useAuthStore } from '@/shared/stores/auth-store'
 import { usernameCooldown } from '@/features/gamification/username-cooldown'
 import { INTEREST_CATALOG } from '@/features/gamification/interests-catalog'
 import { useExplorerProfile, useUpdateProfile } from '@/features/gamification/queries'
@@ -43,8 +38,9 @@ type EditProfileFormValues = z.infer<ReturnType<typeof createEditUsernameSchema>
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 /**
- * Container — `/perfil/editar` (WU10c, design decisions D9/D10). Reads
- * `useExplorerProfile()` (`GET /explorers/me`, the same genuine read
+ * Container — `/perfil/editar` (WU10c, design decisions D9/D10; PR8 of
+ * explorer-onboarding-settings removed logout/theme/language — see below).
+ * Reads `useExplorerProfile()` (`GET /explorers/me`, the same genuine read
  * `/perfil` uses — TanStack dedupes on the shared key) and renders one of
  * 3 branches: pending -> inline skeleton, `isError` -> blocking retry UI
  * (spec "Edit Form Prefills From Server-Read Profile Data" — failing open
@@ -53,89 +49,46 @@ const MAX_AVATAR_BYTES = 5 * 1024 * 1024
  * read resolves — hook count must stay identical across renders, so the
  * early returns live in this container, not inside the form component.
  *
- * Logout lives here too (D10), not inside `EditProfileForm`: this screen
- * is the app's only logout affordance, so it must render across all 3
- * branches, including when the profile read fails. `LanguageSwitcher` and
- * `ThemeSwitcher` (Phase F) share that reasoning (WU11) — both are mounted
- * beside logout so they stay reachable across all 3 branches too.
+ * Logout, `ThemeSwitcher`, and `LanguageSwitcher` moved to `/configuracion`
+ * (`settings-page.tsx`) in PR8 (design D7, spec "Single Logout Surface" /
+ * "Theme Switcher Relocation") — Configuración is now the app's sole
+ * preferences/logout surface. This isolated removal is separately
+ * revertible from the additive PR1-PR7 route commits.
  */
 export function EditProfilePage() {
   const { t } = useTranslation('gamification')
-  const queryClient = useQueryClient()
-  const logout = useAuthStore((state) => state.logout)
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const meQuery = useExplorerProfile()
-
-  const handleConfirmLogout = () => {
-    setConfirmOpen(false)
-    logout()
-    queryClient.clear()
-  }
-
-  const logoutSection = (
-    <>
-      <div className="p-4 pt-0">
-        <div className="flex flex-col gap-4 border-t border-border pt-4">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
-          <Button type="button" variant="destructive" onClick={() => setConfirmOpen(true)}>
-            {t('editProfile.logout')}
-          </Button>
-        </div>
-      </div>
-      {confirmOpen && (
-        <ConfirmationModal
-          title={t('editProfile.logoutConfirmTitle')}
-          description={t('editProfile.logoutConfirmDescription')}
-          confirmLabel={t('editProfile.logout')}
-          onConfirm={handleConfirmLogout}
-          onCancel={() => setConfirmOpen(false)}
-        />
-      )}
-    </>
-  )
 
   if (meQuery.isPending) {
     return (
-      <>
-        <div className="flex flex-col gap-4 p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-14 w-14 rounded-full" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-          <Skeleton className="h-10 w-full" />
-          <div className="flex gap-2">
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-8 w-20" />
-          </div>
-          <Skeleton className="h-10 w-full" />
+      <div className="flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-14 w-14 rounded-full" />
+          <Skeleton className="h-4 w-32" />
         </div>
-        {logoutSection}
-      </>
+        <Skeleton className="h-10 w-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+      </div>
     )
   }
 
   if (meQuery.isError) {
     return (
-      <>
-        <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <span className="font-sans text-xs text-ink">{t('profile.loadError')}</span>
-          <Button variant="primary" onClick={() => meQuery.refetch()}>
-            {t('profile.retry')}
-          </Button>
-        </div>
-        {logoutSection}
-      </>
+      <div className="flex flex-col items-center gap-3 p-6 text-center">
+        <span className="font-sans text-xs text-ink">{t('profile.loadError')}</span>
+        <Button variant="primary" onClick={() => meQuery.refetch()}>
+          {t('profile.retry')}
+        </Button>
+      </div>
     )
   }
 
-  return (
-    <>
-      <EditProfileForm me={meQuery.data} />
-      {logoutSection}
-    </>
-  )
+  return <EditProfileForm me={meQuery.data} />
 }
 
 /**
