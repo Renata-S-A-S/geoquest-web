@@ -11,6 +11,7 @@ import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
 import { RoutesPage } from '@/features/routes/routes-page'
 import { SettingsPage } from '@/features/settings/settings-page'
+import { TermsPage } from './terms-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -29,11 +30,12 @@ import { ProtectedRoute } from './protected-route'
  * árbol, mismo precedente que `/login`. `/onboarding/intereses` (el paso de
  * intereses tras registrarse, PR5) SÍ requiere sesión — vive dentro de
  * `ProtectedRoute` pero fuera de `AppShell` (precedente `/checkin`: flujo
- * full-bleed sin nav). `/configuracion` (explorer-onboarding-settings PR6,
+ * full-bleed sin nav). `/configuracion` (explorer-onboarding-settings PR6/PR7,
  * design D6/D7) vive dentro de `AppShell` — a diferencia de `/checkin`, esta
  * pantalla SÍ muestra el nav; es la única pantalla de logout/preferencias
- * del explorador autenticado (por ahora, scaffold-only: monta
- * `LanguageSwitcher`, el resto llega en PR7). `/perfil`,
+ * del explorador autenticado (`ThemeSwitcher` + `LanguageSwitcher`, prefs de
+ * notificaciones/privacidad, link a T&C y logout). `/terminos` es hermana
+ * pública del árbol, mismo precedente que `/login`. `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
@@ -51,6 +53,7 @@ export const router = createBrowserRouter([
   { path: '/onboarding', element: <SplashPage /> },
   { path: '/registro', element: <RegisterPage /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/terminos', element: <TermsPage /> },
   {
     element: <ProtectedRoute />,
     children: [

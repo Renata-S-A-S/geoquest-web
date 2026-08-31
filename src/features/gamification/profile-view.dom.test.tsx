@@ -126,10 +126,20 @@ describe('ProfileView', () => {
     expect(screen.getByText('Primer paso')).toBeInTheDocument()
   })
 
-  it('renders a gear-icon link that navigates to /perfil/editar', () => {
+  it('renders a pencil-icon link that navigates to /perfil/editar', () => {
     renderView(<ProfileView profile={baseProfile} />)
 
     const editLink = screen.getByRole('link', { name: 'Editar perfil' })
     expect(editLink).toHaveAttribute('href', '/perfil/editar')
+  })
+
+  it('renders a gear-icon link that navigates to /configuracion (icon semantics fixed post-testing: gear = Settings, pencil = Edit)', () => {
+    renderView(<ProfileView profile={baseProfile} />)
+
+    const editLink = screen.getByRole('link', { name: 'Editar perfil' })
+    const settingsLink = screen.getByRole('link', { name: 'Configuración' })
+    expect(settingsLink).toHaveAttribute('href', '/configuracion')
+    // Both links coexist.
+    expect(editLink).toBeInTheDocument()
   })
 })

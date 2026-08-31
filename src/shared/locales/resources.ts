@@ -14,6 +14,8 @@ import esOnboarding from './es/onboarding.json'
 import enOnboarding from './en/onboarding.json'
 import esSettings from './es/settings.json'
 import enSettings from './en/settings.json'
+import esTerms from './es/terms.json'
+import enTerms from './en/terms.json'
 
 /**
  * Single shared resource bundle + namespace registry, reused by the app's
@@ -30,6 +32,7 @@ export const resources = {
     routes: esRoutes,
     onboarding: esOnboarding,
     settings: esSettings,
+    terms: esTerms,
   },
   en: {
     common: enCommon,
@@ -40,6 +43,7 @@ export const resources = {
     routes: enRoutes,
     onboarding: enOnboarding,
     settings: enSettings,
+    terms: enTerms,
   },
 } as const
 
@@ -52,5 +56,6 @@ export const ns = [
   'routes',
   'onboarding',
   'settings',
+  'terms',
 ] as const
 export const defaultNS = 'common' as const

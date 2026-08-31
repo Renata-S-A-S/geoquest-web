@@ -19,6 +19,7 @@
     "retry": "Retry",
     "defaultUsername": "Explorer",
     "editAria": "Edit profile",
+    "settingsAria": "Settings",
     "streak": "{{count}}-day streak",
     "maxLevel": "Max level",
     "xpProgress": "{{current}} / {{total}} XP",
