@@ -1,11 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { TermsPage } from './terms-page'
 
-function renderPage() {
+function renderPage(initialEntries: string[] = ['/terminos']) {
   return render(
-    <MemoryRouter initialEntries={['/terminos']}>
+    <MemoryRouter initialEntries={initialEntries}>
       <Routes>
         <Route path="/terminos" element={<TermsPage />} />
         <Route path="/configuracion" element={<div>Configuración screen</div>} />
@@ -32,9 +32,11 @@ describe('TermsPage', () => {
     expect(screen.getAllByText(/^\[Placeholder/)).toHaveLength(7)
   })
 
-  it('renders a back link to /configuracion', () => {
-    renderPage()
+  it('navigates back in history on "Volver" instead of a hardcoded /configuracion link', () => {
+    renderPage(['/configuracion', '/terminos'])
 
-    expect(screen.getByRole('link', { name: /volver/i })).toHaveAttribute('href', '/configuracion')
+    fireEvent.click(screen.getByRole('button', { name: /volver/i }))
+
+    expect(screen.getByText('Configuración screen')).toBeInTheDocument()
   })
 })

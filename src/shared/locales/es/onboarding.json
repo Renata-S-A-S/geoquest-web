@@ -1,0 +1,14 @@
+{
+  "splash": {
+    "wordmark": "GeoQuest",
+    "tagline": "Explorá Medellín. Ganá en el camino.",
+    "createAccount": "Crear cuenta",
+    "hasAccount": "Ya tengo cuenta"
+  },
+  "interests": {
+    "title": "Elegí tus intereses",
+    "subtitle": "Nos ayudan a mostrarte lugares y misiones relevantes. Elegí al menos uno.",
+    "continue": "Continuar",
+    "submitting": "Guardando…"
+  }
+}

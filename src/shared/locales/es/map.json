@@ -39,5 +39,10 @@
     "missingToken": "El mapa todavía no está configurado.",
     "loadFailed": "No pudimos cargar el mapa.",
     "listHint": "Podés seguir explorando y haciendo check-in desde la lista."
+  },
+  "interestsNudge": {
+    "message": "Todavía no elegiste tus intereses. Elegilos para ver lugares más relevantes.",
+    "cta": "Elegir intereses",
+    "dismiss": "Cerrar aviso"
   }
 }
