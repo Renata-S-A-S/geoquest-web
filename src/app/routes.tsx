@@ -10,6 +10,7 @@ import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
 import { RoutesPage } from '@/features/routes/routes-page'
+import { SettingsPage } from '@/features/settings/settings-page'
 import { ProtectedRoute } from './protected-route'
 
 /**
@@ -28,7 +29,11 @@ import { ProtectedRoute } from './protected-route'
  * árbol, mismo precedente que `/login`. `/onboarding/intereses` (el paso de
  * intereses tras registrarse, PR5) SÍ requiere sesión — vive dentro de
  * `ProtectedRoute` pero fuera de `AppShell` (precedente `/checkin`: flujo
- * full-bleed sin nav). `/perfil`,
+ * full-bleed sin nav). `/configuracion` (explorer-onboarding-settings PR6,
+ * design D6/D7) vive dentro de `AppShell` — a diferencia de `/checkin`, esta
+ * pantalla SÍ muestra el nav; es la única pantalla de logout/preferencias
+ * del explorador autenticado (por ahora, scaffold-only: monta
+ * `LanguageSwitcher`, el resto llega en PR7). `/perfil`,
  * `/perfil/editar` y `/premios/leaderboard` (WU10) ya renderizan vistas
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
@@ -60,6 +65,7 @@ export const router = createBrowserRouter([
           { path: '/premios/leaderboard', element: <LeaderboardPage /> },
           { path: '/perfil', element: <ProfilePage /> },
           { path: '/perfil/editar', element: <EditProfilePage /> },
+          { path: '/configuracion', element: <SettingsPage /> },
         ],
       },
     ],
