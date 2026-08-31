@@ -397,8 +397,8 @@ describe('EditProfilePage pending state', () => {
  * changeLanguage('en') + real-EN-string-assertions pattern. Covers the
  * form's static copy, the interest pills (now read from
  * `interests-catalog.ts`'s `labelKey` through `t()`, not the deprecated
- * static `label`), the avatar actions, and the logout/confirmation copy
- * that lives in the `EditProfilePage` container (D10).
+ * static `label`), and the avatar actions — logout/confirmation copy moved
+ * to `settings-page.tsx` (PR8, design D7) and is covered there.
  */
 describe('EditProfilePage gamification EN-switch', () => {
   afterEach(async () => {
