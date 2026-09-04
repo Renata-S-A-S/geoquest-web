@@ -15,11 +15,12 @@ import { createLoginSchema, type LoginFormValues } from './login-schema'
 /**
  * Pantalla de login — WU8 (UI, issue #8) + WU6 (cliente API real, issue #6).
  *
- * Decisión del founder (revisión de WU8): "Iniciar sesión" y "Continuar con
- * Google" son dos acciones separadas, no un único botón. "Iniciar sesión" es
- * el `type="submit"` real del formulario email/contraseña — ahora pega de
- * verdad a `POST /auth/login`; "Continuar con Google" sigue siendo un stub
- * (ver comentario en su handler, más abajo).
+ * "Iniciar sesión" es el `type="submit"` real del formulario
+ * email/contraseña, pega a `POST /auth/login`. El botón "Continuar con
+ * Google" fue eliminado (product decision 1215.2 / spec 1217): era un
+ * bypass de autenticación que escribía tokens falsos en el store. Vuelve en
+ * un cambio posterior cuando el backend exponga un callback de OAuth que la
+ * SPA pueda consumir (geoquest issue 129).
  */
 export function LoginPage() {
   const { t } = useTranslation('auth')
@@ -47,25 +48,6 @@ export function LoginPage() {
   const onSubmit = (values: LoginFormValues) => {
     setFormError(null)
     loginMutation.mutate(values)
-  }
-
-  const handleGoogleContinue = () => {
-    // TODO(OAuth — fuera de alcance de WU6): esto sigue siendo 100% stub, no
-    // hay integración real de Google todavía. Antes de WU6, este handler
-    // llamaba a un `login()` sin argumentos (stub de WU7); ahora que el
-    // store guarda tokens reales, acá simulamos una sesión con valores
-    // obviamente falsos SOLO para no romper el click-through de demo. Cuando
-    // se implemente OAuth de verdad, casi seguro no encaja en este mismo
-    // `login(tokens)` de email/contraseña — hace falta su propio flujo de
-    // redirect + callback — así que no tomar esto como plantilla.
-    console.log('[login] click en "Continuar con Google", pendiente de integrar OAuth')
-    login({
-      accessToken: 'stub-google-access-token',
-      accessTokenExpiresAtUtc: new Date(Date.now() + 3_600_000).toISOString(),
-      refreshToken: 'stub-google-refresh-token',
-      refreshTokenExpiresAtUtc: new Date(Date.now() + 86_400_000).toISOString(),
-    })
-    navigate('/')
   }
 
   return (
@@ -123,16 +105,6 @@ export function LoginPage() {
           {loginMutation.isPending ? t('form.submitPending') : t('form.submit')}
         </Button>
       </form>
-
-      <div className="flex items-center gap-2" aria-hidden="true">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-sans text-[11px] text-muted">{t('divider')}</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <Button type="button" variant="social" className="w-full" onClick={handleGoogleContinue}>
-        {t('google')}
-      </Button>
     </AuthLayout>
   )
 }
