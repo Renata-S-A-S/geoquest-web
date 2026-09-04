@@ -86,9 +86,7 @@ describe('ResetPasswordPage', () => {
       token: 'abc123',
       newPassword: 'password123',
     })
-    await waitFor(() =>
-      expect(screen.queryByLabelText('Nueva contraseña')).not.toBeInTheDocument()
-    )
+    await waitFor(() => expect(screen.queryByLabelText('Nueva contraseña')).not.toBeInTheDocument())
   })
 
   it('shows the mapped invalid/expired token error on a 401 response and keeps the form visible', async () => {

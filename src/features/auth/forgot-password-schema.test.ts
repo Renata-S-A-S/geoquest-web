@@ -28,9 +28,7 @@ describe('createForgotPasswordSchema', () => {
     const result = schema.safeParse({ email: 'nope' })
 
     expect(result.success).toBe(false)
-    expect(result.success ? undefined : result.error.issues[0]?.message).toBe(
-      'Enter a valid email'
-    )
+    expect(result.success ? undefined : result.error.issues[0]?.message).toBe('Enter a valid email')
   })
 
   it('accepts a valid email', () => {

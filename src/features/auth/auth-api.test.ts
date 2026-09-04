@@ -197,9 +197,7 @@ describe('forgotPasswordRequest', () => {
       })
     )
 
-    await expect(
-      forgotPasswordRequest({ email: 'user@example.com' })
-    ).resolves.toBeUndefined()
+    await expect(forgotPasswordRequest({ email: 'user@example.com' })).resolves.toBeUndefined()
     expect(receivedBody).toEqual({ email: 'user@example.com' })
   })
 })
