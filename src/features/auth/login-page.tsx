@@ -107,6 +107,12 @@ export function LoginPage() {
           hint={errors.password?.message}
           {...register('password')}
         />
+        <a
+          href="/forgot-password"
+          className="self-end font-sans text-[11px] font-bold text-teal hover:underline"
+        >
+          {t('forgotPasswordCta')}
+        </a>
         {formError && <Toast variant="error" message={formError} />}
         <Button
           type="submit"

@@ -2,13 +2,17 @@ import axios from 'axios'
 import type { TFunction } from 'i18next'
 import { apiClient } from '@/shared/lib/api-client'
 import {
+  forgotPasswordRequestSchema,
   loginRequestSchema,
   loginResponseSchema,
   problemDetailsSchema,
   registerRequestSchema,
+  resetPasswordRequestSchema,
+  type ForgotPasswordRequest,
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
+  type ResetPasswordRequest,
 } from '@/shared/schemas/auth'
 
 /** WU6 (issue #6) — llama al `POST /auth/login` real, valida la respuesta con zod. */
@@ -97,6 +101,98 @@ export function mapRegisterError(error: unknown, t: TFunction): string {
 
     if (title === 'Identity.DuplicateExplorer') {
       return t('errors.duplicateExplorer')
+    }
+    if (title === 'Validation.Failed' || status === 400) {
+      return detail ?? t('errors.validationFailed')
+    }
+    if (status === 429) {
+      return t('errors.rateLimited')
+    }
+  }
+
+  return t('errors.generic')
+}
+
+/**
+ * `POST /auth/password/forgot` — contrato confirmado directamente con el
+ * owner del backend. No hay respuesta relevante que parsear: el backend
+ * SIEMPRE devuelve 200 OK sin importar si el correo existe (anti
+ * account-enumeration), así que esta función no valida ni devuelve un body.
+ */
+export async function forgotPasswordRequest(payload: ForgotPasswordRequest): Promise<void> {
+  const body = forgotPasswordRequestSchema.parse(payload)
+  await apiClient.post('/auth/password/forgot', body)
+}
+
+/**
+ * Mapea errores de `POST /auth/password/forgot`. Al ser un endpoint que
+ * siempre responde 200 OK, solo hay ramas de error de transporte/validación
+ * cliente-servidor — no existe un título problem+json específico de este
+ * endpoint más allá de `Validation.Failed` (ej. formato de correo, aunque zod
+ * ya debería atajarlo antes de llegar acá).
+ *
+ *   429                            -> mensaje estático traducido de rate limit
+ *   400 title="Validation.Failed"  -> usa el `detail` real si vino (passthrough, igual que login)
+ */
+export function mapForgotPasswordError(error: unknown, t: TFunction): string {
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return t('errors.network')
+    }
+
+    const problem = problemDetailsSchema.safeParse(error.response.data)
+    const title = problem.success ? problem.data.title : undefined
+    const detail = problem.success ? problem.data.detail : undefined
+    const status = error.response.status
+
+    if (status === 429) {
+      return t('errors.rateLimited')
+    }
+    if (title === 'Validation.Failed' || status === 400) {
+      return detail ?? t('errors.validationFailed')
+    }
+  }
+
+  return t('errors.generic')
+}
+
+/**
+ * `POST /auth/password/reset` — contrato confirmado directamente con el
+ * owner del backend. A diferencia de login/register, esta respuesta 200 OK
+ * no trae tokens: el reset de contraseña no auto-autentica, así que no hay
+ * un `*ResponseSchema` que parsear acá.
+ */
+export async function resetPasswordRequest(payload: ResetPasswordRequest): Promise<void> {
+  const body = resetPasswordRequestSchema.parse(payload)
+  await apiClient.post('/auth/password/reset', body)
+}
+
+/**
+ * Mapea errores de `POST /auth/password/reset` (contrato confirmado con el
+ * backend).
+ *
+ *   401 title="Identity.InvalidResetToken" -> mensaje estático traducido, NUNCA el detail del server
+ *   400 title="Validation.Failed"          -> usa el `detail` real si vino (passthrough, igual que login)
+ *   429                                    -> mensaje estático traducido de rate limit
+ *
+ * El 401 es deliberadamente estático (nunca pasa `detail`): es la misma
+ * lógica de seguridad que `Identity.DuplicateExplorer` en `mapRegisterError`
+ * — un token de reset inválido/expirado no debería filtrar detalles del
+ * servidor al usuario.
+ */
+export function mapResetPasswordError(error: unknown, t: TFunction): string {
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      return t('errors.network')
+    }
+
+    const problem = problemDetailsSchema.safeParse(error.response.data)
+    const title = problem.success ? problem.data.title : undefined
+    const detail = problem.success ? problem.data.detail : undefined
+    const status = error.response.status
+
+    if (title === 'Identity.InvalidResetToken' || status === 401) {
+      return t('errors.invalidResetToken')
     }
     if (title === 'Validation.Failed' || status === 400) {
       return detail ?? t('errors.validationFailed')
