@@ -3,7 +3,15 @@ import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
-import { mapLoginError, mapRegisterError, registerRequest } from './auth-api'
+import {
+  forgotPasswordRequest,
+  mapForgotPasswordError,
+  mapLoginError,
+  mapRegisterError,
+  mapResetPasswordError,
+  registerRequest,
+  resetPasswordRequest,
+} from './auth-api'
 import type { RegisterRequest } from '@/shared/schemas/auth'
 
 const t = i18next.getFixedT('es', 'auth')
@@ -175,6 +183,111 @@ describe('mapRegisterError', () => {
     const error = makeAxiosError(409, { title: 'Identity.DuplicateExplorer' })
     expect(mapRegisterError(error, tEn)).toBe(
       'An account with that email or username already exists.'
+    )
+  })
+})
+
+describe('forgotPasswordRequest', () => {
+  it('POSTs /auth/password/forgot with the email payload and resolves with no meaningful body', async () => {
+    let receivedBody: unknown
+    server.use(
+      http.post(`${baseURL}/auth/password/forgot`, async ({ request }) => {
+        receivedBody = await request.json()
+        return new HttpResponse(null, { status: 200 })
+      })
+    )
+
+    await expect(
+      forgotPasswordRequest({ email: 'user@example.com' })
+    ).resolves.toBeUndefined()
+    expect(receivedBody).toEqual({ email: 'user@example.com' })
+  })
+})
+
+describe('mapForgotPasswordError', () => {
+  it('returns the translated network-error message when the request has no response', () => {
+    expect(mapForgotPasswordError(makeNoResponseAxiosError(), t)).toBe(
+      'No pudimos conectar con el servidor. Intentá de nuevo.'
+    )
+  })
+
+  it('returns the translated rate-limited message for a 429 response', () => {
+    const error = makeAxiosError(429, {})
+    expect(mapForgotPasswordError(error, t)).toBe('Demasiados intentos. Probá de nuevo más tarde.')
+  })
+
+  it('passes through the real server detail for a 400 / Validation.Failed response', () => {
+    const error = makeAxiosError(400, { title: 'Validation.Failed', detail: 'Correo inválido.' })
+    expect(mapForgotPasswordError(error, t)).toBe('Correo inválido.')
+  })
+
+  it('falls back to the translated static validation message when detail is absent on a 400', () => {
+    const error = makeAxiosError(400, { title: 'Validation.Failed' })
+    expect(mapForgotPasswordError(error, t)).toBe('Revisá los datos ingresados.')
+  })
+
+  it('returns the translated generic message for a non-axios error', () => {
+    expect(mapForgotPasswordError(new Error('boom'), t)).toBe(
+      'No pudimos iniciar sesión. Intentá de nuevo en unos minutos.'
+    )
+  })
+})
+
+describe('resetPasswordRequest', () => {
+  it('POSTs /auth/password/reset with the full payload and resolves with no meaningful body', async () => {
+    let receivedBody: unknown
+    server.use(
+      http.post(`${baseURL}/auth/password/reset`, async ({ request }) => {
+        receivedBody = await request.json()
+        return new HttpResponse(null, { status: 200 })
+      })
+    )
+
+    const payload = { email: 'user@example.com', token: 'tok+en/==', newPassword: 'password123' }
+    await expect(resetPasswordRequest(payload)).resolves.toBeUndefined()
+    expect(receivedBody).toEqual(payload)
+  })
+})
+
+describe('mapResetPasswordError', () => {
+  it('returns the translated network-error message when the request has no response', () => {
+    expect(mapResetPasswordError(makeNoResponseAxiosError(), t)).toBe(
+      'No pudimos conectar con el servidor. Intentá de nuevo.'
+    )
+  })
+
+  it('returns the translated invalid-reset-token message for a 401 / Identity.InvalidResetToken, never the raw server detail', () => {
+    const error = makeAxiosError(401, {
+      title: 'Identity.InvalidResetToken',
+      detail: 'raw server detail that must never leak',
+    })
+    expect(mapResetPasswordError(error, t)).toBe(
+      'Este enlace ya no es válido o expiró. Solicitá uno nuevo.'
+    )
+  })
+
+  it('passes through the real server detail for a 400 / Validation.Failed response', () => {
+    const error = makeAxiosError(400, {
+      title: 'Validation.Failed',
+      detail: 'La nueva contraseña es inválida.',
+    })
+    expect(mapResetPasswordError(error, t)).toBe('La nueva contraseña es inválida.')
+  })
+
+  it('falls back to the translated static validation message when detail is absent on a 400', () => {
+    const error = makeAxiosError(400, { title: 'Validation.Failed' })
+    expect(mapResetPasswordError(error, t)).toBe('Revisá los datos ingresados.')
+  })
+
+  it('returns the translated rate-limited message for a 429 response', () => {
+    const error = makeAxiosError(429, {})
+    expect(mapResetPasswordError(error, t)).toBe('Demasiados intentos. Probá de nuevo más tarde.')
+  })
+
+  it('uses the real English dictionary when built with an English t()', () => {
+    const error = makeAxiosError(401, { title: 'Identity.InvalidResetToken' })
+    expect(mapResetPasswordError(error, tEn)).toBe(
+      'This link is no longer valid or has expired. Request a new one.'
     )
   })
 })

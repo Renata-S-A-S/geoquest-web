@@ -3,6 +3,8 @@ import { AppShell } from './layout/app-shell'
 import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
+import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
+import { ResetPasswordPage } from '@/features/auth/reset-password-page'
 import { SplashPage } from '@/features/onboarding/splash-page'
 import { InterestsStepPage } from '@/features/onboarding/interests-step-page'
 import { CheckinPage } from '@/features/checkin/checkin-page'
@@ -48,12 +50,19 @@ import { ProtectedRoute } from './protected-route'
  * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
  * navegación — se conserva reservada para la futura pantalla de
  * Recompensas (Slice 004); no es un cambio funcional, solo documentación.
+ * `/forgot-password` y `/reset-password` (flujo de recuperación de
+ * contraseña) son hermanas públicas por la misma razón que `/login`: un
+ * usuario deslogueado que olvidó su contraseña necesita alcanzarlas sin
+ * sesión, y el link de `/reset-password` llega desde un email externo (no
+ * hay forma de que ese click ya traiga una sesión activa).
  */
 export const router = createBrowserRouter([
   { path: '/onboarding', element: <SplashPage /> },
   { path: '/registro', element: <RegisterPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/terminos', element: <TermsPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   {
     element: <ProtectedRoute />,
     children: [
