@@ -53,3 +53,94 @@ export const routeStartProblemSchema = z.object({
   status: z.number().optional(),
 })
 export type RouteStartProblem = z.infer<typeof routeStartProblemSchema>
+
+/**
+ * Read-layer contracts (004-routes-read-endpoints, Slice B/C) — the mock
+ * data note above is now obsolete for these shapes: `GET /routes`,
+ * `GET /routes/{id}`, and `GET /routes/{id}/progress` are real backend
+ * endpoints. Field names and nullability confirmed against
+ * `GeoQuest.Modules.Routes.Contracts.{RouteSummaryResult,RouteDetailResult,
+ * RouteStopResult,RouteProgressSummaryResult,RouteProgressDetailResult,
+ * RouteProgressStopResult}` (ASP.NET's default camelCase policy only
+ * lowercases the first character of each property name).
+ */
+
+/** `GET /routes` list item (`RouteSummaryResult`) — only `Published` routes, never `status`/`contentVersion`. */
+export const routeSummaryResultSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  routeType: z.string(),
+  theme: z.string(),
+  stopCount: z.number().int(),
+  windowDays: z.number().int(),
+  completionPointsReward: z.number().int(),
+})
+export type RouteSummaryResult = z.infer<typeof routeSummaryResultSchema>
+
+/** Curated/display stop of `RouteDetailResult.Stops` (`RouteStopResult`). `name` is `null` while the `PlaceRef` projection hasn't caught up yet. */
+export const routeStopResultSchema = z.object({
+  placeId: z.string(),
+  name: z.string().nullable(),
+})
+export type RouteStopResult = z.infer<typeof routeStopResultSchema>
+
+/**
+ * The explorer's own progress on a route (`RouteProgressSummaryResult`),
+ * used both embedded as `RouteDetailResult.MyProgress` and as a row of
+ * `GET /routes/progress` (not consumed by this slice — reserved for a
+ * later routes-page work unit).
+ */
+export const routeProgressSummaryResultSchema = z.object({
+  routeProgressId: z.string(),
+  routeId: z.string(),
+  routeName: z.string().nullable(),
+  status: z.string(),
+  startedAtUtc: z.string(),
+  expiresAtUtc: z.string(),
+  completedAtUtc: z.string().nullable(),
+  completedStopCount: z.number().int(),
+  totalStopCount: z.number().int(),
+})
+export type RouteProgressSummaryResult = z.infer<typeof routeProgressSummaryResultSchema>
+
+/** `GET /routes/{id}` response (`RouteDetailResult`). `myProgress` is `null` when the explorer never started this route. */
+export const routeDetailResultSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  routeType: z.string(),
+  theme: z.string(),
+  windowDays: z.number().int(),
+  completionPointsReward: z.number().int(),
+  stops: z.array(routeStopResultSchema),
+  myProgress: routeProgressSummaryResultSchema.nullable(),
+})
+export type RouteDetailResult = z.infer<typeof routeDetailResultSchema>
+
+/** Stop of `RouteProgressDetailResult.Stops` (`RouteProgressStopResult`) — from the intent's `RequiredPlaceIds` snapshot, never live `Route.PlaceIds`. */
+export const routeProgressStopResultSchema = z.object({
+  placeId: z.string(),
+  name: z.string().nullable(),
+  isCompleted: z.boolean(),
+  completedAtUtc: z.string().nullable(),
+})
+export type RouteProgressStopResult = z.infer<typeof routeProgressStopResultSchema>
+
+/**
+ * `GET /routes/{id}/progress` response (`RouteProgressDetailResult`) — the
+ * explorer's LAST attempt on this route. A `404` means "never started" and
+ * is handled by `getRouteProgress` returning `null`, never parsed through
+ * this schema (spec "Explorer Progress Detail", Never-started scenario).
+ */
+export const routeProgressDetailResultSchema = z.object({
+  routeProgressId: z.string(),
+  routeId: z.string(),
+  routeName: z.string().nullable(),
+  status: z.string(),
+  startedAtUtc: z.string(),
+  expiresAtUtc: z.string(),
+  completedAtUtc: z.string().nullable(),
+  completedStopCount: z.number().int(),
+  totalStopCount: z.number().int(),
+  stops: z.array(routeProgressStopResultSchema),
+})
+export type RouteProgressDetailResult = z.infer<typeof routeProgressDetailResultSchema>

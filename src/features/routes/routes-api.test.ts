@@ -2,6 +2,9 @@ import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '@/test/msw-server'
 import {
+  getRouteById,
+  getRouteProgress,
+  getRoutes,
   getStartRouteErrorMessage,
   mapStartRouteError,
   startRoute,
@@ -81,5 +84,124 @@ describe('getStartRouteErrorMessage', () => {
     expect(getStartRouteErrorMessage('notPublished')).toBeTruthy()
     expect(getStartRouteErrorMessage('blocked')).toBeTruthy()
     expect(getStartRouteErrorMessage('unknown')).toBeTruthy()
+  })
+})
+
+// 004-routes-read-endpoints (Slice B/C) — read-layer transport, RED first (task 2.1-2.3).
+
+describe('getRoutes', () => {
+  it('GET /routes maps the response to a RouteSummaryResult[]', async () => {
+    const summary = {
+      id: routeId,
+      name: 'Centro histórico',
+      routeType: 'walking',
+      theme: 'historia',
+      stopCount: 3,
+      windowDays: 7,
+      completionPointsReward: 50,
+    }
+    server.use(http.get(`${baseURL}/routes`, () => HttpResponse.json([summary])))
+
+    const result = await getRoutes()
+
+    expect(result).toEqual([summary])
+  })
+
+  it('resolves an empty array when the backend returns no published routes', async () => {
+    server.use(http.get(`${baseURL}/routes`, () => HttpResponse.json([])))
+
+    expect(await getRoutes()).toEqual([])
+  })
+})
+
+describe('getRouteById', () => {
+  it('GET /routes/{id} maps the response to a RouteDetailResult with myProgress null when never started', async () => {
+    const detail = {
+      id: routeId,
+      name: 'Centro histórico',
+      routeType: 'walking',
+      theme: 'historia',
+      windowDays: 7,
+      completionPointsReward: 50,
+      stops: [{ placeId: '10000000-0000-0000-0000-000000000004', name: 'Plaza Botero' }],
+      myProgress: null,
+    }
+    server.use(http.get(`${baseURL}/routes/${routeId}`, () => HttpResponse.json(detail)))
+
+    const result = await getRouteById(routeId)
+
+    expect(result).toEqual(detail)
+  })
+
+  it('maps a populated (non-null) myProgress', async () => {
+    const myProgress = {
+      routeProgressId: 'progress-1',
+      routeId,
+      routeName: 'Centro histórico',
+      status: 'Started',
+      startedAtUtc: '2026-09-01T00:00:00Z',
+      expiresAtUtc: '2026-09-08T00:00:00Z',
+      completedAtUtc: null,
+      completedStopCount: 1,
+      totalStopCount: 3,
+    }
+    server.use(
+      http.get(`${baseURL}/routes/${routeId}`, () =>
+        HttpResponse.json({
+          id: routeId,
+          name: 'Centro histórico',
+          routeType: 'walking',
+          theme: 'historia',
+          windowDays: 7,
+          completionPointsReward: 50,
+          stops: [],
+          myProgress,
+        })
+      )
+    )
+
+    const result = await getRouteById(routeId)
+
+    expect(result.myProgress).toEqual(myProgress)
+  })
+})
+
+describe('getRouteProgress', () => {
+  it('GET /routes/{id}/progress maps a 200 response to a RouteProgressDetailResult', async () => {
+    const progress = {
+      routeProgressId: 'progress-1',
+      routeId,
+      routeName: 'Centro histórico',
+      status: 'Started',
+      startedAtUtc: '2026-09-01T00:00:00Z',
+      expiresAtUtc: '2026-09-08T00:00:00Z',
+      completedAtUtc: null,
+      completedStopCount: 1,
+      totalStopCount: 3,
+      stops: [
+        {
+          placeId: '10000000-0000-0000-0000-000000000004',
+          name: 'Plaza Botero',
+          isCompleted: true,
+          completedAtUtc: '2026-09-01T12:00:00Z',
+        },
+      ],
+    }
+    server.use(http.get(`${baseURL}/routes/${routeId}/progress`, () => HttpResponse.json(progress)))
+
+    const result = await getRouteProgress(routeId)
+
+    expect(result).toEqual(progress)
+  })
+
+  it('maps a 404 to "not started" (null), never an error [scenario: Never-started route]', async () => {
+    server.use(
+      http.get(
+        `${baseURL}/routes/${routeId}/progress`,
+        () => new HttpResponse(null, { status: 404 })
+      )
+    )
+
+    await expect(getRouteProgress(routeId)).resolves.toBeNull()
   })
 })
