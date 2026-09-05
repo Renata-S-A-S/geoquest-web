@@ -16,6 +16,30 @@ import { RoutesPage } from '@/features/routes/routes-page'
 const baseURL = 'http://localhost:5219'
 const [routeA, routeB] = MOCK_ROUTES
 
+/**
+ * `RouteDetailModal` now fetches its own detail via `GET /routes/{id}`
+ * (slice 03a-route-detail-modal-async) instead of receiving the mock route
+ * object directly, so opening it in these tests requires mocking that
+ * endpoint. The stub mirrors `RouteDetailResult`'s shape one-to-one off the
+ * same seeded mock data the list already renders from.
+ */
+function mockRouteDetail(route: (typeof MOCK_ROUTES)[number]) {
+  server.use(
+    http.get(`${baseURL}/routes/${route.id}`, () =>
+      HttpResponse.json({
+        id: route.id,
+        name: route.name,
+        routeType: route.routeType,
+        theme: route.theme,
+        windowDays: route.windowDays,
+        completionPointsReward: route.completionPointsReward,
+        stops: route.stops.map(({ placeId, name }) => ({ placeId, name })),
+        myProgress: null,
+      })
+    )
+  )
+}
+
 function renderRoutesPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -40,34 +64,38 @@ describe('RoutesPage', () => {
     expect(screen.getByText(routeB.theme)).toBeInTheDocument()
   })
 
-  it('opens the detail modal with the ordered stop list when a card is tapped', () => {
+  it('opens the detail modal with the ordered stop list when a card is tapped', async () => {
+    mockRouteDetail(routeA)
     renderRoutesPage()
 
     fireEvent.click(screen.getByText(routeA.name))
 
     const modal = screen.getByTestId('route-detail-modal')
-    const stops = within(modal).getAllByTestId('route-detail-stop')
+    const stops = await within(modal).findAllByTestId('route-detail-stop')
     expect(stops).toHaveLength(routeA.stops.length)
     stops.forEach((stop, index) => {
       expect(within(stop).getByText(routeA.stops[index].name)).toBeInTheDocument()
     })
   })
 
-  it('closes the modal on backdrop click and on the close button', () => {
+  it('closes the modal on backdrop click and on the close button', async () => {
+    mockRouteDetail(routeA)
     renderRoutesPage()
 
     fireEvent.click(screen.getByText(routeA.name))
     expect(screen.getByTestId('route-detail-modal')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Cerrar' }))
     expect(screen.queryByTestId('route-detail-modal')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByText(routeA.name))
+    await screen.findByRole('button', { name: 'Cerrar' })
     fireEvent.click(screen.getByTestId('route-detail-modal-backdrop'))
     expect(screen.queryByTestId('route-detail-modal')).not.toBeInTheDocument()
   })
 
   it('starting a route calls the real POST /routes/{id}/start and shows a success confirmation', async () => {
+    mockRouteDetail(routeA)
     let capturedBody: unknown
     server.use(
       http.post(`${baseURL}/routes/${routeA.id}/start`, async ({ request }) => {
@@ -78,7 +106,7 @@ describe('RoutesPage', () => {
 
     renderRoutesPage()
     fireEvent.click(screen.getByText(routeA.name))
-    fireEvent.click(screen.getByRole('button', { name: 'Iniciar ruta' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar ruta' }))
 
     await waitFor(() => expect(screen.getByText('¡Ruta iniciada!')).toBeInTheDocument())
     expect(capturedBody).toBe('')
@@ -86,6 +114,7 @@ describe('RoutesPage', () => {
   })
 
   it('shows an inline error and keeps the start button usable when the backend rejects with 409', async () => {
+    mockRouteDetail(routeA)
     server.use(
       http.post(`${baseURL}/routes/${routeA.id}/start`, () =>
         HttpResponse.json({ title: 'RouteNotPublished' }, { status: 409 })
@@ -94,7 +123,7 @@ describe('RoutesPage', () => {
 
     renderRoutesPage()
     fireEvent.click(screen.getByText(routeA.name))
-    fireEvent.click(screen.getByRole('button', { name: 'Iniciar ruta' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Iniciar ruta' }))
 
     await waitFor(() =>
       expect(screen.getByText('Esta ruta todavía no está publicada.')).toBeInTheDocument()

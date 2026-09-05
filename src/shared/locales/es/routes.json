@@ -9,7 +9,9 @@
     "stopsTitle": "Paradas",
     "windowDays": "{{count}} días para completar desde el inicio",
     "reward": "+{{points}} pts al completar la ruta",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "errorTitle": "No pudimos cargar esta ruta",
+    "errorDescription": "Intentá de nuevo en un momento."
   },
   "stopDetail": {
     "close": "Cerrar detalle de la parada",

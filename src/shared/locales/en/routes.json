@@ -9,7 +9,9 @@
     "stopsTitle": "Stops",
     "windowDays": "{{count}} days to complete once started",
     "reward": "+{{points}} pts on completion",
-    "close": "Close"
+    "close": "Close",
+    "errorTitle": "We couldn't load this route",
+    "errorDescription": "Try again in a moment."
   },
   "stopDetail": {
     "close": "Close stop details",
