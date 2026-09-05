@@ -29,7 +29,7 @@ export function RoutesPage() {
       {selectedRoute && (
         <RouteDetailModal
           key={selectedRoute.id}
-          route={selectedRoute}
+          routeId={selectedRoute.id}
           onClose={() => setSelectedRoute(null)}
         />
       )}

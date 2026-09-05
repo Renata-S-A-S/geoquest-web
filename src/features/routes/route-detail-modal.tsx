@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarBlank, Star, X } from '@phosphor-icons/react'
+import { CalendarBlank, Star, WarningCircle, X } from '@phosphor-icons/react'
 import { TornPanel } from '@/shared/components/torn-panel'
 import { Button } from '@/shared/components/ui/button'
+import { EmptyState } from '@/shared/components/empty-state'
 import { Pill } from '@/shared/components/ui/pill'
 import { Spinner } from '@/shared/components/ui/spinner'
 import { Toast } from '@/shared/components/toast'
-import { categoryLabelKey } from '@/shared/schemas/places'
-import { useStartRoute } from '@/features/routes/queries'
+import { useRouteDetail, useStartRoute } from '@/features/routes/queries'
 import { getStartRouteErrorMessage, mapStartRouteError } from '@/features/routes/routes-api'
 import { RouteStopDetailCard } from '@/features/routes/route-stop-detail-card'
-import type { RouteDisplay, RouteStopDisplay } from '@/features/routes/routes-mock-data'
+import type { RouteStopResult } from '@/features/routes/schemas'
 
 export interface RouteDetailModalProps {
-  route: RouteDisplay
+  routeId: string
   onClose: () => void
 }
 
@@ -23,11 +23,24 @@ export interface RouteDetailModalProps {
  * mobile, centered `TornPanel` card from `lg`, closes on Escape or a
  * backdrop click.
  *
+ * The list only hands us a `routeId` — `GET /routes` returns stopless
+ * summaries (`RouteSummaryResult`), so this modal fetches its own detail
+ * via `useRouteDetail(routeId)` and owns its own loading/error states,
+ * mirroring `RouteStopDetailCard`'s exact `usePlaceDetail` idiom below.
+ *
+ * The real `RouteStopResult` is only `{ placeId, name }` — no category, so
+ * this modal does NOT render a per-stop category pill (decision 1235).
+ * That's not lost: `RouteStopDetailCard` already renders the real category
+ * from `GET /places/{id}` once a stop is tapped. Fetching category per stop
+ * here would be an N+1 request for a decorative label, rejected by design.
+ *
  * "Iniciar ruta" is a REAL network call (`POST /routes/{id}/start`, via
  * `useStartRoute`) — not mocked. On success it shows an inline confirmation
- * (`routeProgressId`) for this session only; there is no persistent
- * "route in progress" tracker across reloads, since the backend has no
- * read/GET endpoint yet to reconcile against.
+ * (`routeProgressId`) for this session only; there is still no persistent
+ * "route in progress" tracker across reloads. That is now a gap in THIS
+ * component, not in the backend: `GET /routes/{id}/progress` exists and is
+ * already wired as `useRouteProgress` (slice 2). Reconciling the started
+ * route against it on mount is deliberately left to a later work unit.
  *
  * Tapping a stop swaps the panel body for `RouteStopDetailCard` — the SAME
  * rich place-detail experience as the map's `SelectedPlaceCard` (real
@@ -37,10 +50,11 @@ export interface RouteDetailModalProps {
  * stop list) and only close the whole modal on a second trigger, mirroring
  * how a nested drill-down back button behaves elsewhere in the app.
  */
-export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
+export function RouteDetailModal({ routeId, onClose }: RouteDetailModalProps) {
   const { t } = useTranslation('routes')
+  const { data: route, isPending, isError } = useRouteDetail(routeId)
   const startRoute = useStartRoute()
-  const [selectedStop, setSelectedStop] = useState<RouteStopDisplay | null>(null)
+  const [selectedStop, setSelectedStop] = useState<RouteStopResult | null>(null)
 
   function handleClose() {
     if (selectedStop) {
@@ -77,11 +91,33 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
           backing="ink"
           role="dialog"
           aria-modal="true"
-          aria-label={selectedStop ? selectedStop.name : route.name}
+          aria-label={selectedStop?.name ?? route?.name ?? t('title')}
           data-testid="route-detail-modal"
           className="flex max-h-[85vh] flex-col gap-4 overflow-y-auto px-6 pb-8 pt-8 lg:px-9 lg:pb-8 lg:pt-10"
         >
-          {selectedStop ? (
+          {isPending ? (
+            <div
+              data-testid="route-detail-loading"
+              className="flex items-center justify-center py-10"
+            >
+              <Spinner size={24} />
+            </div>
+          ) : isError || !route ? (
+            <div data-testid="route-detail-error" className="flex flex-col gap-3">
+              <EmptyState
+                icon={WarningCircle}
+                title={t('detail.errorTitle')}
+                description={t('detail.errorDescription')}
+              />
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full rounded-sm border border-border py-2.5 font-sans text-xs font-bold text-ink"
+              >
+                {t('detail.close')}
+              </button>
+            </div>
+          ) : selectedStop ? (
             <RouteStopDetailCard
               placeId={selectedStop.placeId}
               onDismiss={() => setSelectedStop(null)}
@@ -133,14 +169,9 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
                         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-teal font-mono text-[10px] font-bold text-teal">
                           {index + 1}
                         </span>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-sans text-xs font-bold text-ink">{stop.name}</span>
-                          <Pill variant="tint" className="w-fit">
-                            {t(
-                              `gamification:interests.${categoryLabelKey(CATEGORY_INDEX[stop.category])}`
-                            )}
-                          </Pill>
-                        </div>
+                        <span className="font-sans text-xs font-bold text-ink">
+                          {stop.name ?? '—'}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -163,7 +194,7 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
                     type="button"
                     variant="primary"
                     disabled={startRoute.isPending}
-                    onClick={() => startRoute.mutate(route.id)}
+                    onClick={() => startRoute.mutate(routeId)}
                     className="w-full"
                   >
                     {startRoute.isPending ? (
@@ -183,14 +214,4 @@ export function RouteDetailModal({ route, onClose }: RouteDetailModalProps) {
       </div>
     </div>
   )
-}
-
-/** `stop.category` is a `CATEGORY_BY_ID` name (see `routes-mock-data.ts`) — this maps it back to its numeric index for reuse of `categoryLabelKey`. */
-const CATEGORY_INDEX: Record<string, number> = {
-  Gastronomia: 0,
-  Naturaleza: 1,
-  HistoriaCultura: 2,
-  Aventura: 3,
-  Arte: 4,
-  Alojamiento: 5,
 }
