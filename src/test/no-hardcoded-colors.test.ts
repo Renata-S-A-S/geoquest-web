@@ -100,6 +100,22 @@ const unallowedViolations = allViolations.filter(
 )
 
 describe('no-hardcoded-colors static scan', () => {
+  /**
+   * Sentinel. A static scan that silently stops finding files would pass
+   * forever while guarding nothing — `flatMap` over an empty file list yields
+   * no violations, and "no violations" is exactly what this suite asserts.
+   *
+   * The stale-entry test below is not a substitute: it only bites while
+   * `ALLOWED_HARDCODED_COLORS` still has a live entry, so it stops protecting
+   * the scan the moment `theme.ts`'s hex literals migrate to tokens. The
+   * anchor here is deliberately a structural file rather than an allow-listed
+   * one, so removing an allow-list entry cannot disarm the sentinel.
+   */
+  it('actually scans the source files', () => {
+    expect(sourceFiles.length).toBeGreaterThan(0)
+    expect(sourceFiles).toContain('app/routes.tsx')
+  })
+
   it('finds no hardcoded hex, functional-color, or raw-palette utility outside the allow-list', () => {
     const message = unallowedViolations
       .map((v) => `${v.path}:${v.line} [${v.rule}] matched "${v.match}"`)
