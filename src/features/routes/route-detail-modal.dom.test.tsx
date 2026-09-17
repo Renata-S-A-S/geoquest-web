@@ -44,7 +44,8 @@ const placePayload = {
   subcategory: 17,
   latitude: 6.2518,
   longitude: -75.5636,
-  pointsReward: 50,
+  xpReward: 50,
+  geoPointsReward: 0,
   photos: [],
 }
 

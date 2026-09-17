@@ -25,7 +25,8 @@ function place(overrides: Partial<NearbyPlace> = {}): NearbyPlace {
     latitude: 6.21,
     longitude: -75.57,
     distanceMeters: 850,
-    pointsReward: 50,
+    xpReward: 50,
+    geoPointsReward: 0,
     photos: [],
     ...overrides,
   }

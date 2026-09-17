@@ -3,7 +3,11 @@
   "list": {
     "stops": "{{count}} paradas",
     "windowDays": "{{count}} días para completar",
-    "reward": "+{{points}} pts"
+    "reward": "+{{points}} pts",
+    "loadError": "No pudimos cargar las rutas.",
+    "retry": "Reintentar",
+    "emptyTitle": "Todavía no hay rutas",
+    "emptyDescription": "Volvé pronto para descubrir nuevos recorridos."
   },
   "detail": {
     "stopsTitle": "Paradas",

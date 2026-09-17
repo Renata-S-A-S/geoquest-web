@@ -24,7 +24,8 @@ export const nearbyPlaceSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   distanceMeters: z.number(),
-  pointsReward: z.number(),
+  xpReward: z.number(),
+  geoPointsReward: z.number(),
   /** Seed data today is placeholder MinIO URLs (`http://localhost:9000/...`)
    * that mostly don't resolve to a real object yet — consumers must render a
    * graceful fallback on load failure, never assume the first URL is real. */
@@ -51,7 +52,8 @@ export const placeDetailSchema = z.object({
   subcategory: z.number().int().min(0).max(19),
   latitude: z.number(),
   longitude: z.number(),
-  pointsReward: z.number(),
+  xpReward: z.number(),
+  geoPointsReward: z.number(),
   photos: z.array(z.string()).default([]),
 })
 export type PlaceDetail = z.infer<typeof placeDetailSchema>

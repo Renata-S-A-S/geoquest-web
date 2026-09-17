@@ -109,7 +109,8 @@ function nearbyPlace(overrides: Record<string, unknown> = {}) {
     latitude: DEFAULT_CENTER.lat,
     longitude: DEFAULT_CENTER.lng,
     distanceMeters: 850,
-    pointsReward: 50,
+    xpReward: 50,
+    geoPointsReward: 0,
     photos: [],
     ...overrides,
   }
