@@ -3,7 +3,11 @@
   "list": {
     "stops": "{{count}} stops",
     "windowDays": "{{count}} days to complete",
-    "reward": "+{{points}} pts"
+    "reward": "+{{points}} pts",
+    "loadError": "We couldn't load the routes.",
+    "retry": "Retry",
+    "emptyTitle": "No routes yet",
+    "emptyDescription": "Check back soon for new tours."
   },
   "detail": {
     "stopsTitle": "Stops",
