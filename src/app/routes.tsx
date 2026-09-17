@@ -42,9 +42,9 @@ import { ProtectedRoute } from './protected-route'
  * reales; `/` renderiza `null` a propósito — `MapPage` se monta directo en
  * `AppShell` (no vía este Outlet) para sobrevivir la navegación entre tabs
  * sin recrear el contexto WebGL de Mapbox en cada visita (ver el comentario
- * en `app-shell.tsx`). `/rutas` (Rutas/tours) ya renderiza `RoutesPage` —
- * ver `features/routes/` (mock display data pendiente de un endpoint de
- * lectura real en el backend, documentado en `routes-mock-data.ts`).
+ * en `app-shell.tsx`). `/rutas` (Rutas/tours) ya renderiza `RoutesPage`,
+ * que consume el catálogo publicado vía `GET /routes` — ver
+ * `features/routes/`.
  * La ruta índice `/premios` (bare) sigue siendo
  * placeholder: WU10b (issue closure) repuntó la nav de "Premios" a
  * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
