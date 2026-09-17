@@ -5,13 +5,11 @@ import { z } from 'zod'
  * `schemas/places.ts`: Zod parse in, Zod parse out. Field names confirmed
  * against the backend source (`GeoQuest.Modules.Routes.Domain`).
  *
- * IMPORTANT: the backend currently exposes ONLY write endpoints for Routes
- * (`POST /routes/{id}/start`, and the `/admin/routes/*` admin surface) —
- * there is no `GET /routes` or `GET /routes/{id}` yet. `routeSchema` below
- * documents the real domain shape (used to validate the hand-authored mock
- * data in `routes-mock-data.ts` stays honest to the contract), but nothing
- * in this feature parses a live `Route` off the wire. Only
- * `routeStartResponseSchema` backs a real network call.
+ * Two families live here. The write surface (`POST /routes/{id}/start`) and
+ * `routeSchema`, which documents the full domain entity and is used only to
+ * keep the hand-authored `routes-mock-data.ts` honest to the contract —
+ * nothing parses a live `Route` off the wire. Then the read-layer result
+ * contracts further down, which do back real network calls.
  */
 
 export const ROUTE_STATUSES = ['Draft', 'Published', 'Archived'] as const
@@ -55,9 +53,8 @@ export const routeStartProblemSchema = z.object({
 export type RouteStartProblem = z.infer<typeof routeStartProblemSchema>
 
 /**
- * Read-layer contracts (004-routes-read-endpoints, Slice B/C) — the mock
- * data note above is now obsolete for these shapes: `GET /routes`,
- * `GET /routes/{id}`, and `GET /routes/{id}/progress` are real backend
+ * Read-layer contracts (004-routes-read-endpoints, Slice B/C). `GET /routes`,
+ * `GET /routes/{id}` and `GET /routes/{id}/progress` are real backend
  * endpoints. Field names and nullability confirmed against
  * `GeoQuest.Modules.Routes.Contracts.{RouteSummaryResult,RouteDetailResult,
  * RouteStopResult,RouteProgressSummaryResult,RouteProgressDetailResult,
