@@ -13,7 +13,7 @@ import { installLocaleInterceptor } from '@/shared/lib/locale-interceptor'
  * depender de esto un build de producción real.
  */
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5219',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'https://geoquest-api-td81.onrender.com',
 })
 
 installAuthInterceptors(apiClient)

@@ -1,11 +1,11 @@
 import { CalendarBlank, MapTrifold, Star } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Pill } from '@/shared/components/ui/pill'
-import type { RouteDisplay } from '@/features/routes/routes-mock-data'
+import type { RouteSummaryResult } from '@/features/routes/schemas'
 
 export interface RouteCardProps {
-  route: RouteDisplay
-  onSelect: (route: RouteDisplay) => void
+  route: RouteSummaryResult
+  onSelect: (route: RouteSummaryResult) => void
 }
 
 /** Rutas list card — name, theme, routeType badge, stop count, window days, points reward. Tapping opens the detail modal. */
@@ -31,7 +31,7 @@ export function RouteCard({ route, onSelect }: RouteCardProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Pill variant="outline">{t('list.stops', { count: route.placeIds.length })}</Pill>
+          <Pill variant="outline">{t('list.stops', { count: route.stopCount })}</Pill>
           <Pill variant="outline">
             <CalendarBlank size={12} weight="bold" />
             {t('list.windowDays', { count: route.windowDays })}
