@@ -3,10 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http, delay } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { ProfilePage } from './profile-page'
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 const gamingProfileResponse = {
   explorerId: 'explorer-1',

@@ -5,11 +5,12 @@ import { HttpResponse, http, delay } from 'msw'
 import i18next from 'i18next'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { EditProfilePage } from './edit-profile-page'
 import type { ExplorerProfileResponse } from '@/shared/schemas/gamification'
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function meResponse(overrides: Partial<ExplorerProfileResponse> = {}): ExplorerProfileResponse {
   return {

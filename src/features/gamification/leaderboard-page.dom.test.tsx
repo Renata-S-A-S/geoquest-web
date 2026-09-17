@@ -4,10 +4,11 @@ import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { act } from 'react'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { LeaderboardPage } from './leaderboard-page'
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })

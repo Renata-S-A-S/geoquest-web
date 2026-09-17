@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { MOCK_ROUTES } from '@/features/routes/routes-mock-data'
 import { RoutesPage } from '@/features/routes/routes-page'
@@ -13,7 +14,7 @@ import { RoutesPage } from '@/features/routes/routes-page'
  * (via the detail modal's "Iniciar ruta") is a real network call and goes
  * through msw, mirroring `map-page.dom.test.tsx`'s pattern.
  */
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 const [routeA, routeB] = MOCK_ROUTES
 
 /**

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { requestPosition } from '@/features/checkin/media/request-position'
@@ -19,7 +20,7 @@ vi.mock('@/features/checkin/media/request-position', async (importOriginal) => {
   return { ...actual, requestPosition: vi.fn() }
 })
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })

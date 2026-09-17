@@ -1,13 +1,14 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { getGamingProfile, getLeaderboard } from '@/features/gamification/gamification-api'
 
 /**
- * `apiClient`'s dev fallback baseURL (see `checkin-api.test.ts` for the same
- * note) — MSW must intercept that exact origin.
+ * The origin `apiClient` actually resolves at test time (see
+ * `checkin-api.test.ts` for the same note) — MSW must intercept it exactly.
  */
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 const profilePayload = {
   explorerId: 'explorer-1',

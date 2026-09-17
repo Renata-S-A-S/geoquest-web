@@ -2,6 +2,7 @@ import { AxiosError, type AxiosResponse } from 'axios'
 import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import {
   forgotPasswordRequest,
@@ -16,7 +17,7 @@ import type { RegisterRequest } from '@/shared/schemas/auth'
 
 const t = i18next.getFixedT('es', 'auth')
 const tEn = i18next.getFixedT('en', 'auth')
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 /**
  * Only the static/fallback branches of `mapLoginError` are in scope for the

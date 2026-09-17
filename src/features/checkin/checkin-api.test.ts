@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import {
   createCheckin,
@@ -10,12 +11,12 @@ import {
 } from '@/features/checkin/checkin-api'
 
 /**
- * `apiClient`'s dev fallback baseURL when `VITE_API_BASE_URL` is unset (see
- * `src/shared/lib/api-client.ts`) — this suite exercises the shared
- * singleton directly (mirrors `checkin-api.ts` calling `apiClient`
- * directly, same as `auth-api.ts`), so MSW must intercept that exact origin.
+ * The origin `apiClient` actually resolves at test time (see
+ * `src/test/api-base-url.ts`) — this suite exercises the shared singleton
+ * directly (mirrors `checkin-api.ts` calling `apiClient` directly, same as
+ * `auth-api.ts`), so MSW must intercept that exact origin.
  */
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 const validCreateCheckinPayload = {
   placeId: '10000000-0000-0000-0000-000000000004',

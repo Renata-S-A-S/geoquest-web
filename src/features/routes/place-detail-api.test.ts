@@ -1,10 +1,11 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { getPlaceById } from '@/features/routes/place-detail-api'
 
-/** `apiClient`'s dev fallback baseURL — see `places-api.test.ts` for the same note. */
-const baseURL = 'http://localhost:5219'
+/** The origin `apiClient` resolves at test time — see `places-api.test.ts`. */
+const baseURL = TEST_API_BASE_URL
 
 const placePayload = {
   placeId: '10000000-0000-0000-0000-000000000001',
