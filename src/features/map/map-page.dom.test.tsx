@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { DEFAULT_CENTER } from '@/features/map/map-config'
@@ -96,7 +97,7 @@ vi.mock('react-map-gl', () => ({
   ),
 }))
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function nearbyPlace(overrides: Record<string, unknown> = {}) {
   return {

@@ -3,6 +3,7 @@ import { act, render, renderHook, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useCheckin } from '@/features/checkin/use-checkin'
 import { CheckinPage } from '@/features/checkin/checkin-page'
@@ -35,7 +36,7 @@ vi.mock('@/features/checkin/media/request-position', async (importOriginal) => {
   return { ...actual, requestPosition: vi.fn() }
 })
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 const fakeStream = { getTracks: () => [] } as unknown as MediaStream
 const fakePosition = { latitude: 6.2234, longitude: -75.5802, gpsAccuracyMeters: 12.5 }
 const fakeBlob = new Blob(['jpeg-bytes'], { type: 'image/jpeg' })

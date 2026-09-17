@@ -1,15 +1,16 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { getNearbyPlaces } from '@/features/map/places-api'
 
 /**
- * `apiClient`'s dev fallback baseURL (see `gamification-api.test.ts` for the
- * same note) — MSW must intercept that exact origin. Fixture returns
- * real-shaped ints for category/subcategory, not strings (live-verified,
- * see `shared/schemas/places.ts`).
+ * The origin `apiClient` actually resolves at test time (see
+ * `gamification-api.test.ts` for the same note) — MSW must intercept it
+ * exactly. Fixture returns real-shaped ints for category/subcategory, not
+ * strings (live-verified, see `shared/schemas/places.ts`).
  */
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 const nearbyPayload = [
   {

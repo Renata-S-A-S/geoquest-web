@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import {
   buildProfilePatchForm,
@@ -10,7 +11,7 @@ import {
 } from '@/features/gamification/profile-edit-api'
 import type { ProfilePatchInput } from '@/shared/schemas/gamification'
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 const t = i18next.getFixedT('es', 'gamification')
 
 function fields(form: FormData): string[] {

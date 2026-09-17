@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { DEFAULT_CENTER } from '@/features/map/map-config'
 import { resolveMapCenter } from '@/features/map/use-map-center'
@@ -21,7 +22,7 @@ import { AppShell } from './app-shell'
 
 vi.mock('@/features/map/use-map-center', () => ({ resolveMapCenter: vi.fn() }))
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function nearbyPlace(overrides: Record<string, unknown> = {}) {
   return {

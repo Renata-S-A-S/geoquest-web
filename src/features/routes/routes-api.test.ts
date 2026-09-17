@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import {
   getRouteById,
@@ -10,7 +11,7 @@ import {
   startRoute,
 } from '@/features/routes/routes-api'
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 const routeId = '5f2f9b3e-6e3b-4f0a-9d1a-8a3c2b4e6f01'
 
 describe('startRoute', () => {

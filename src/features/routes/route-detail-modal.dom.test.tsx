@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { MOCK_ROUTES } from '@/features/routes/routes-mock-data'
 import { RouteDetailModal } from '@/features/routes/route-detail-modal'
@@ -20,7 +21,7 @@ import { RouteDetailModal } from '@/features/routes/route-detail-modal'
  * payload below since the real `RouteStopResult` has no category field —
  * the per-stop category pill is removed from this modal (decision 1235).
  */
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 const mockRoute = MOCK_ROUTES[0]
 const firstStop = mockRoute.stops[0]
 

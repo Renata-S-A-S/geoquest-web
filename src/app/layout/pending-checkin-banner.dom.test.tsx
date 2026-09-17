@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { act } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
@@ -12,7 +13,7 @@ import { PendingCheckinBanner } from './pending-checkin-banner'
 /** Same fixed-namespace `t` pattern as the component under test (PR3a). */
 const tCheckin = i18next.getFixedT('es', 'checkin')
 
-const baseURL = 'http://localhost:5219'
+const baseURL = TEST_API_BASE_URL
 
 function statusPayload(overrides: Record<string, unknown> = {}) {
   return {
