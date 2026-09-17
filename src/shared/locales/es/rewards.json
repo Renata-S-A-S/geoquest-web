@@ -1,0 +1,15 @@
+{
+  "title": "Premios",
+  "subnav": {
+    "catalog": "Catálogo",
+    "leaderboard": "Ranking"
+  },
+  "list": {
+    "cost": "{{points}} pts",
+    "value": "Valor aprox. {{value}}",
+    "loadError": "No pudimos cargar los premios.",
+    "retry": "Reintentar",
+    "emptyTitle": "Todavía no hay premios",
+    "emptyDescription": "Volvé pronto para canjear tus GeoPoints."
+  }
+}

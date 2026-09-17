@@ -1,6 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './layout/app-shell'
-import { RoutePlaceholder } from './route-placeholder'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
@@ -11,6 +10,8 @@ import { CheckinPage } from '@/features/checkin/checkin-page'
 import { EditProfilePage } from '@/features/gamification/edit-profile-page'
 import { LeaderboardPage } from '@/features/gamification/leaderboard-page'
 import { ProfilePage } from '@/features/gamification/profile-page'
+import { RewardsLayout } from './layout/rewards-layout'
+import { RewardsPage } from '@/features/rewards/rewards-page'
 import { RoutesPage } from '@/features/routes/routes-page'
 import { SettingsPage } from '@/features/settings/settings-page'
 import { TermsPage } from './terms-page'
@@ -45,11 +46,16 @@ import { ProtectedRoute } from './protected-route'
  * en `app-shell.tsx`). `/rutas` (Rutas/tours) ya renderiza `RoutesPage`,
  * que consume el catálogo publicado vía `GET /routes` — ver
  * `features/routes/`.
- * La ruta índice `/premios` (bare) sigue siendo
- * placeholder: WU10b (issue closure) repuntó la nav de "Premios" a
- * `/premios/leaderboard`, así que `/premios` ya no es alcanzable desde la
- * navegación — se conserva reservada para la futura pantalla de
- * Recompensas (Slice 004); no es un cambio funcional, solo documentación.
+ * `/premios` ya no es un placeholder reservado: ahora es una sección con
+ * layout propio (`RewardsLayout`, en `app/layout/`). Su ruta índice
+ * renderiza `RewardsPage` — el catálogo publicado que consume
+ * `GET /rewards`, ver `features/rewards/` — y `/premios/leaderboard` se
+ * conserva con la misma URL de siempre, ahora como ruta hija. El layout
+ * vive en `app/layout/` y no dentro de un feature porque abarca dos
+ * (`features/rewards` y `features/gamification`), igual que el resto del
+ * chrome de navegación. La nav principal volvió a apuntar a `/premios`
+ * (ver `nav-items.ts`), así que el catálogo es la pantalla de aterrizaje
+ * de la sección y el ranking queda a un tap del sub-nav.
  * `/forgot-password` y `/reset-password` (flujo de recuperación de
  * contraseña) son hermanas públicas por la misma razón que `/login`: un
  * usuario deslogueado que olvidó su contraseña necesita alcanzarlas sin
@@ -73,8 +79,14 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: null },
           { path: '/rutas', element: <RoutesPage /> },
-          { path: '/premios', element: <RoutePlaceholder label="premios — pendiente" /> },
-          { path: '/premios/leaderboard', element: <LeaderboardPage /> },
+          {
+            path: '/premios',
+            element: <RewardsLayout />,
+            children: [
+              { index: true, element: <RewardsPage /> },
+              { path: 'leaderboard', element: <LeaderboardPage /> },
+            ],
+          },
           { path: '/perfil', element: <ProfilePage /> },
           { path: '/perfil/editar', element: <EditProfilePage /> },
           { path: '/configuracion', element: <SettingsPage /> },

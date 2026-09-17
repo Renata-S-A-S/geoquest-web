@@ -10,7 +10,8 @@ import { useRoutes } from '@/features/routes/queries'
 import type { RouteSummaryResult } from '@/features/routes/schemas'
 
 /**
- * `/rutas` — replaces the `<RoutePlaceholder>` stub. Container: fetches the
+ * `/rutas` — was a bare placeholder stub until this screen landed (that
+ * stub component is gone, see `app/routes.tsx`). Container: fetches the
  * published catalog via `useRoutes()` (`GET /routes`), renders one
  * `RouteCard` per `RouteSummaryResult` and opens `RouteDetailModal` on tap.
  * `selectedRoute` (mirrors `ProfilePage`'s `selectedBadge` pattern) is local

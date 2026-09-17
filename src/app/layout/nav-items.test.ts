@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { NAV_ITEMS } from './nav-items'
 
 describe('NAV_ITEMS', () => {
-  it('points the rewards item at the leaderboard screen, not the placeholder route', () => {
+  it('points the rewards item at the section root, so the catalog is the landing screen', () => {
     const rewards = NAV_ITEMS.find((item) => item.id === 'rewards')
 
-    expect(rewards?.to).toBe('/premios/leaderboard')
+    expect(rewards?.to).toBe('/premios')
   })
 
   it('gives every item a stable, non-translated id distinct from its labelKey', () => {

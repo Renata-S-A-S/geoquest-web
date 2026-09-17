@@ -1,0 +1,15 @@
+{
+  "title": "Rewards",
+  "subnav": {
+    "catalog": "Catalog",
+    "leaderboard": "Ranking"
+  },
+  "list": {
+    "cost": "{{points}} pts",
+    "value": "Approx. value {{value}}",
+    "loadError": "We couldn't load the rewards.",
+    "retry": "Retry",
+    "emptyTitle": "No rewards yet",
+    "emptyDescription": "Check back soon to redeem your GeoPoints."
+  }
+}

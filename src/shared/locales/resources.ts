@@ -10,6 +10,8 @@ import esMap from './es/map.json'
 import enMap from './en/map.json'
 import esRoutes from './es/routes.json'
 import enRoutes from './en/routes.json'
+import esRewards from './es/rewards.json'
+import enRewards from './en/rewards.json'
 import esOnboarding from './es/onboarding.json'
 import enOnboarding from './en/onboarding.json'
 import esSettings from './es/settings.json'
@@ -30,6 +32,7 @@ export const resources = {
     gamification: esGamification,
     map: esMap,
     routes: esRoutes,
+    rewards: esRewards,
     onboarding: esOnboarding,
     settings: esSettings,
     terms: esTerms,
@@ -41,6 +44,7 @@ export const resources = {
     gamification: enGamification,
     map: enMap,
     routes: enRoutes,
+    rewards: enRewards,
     onboarding: enOnboarding,
     settings: enSettings,
     terms: enTerms,
@@ -54,6 +58,7 @@ export const ns = [
   'gamification',
   'map',
   'routes',
+  'rewards',
   'onboarding',
   'settings',
   'terms',
