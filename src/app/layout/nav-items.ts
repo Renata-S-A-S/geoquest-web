@@ -12,7 +12,7 @@ import { MapTrifold, Path, Gift, User } from '@phosphor-icons/react'
 export const NAV_ITEMS = [
   { id: 'map', to: '/', labelKey: 'nav.map', icon: MapTrifold },
   { id: 'routes', to: '/rutas', labelKey: 'nav.routes', icon: Path },
-  { id: 'rewards', to: '/premios/leaderboard', labelKey: 'nav.rewards', icon: Gift },
+  { id: 'rewards', to: '/premios', labelKey: 'nav.rewards', icon: Gift },
   { id: 'profile', to: '/perfil', labelKey: 'nav.profile', icon: User },
 ] as const
 
