@@ -5,36 +5,13 @@ import { z } from 'zod'
  * `schemas/places.ts`: Zod parse in, Zod parse out. Field names confirmed
  * against the backend source (`GeoQuest.Modules.Routes.Domain`).
  *
- * Two families live here. The write surface (`POST /routes/{id}/start`) and
- * `routeSchema`, which documents the full domain entity and is used only to
- * keep the hand-authored `routes-mock-data.ts` honest to the contract —
- * nothing parses a live `Route` off the wire. Then the read-layer result
- * contracts further down, which do back real network calls.
+ * Two families live here: the write surface (`POST /routes/{id}/start`) and
+ * the read-layer result contracts further down. Both back real network
+ * calls — nothing here models the backend's internal `Route` entity, which
+ * never crosses the wire.
  */
 
-export const ROUTE_STATUSES = ['Draft', 'Published', 'Archived'] as const
-export const routeStatusSchema = z.enum(ROUTE_STATUSES)
-export type RouteStatus = z.infer<typeof routeStatusSchema>
-
-export const routeSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  /** Free text, no closed taxonomy on the backend (e.g. "Recorrido a pie"). */
-  routeType: z.string(),
-  /** Free text, no closed taxonomy on the backend (e.g. "Centro histórico"). */
-  theme: z.string(),
-  /** Curation/display order — the order stops should be shown/visited in. */
-  placeIds: z.array(z.string()),
-  windowDays: z.number().int().min(1),
-  completionPointsReward: z.number().int().min(1),
-  completionBadgeId: z.string().nullable(),
-  contentVersion: z.number().int(),
-  status: routeStatusSchema,
-  createdAtUtc: z.string(),
-})
-export type Route = z.infer<typeof routeSchema>
-
-/** `POST /routes/{id}/start` response (201 Created). The one real read this feature performs. */
+/** `POST /routes/{id}/start` response (201 Created) — the feature's only write. */
 export const routeStartResponseSchema = z.object({
   routeProgressId: z.string(),
 })

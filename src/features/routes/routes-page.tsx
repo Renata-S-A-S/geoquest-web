@@ -24,7 +24,7 @@ export function RoutesPage() {
 
   if (isPending) {
     return (
-      <div className="flex flex-col gap-2 p-4">
+      <div data-testid="routes-list-loading" className="flex flex-col gap-2 p-4">
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-20 w-full" />
         <Skeleton className="h-20 w-full" />
