@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { apiClient } from '@/shared/lib/api-client'
-import { getRewards, mapRedeemRewardError } from '@/features/rewards/rewards-api'
+import {
+  getRedemptionStatus,
+  getRewards,
+  mapRedeemRewardError,
+  redeemReward,
+} from '@/features/rewards/rewards-api'
 
 /**
  * Rewards read layer — transport tests. Mirrors `routes-api.test.ts`:
@@ -173,5 +178,171 @@ describe('mapRedeemRewardError', () => {
 
   it('maps a non-Axios failure to unknown', () => {
     expect(mapRedeemRewardError(new Error('boom'))).toEqual({ kind: 'unknown' })
+  })
+})
+
+/**
+ * Redemption transport (issue #115, PR 11a). Same MSW-at-the-wire shape as
+ * the read tests above: the transport is never mocked, only the origin it
+ * talks to.
+ *
+ * `qrToken` is the plain token and exists on the wire EXACTLY ONCE, in the
+ * `POST .../redeem` response — the backend persists only its hash
+ * (`UserReward.QrTokenHash`, the same criterion as `RefreshToken`). These
+ * tests therefore pin two things the type signature alone cannot: the
+ * redeem response really carries it, and the status response can never
+ * carry it back.
+ */
+const userRewardId = 'd41f9a76-5c3e-4b2a-9f18-2e7c6b5a4d3c'
+
+const redemption = {
+  userRewardId,
+  qrToken: 'PLAIN-QR-TOKEN-ONLY-EVER-SENT-ONCE',
+  qrExpiresAtUtc: '2026-09-17T18:30:00Z',
+}
+
+const redemptionStatus = {
+  userRewardId,
+  rewardId,
+  status: 'Earned',
+  qrExpiresAtUtc: '2026-09-17T18:30:00Z',
+  earnedAtUtc: '2026-09-17T18:00:00Z',
+  redeemedAtUtc: null,
+}
+
+describe('redeemReward', () => {
+  it('maps POST /rewards/{id}/redeem to a RewardRedemptionResult with every contract field', async () => {
+    server.use(
+      http.post(`${baseURL}/rewards/${rewardId}/redeem`, () => HttpResponse.json(redemption))
+    )
+
+    expect(await redeemReward(rewardId)).toEqual(redemption)
+  })
+
+  it('strips fields the contract does not declare, so nothing can ride alongside the token', async () => {
+    server.use(
+      http.post(`${baseURL}/rewards/${rewardId}/redeem`, () =>
+        HttpResponse.json({ ...redemption, qrImageUrl: 'https://cdn.example.com/qr.png' })
+      )
+    )
+
+    const result = await redeemReward(rewardId)
+
+    expect(result).not.toHaveProperty('qrImageUrl')
+    expect(result).toEqual(redemption)
+  })
+
+  it('rejects a response missing qrToken, because the token can never be re-fetched', async () => {
+    const { qrToken: _omitted, ...withoutToken } = redemption
+    server.use(
+      http.post(`${baseURL}/rewards/${rewardId}/redeem`, () => HttpResponse.json(withoutToken))
+    )
+
+    await expect(redeemReward(rewardId)).rejects.toThrow()
+  })
+
+  it('rejects the documented failures so the caller can run them through mapRedeemRewardError', async () => {
+    server.use(
+      http.post(`${baseURL}/rewards/${rewardId}/redeem`, () =>
+        HttpResponse.json({ title: 'Reward.StockExhausted', status: 409 }, { status: 409 })
+      )
+    )
+
+    await expect(redeemReward(rewardId)).rejects.toMatchObject({ response: { status: 409 } })
+  })
+})
+
+describe('getRedemptionStatus', () => {
+  it('maps GET /rewards/redemptions/{id} to a UserRewardStatusResult with every contract field', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json(redemptionStatus)
+      )
+    )
+
+    expect(await getRedemptionStatus(userRewardId)).toEqual(redemptionStatus)
+  })
+
+  it('parses the null timestamps a PendingReservation carries', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json({
+          ...redemptionStatus,
+          status: 'PendingReservation',
+          qrExpiresAtUtc: null,
+          earnedAtUtc: null,
+          redeemedAtUtc: null,
+        })
+      )
+    )
+
+    const result = await getRedemptionStatus(userRewardId)
+
+    expect(result.qrExpiresAtUtc).toBeNull()
+    expect(result.earnedAtUtc).toBeNull()
+    expect(result.redeemedAtUtc).toBeNull()
+  })
+
+  it.each(['PendingReservation', 'Earned', 'Redeemed', 'Expired', 'Failed'])(
+    'accepts the documented status %s',
+    async (status) => {
+      server.use(
+        http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+          HttpResponse.json({ ...redemptionStatus, status })
+        )
+      )
+
+      expect((await getRedemptionStatus(userRewardId)).status).toBe(status)
+    }
+  )
+
+  it('rejects a status outside the documented set instead of passing it through', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json({ ...redemptionStatus, status: 'Reserved' })
+      )
+    )
+
+    await expect(getRedemptionStatus(userRewardId)).rejects.toThrow()
+  })
+
+  it('drops a qrToken even if the status payload ever carried one, so the token has no second source', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json({ ...redemptionStatus, qrToken: 'PLAIN-QR-TOKEN-ONLY-EVER-SENT-ONCE' })
+      )
+    )
+
+    expect(await getRedemptionStatus(userRewardId)).not.toHaveProperty('qrToken')
+  })
+
+  it('rejects a 404 NotFound instead of resolving null, unlike getRouteProgress', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json(
+          { title: 'GetUserRewardStatusQuery.NotFound', status: 404 },
+          { status: 404 }
+        )
+      )
+    )
+
+    await expect(getRedemptionStatus(userRewardId)).rejects.toMatchObject({
+      response: { status: 404 },
+    })
+  })
+
+  it('rejects a 403 NotAuthorized, which no explorer-facing copy can act on', async () => {
+    server.use(
+      http.get(`${baseURL}/rewards/redemptions/${userRewardId}`, () =>
+        HttpResponse.json(
+          { title: 'GetUserRewardStatusQuery.NotAuthorized', status: 403 },
+          { status: 403 }
+        )
+      )
+    )
+
+    await expect(getRedemptionStatus(userRewardId)).rejects.toMatchObject({
+      response: { status: 403 },
+    })
   })
 })
