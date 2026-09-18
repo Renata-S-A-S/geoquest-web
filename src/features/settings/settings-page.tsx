@@ -59,7 +59,7 @@ function PreferenceToggle({ label, checked, onChange }: PreferenceToggleProps) {
  * false, since `/configuracion` lives inside that guard. PR8 will remove
  * the now-redundant logout affordance from `edit-profile-page.tsx`.
  *
- * Account deletion (issue 110, Ley 1581 habeas data) reuses that same
+ * Account deletion (#110, Ley 1581 habeas data) reuses that same
  * teardown: `DELETE /explorers/me` answers 204, then `logout()` +
  * `queryClient.clear()` with no `navigate()`. Because the teardown unmounts
  * this tree immediately, any success message rendered here would die with it
