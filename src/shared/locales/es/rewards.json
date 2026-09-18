@@ -12,6 +12,32 @@
     "emptyTitle": "Todavía no hay premios",
     "emptyDescription": "Volvé pronto para canjear tus GeoPoints."
   },
+  "redeem": {
+    "cost": "Se descuentan {{points}} pts de tu saldo.",
+    "confirmTitle": "¿Canjear este premio?",
+    "confirmBody": "Al confirmar generamos un código QR que se muestra una sola vez: mostralo en el mostrador antes de que venza.",
+    "confirmAction": "Confirmar canje",
+    "back": "Volver al catálogo",
+    "redeeming": "Generando tu canje…",
+    "checking": "Buscando tu canje…",
+    "dismiss": "Cerrar el QR",
+    "dismissWarning": "Al cerrar, el código QR desaparece para siempre: no se guarda en ningún lado y no se puede volver a mostrar.",
+    "heldTitle": "Tu canje sigue activo",
+    "heldBody": "El código QR se mostró una sola vez y no se puede recuperar. Vas a poder canjear este premio de nuevo cuando este canje venza.",
+    "statusError": "No pudimos consultar el estado de tu canje.",
+    "again": "Canjear de nuevo",
+    "terminal": {
+      "Redeemed": "Ya usaste este canje en el mostrador.",
+      "Expired": "Este canje venció sin usarse.",
+      "Failed": "Este canje no se pudo completar."
+    },
+    "error": {
+      "stockExhausted": "Se agotaron las unidades de este premio, así que no se pudo generar el canje.",
+      "businessNotActive": "El comercio no está activo en este momento, así que no acepta canjes. Probá de nuevo cuando vuelva a estarlo.",
+      "rewardNotFound": "Este premio ya no está disponible.",
+      "unknown": "No pudimos completar el canje."
+    }
+  },
   "redemption": {
     "qrTitle": "Código QR del canje",
     "instructions": "Mostrá este código en el mostrador para canjear tu premio.",
