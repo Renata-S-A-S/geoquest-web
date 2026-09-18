@@ -12,6 +12,12 @@
     "emptyTitle": "Todavía no hay premios",
     "emptyDescription": "Volvé pronto para canjear tus GeoPoints."
   },
+  "redemption": {
+    "qrTitle": "Código QR del canje",
+    "instructions": "Mostrá este código en el mostrador para canjear tu premio.",
+    "expiresIn": "Vence en {{time}}",
+    "expired": "Este QR venció."
+  },
   "identityVerification": {
     "title": "Verificación de identidad pendiente",
     "body": "Para canjear un premio necesitás tener tu identidad verificada.",

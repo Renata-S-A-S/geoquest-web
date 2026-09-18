@@ -12,6 +12,12 @@
     "emptyTitle": "No rewards yet",
     "emptyDescription": "Check back soon to redeem your GeoPoints."
   },
+  "redemption": {
+    "qrTitle": "Redemption QR code",
+    "instructions": "Show this code at the counter to redeem your reward.",
+    "expiresIn": "Expires in {{time}}",
+    "expired": "This QR expired."
+  },
   "identityVerification": {
     "title": "Identity verification pending",
     "body": "Redeeming a reward requires a verified identity.",
