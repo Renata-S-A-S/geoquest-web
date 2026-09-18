@@ -25,15 +25,19 @@ const TIMEZONE_DESIGNATOR = /(?:Z|[+-]\d{2}:?\d{2})$/i
  * `Date.parse` reads a designator-less date-time as LOCAL time. An explorer
  * in UTC-5 would then see a QR live five hours past its real deadline.
  *
- * Same trap and same fix as `checkin/badge-diff.ts`'s `toEpochMs`. It is
- * duplicated rather than shared: four lines of normalization do not justify
- * coupling the rewards slice to the check-in slice, and neither feature owns
- * a date utility the other should depend on.
+ * Same trap and same fix as `checkin/badge-diff.ts`'s `toEpochMs`. It stays
+ * duplicated ACROSS slices — four lines of normalization do not justify
+ * coupling rewards to check-in, and neither feature owns a date utility the
+ * other should depend on — but it is shared WITHIN this one, which is why
+ * it is exported: `use-qr-countdown.ts` reads the very same
+ * `qrExpiresAtUtc` string this function judges, and a second copy could
+ * drift into disagreeing with this one about when a QR dies. A live
+ * countdown and the status derivation must never answer differently.
  *
  * Returns `NaN` for anything unparseable; the caller treats that as "cannot
  * prove the deadline passed", never as "expired".
  */
-function toEpochMs(value: string): number {
+export function toEpochMs(value: string): number {
   return Date.parse(TIMEZONE_DESIGNATOR.test(value) ? value : value + 'Z')
 }
 
