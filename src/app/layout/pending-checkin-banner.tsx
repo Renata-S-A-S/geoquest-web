@@ -6,6 +6,9 @@ import { X } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { getCheckinStatus } from '@/features/checkin/checkin-api'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
+import { diffUnlockedBadges } from '@/features/checkin/badge-diff'
+import { getGamingProfile } from '@/features/gamification/gamification-api'
+import { gamificationKeys } from '@/features/gamification/queries'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { ValidationStatus } from '@/shared/schemas/checkin'
 
@@ -50,9 +53,23 @@ function classifyOutcome(validationStatus: ValidationStatus): PendingOutcome {
  */
 export function PendingCheckinBanner() {
   const { t } = useTranslation()
+  /**
+   * Issue #108: the badge wording is shared with the check-in success
+   * screen, so it lives in the `checkin` namespace rather than being
+   * duplicated into `common`. Read through `useTranslation` (not the
+   * module-level `tCheckin` above) so it follows a language switch.
+   */
+  const { t: tCheckinNs } = useTranslation('checkin')
   const [snapshot] = useState(() => useCheckinStore.getState().pending)
+  /**
+   * Issue #108: read at mount for the same reason as `snapshot` above — the
+   * effect below clears it as soon as the outcome is terminal, which can
+   * happen before the profile refetch that needs it has landed.
+   */
+  const [badgeNamesBefore] = useState(() => useCheckinStore.getState().badgeNamesBefore)
   const [dismissed, setDismissed] = useState(false)
   const clearPending = useCheckinStore((state) => state.clearPending)
+  const clearBadgeNamesBefore = useCheckinStore((state) => state.clearBadgeNamesBefore)
 
   const { data, error } = useQuery({
     queryKey: ['pending-checkin-status', snapshot?.checkInId],
@@ -64,14 +81,40 @@ export function PendingCheckinBanner() {
 
   const outcome = data ? classifyOutcome(data.validationStatus) : null
 
+  /**
+   * Issue #108 — the "after" half of the badge diff, requested ONLY once the
+   * check-in is known to be approved: a still-pending or rejected follow-up
+   * has nothing to celebrate and must not spend a request. Errors are left
+   * unread on purpose (`retry: false`, no `error` destructured): a failed
+   * profile read degrades to the plain approved notice, never to an error.
+   */
+  const { data: profile } = useQuery({
+    queryKey: gamificationKeys.profile,
+    queryFn: getGamingProfile,
+    enabled: outcome === 'approved',
+    staleTime: 0,
+    retry: false,
+  })
+
+  // `data.createdAt` is the server's clock, the same one behind
+  // `awardedAtUtc` — never this device's, which may be skewed.
+  const unlockedBadgeNames =
+    data && profile ? diffUnlockedBadges(badgeNamesBefore, profile.badges, data.createdAt) : []
+
   useEffect(() => {
     if (!snapshot) return
     if (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) clearPending()
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        clearPending()
+        clearBadgeNamesBefore()
+      }
       return
     }
-    if (outcome === 'approved' || outcome === 'rejected') clearPending()
-  }, [snapshot, error, outcome, clearPending])
+    if (outcome === 'approved' || outcome === 'rejected') {
+      clearPending()
+      clearBadgeNamesBefore()
+    }
+  }, [snapshot, error, outcome, clearPending, clearBadgeNamesBefore])
 
   if (!snapshot || dismissed || !data || outcome === 'pending') return null
 
@@ -83,6 +126,14 @@ export function PendingCheckinBanner() {
             {t('notifications.checkinApproved', { placeName: snapshot.placeName })}
           </b>{' '}
           {t('notifications.xpAndPoints', { xp: data.xpAwarded, geoPoints: data.geoPointsAwarded })}
+          {unlockedBadgeNames.length > 0 && (
+            <b className="mt-0.5 block text-coral">
+              {tCheckinNs('approved.badgeUnlocked', {
+                count: unlockedBadgeNames.length,
+                badgeNames: unlockedBadgeNames.join(', '),
+              })}
+            </b>
+          )}
         </p>
       ) : (
         <p className="font-sans text-xs text-ink">{getGenericContentRejectionMessage(tCheckin)}</p>
