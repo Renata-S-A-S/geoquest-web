@@ -26,6 +26,10 @@ function mockUseCheckin(state: CheckinState, overrides: Partial<UseCheckinResult
     videoRef: { current: null },
     capture: vi.fn(),
     retry: vi.fn(),
+    // Issue #108: `null` is the default because it is the default at
+    // runtime too — the celebration needs a profile refetch that has not
+    // happened yet at the moment `approved` first renders.
+    celebration: null,
     ...overrides,
   })
 }
@@ -190,5 +194,92 @@ describe('CheckinPage', () => {
 
     expect(screen.queryByText('home-route')).not.toBeInTheDocument()
     expect(screen.getByText('+50 XP')).toBeInTheDocument()
+  })
+})
+
+/**
+ * Issue #108 — the celebratory extras on the approved screen. `celebration`
+ * arrives AFTER the approval transition (it needs a `GET /gaming/profile`
+ * refetch), so `null` is a normal, frequent value: refetch still in flight,
+ * refetch failed, or no badge snapshot was taken. Every one of those renders
+ * exactly today's screen — XP and GeoPoints, nothing else, and NO error.
+ */
+describe('CheckinPage approved extras (issue #108)', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    useCheckinStore.setState({ selectedPlace: fakeSelectedPlace })
+  })
+
+  const approved = {
+    kind: 'approved',
+    xpAwarded: 50,
+    geoPointsAwarded: 10,
+    placeName: 'El Cielo',
+  } as const
+
+  it('renders the unlocked badge name and the streak once the celebration resolves', () => {
+    mockUseCheckin(approved, {
+      celebration: { unlockedBadgeNames: ['Explorador'], currentStreak: 7 },
+    })
+    renderPage()
+
+    expect(screen.getByText(/Explorador/)).toBeInTheDocument()
+    expect(screen.getByText('Racha de 7 días')).toBeInTheDocument()
+  })
+
+  it('names every badge when a single check-in unlocks more than one', () => {
+    mockUseCheckin(approved, {
+      celebration: { unlockedBadgeNames: ['Explorador', 'Fotografo'], currentStreak: 2 },
+    })
+    renderPage()
+
+    expect(screen.getByText(/Explorador, Fotografo/)).toBeInTheDocument()
+  })
+
+  it('uses the singular streak wording for a one-day streak', () => {
+    mockUseCheckin(approved, { celebration: { unlockedBadgeNames: [], currentStreak: 1 } })
+    renderPage()
+
+    expect(screen.getByText('Racha de 1 día')).toBeInTheDocument()
+  })
+
+  it('renders no badge line when nothing was unlocked, but keeps the streak', () => {
+    mockUseCheckin(approved, { celebration: { unlockedBadgeNames: [], currentStreak: 4 } })
+    renderPage()
+
+    expect(screen.getByText('Racha de 4 días')).toBeInTheDocument()
+    expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
+  })
+
+  it('renders exactly the pre-#108 screen, with no error, when the celebration never resolves', () => {
+    mockUseCheckin(approved, { celebration: null })
+    renderPage()
+
+    expect(screen.getByText('+50 XP')).toBeInTheDocument()
+    expect(screen.getByText(/10 GeoPoints/)).toBeInTheDocument()
+    expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Racha/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/No pudimos/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver mi perfil' })).toBeInTheDocument()
+  })
+
+  it('hides the streak when the backend reports a zero-day streak', () => {
+    mockUseCheckin(approved, { celebration: { unlockedBadgeNames: [], currentStreak: 0 } })
+    renderPage()
+
+    expect(screen.queryByText(/Racha/)).not.toBeInTheDocument()
+  })
+
+  it('translates the badge line and the streak to English (EN-switch test)', async () => {
+    mockUseCheckin(approved, {
+      celebration: { unlockedBadgeNames: ['Explorer'], currentStreak: 7 },
+    })
+    await act(async () => {
+      await i18next.changeLanguage('en')
+    })
+    renderPage()
+
+    expect(screen.getByText('You unlocked a new badge: Explorer!')).toBeInTheDocument()
+    expect(screen.getByText('7-day streak')).toBeInTheDocument()
   })
 })

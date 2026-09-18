@@ -14,6 +14,8 @@ import {
 } from '@/features/checkin/media/capture-photo'
 import { requestPosition } from '@/features/checkin/media/request-position'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
+import { queryClient } from '@/shared/lib/query-client'
+import { gamificationKeys } from '@/features/gamification/queries'
 
 /**
  * Design decision #9: mock the two browser-touching media adapters entirely
@@ -498,5 +500,220 @@ describe('useCheckin', () => {
     act(() => result.current.retry())
 
     expect(result.current.state).toEqual({ kind: 'camera' })
+  })
+})
+
+/**
+ * Issue #108 — badge diff + streak. `CheckInStatusResult` has no badges
+ * field, so the only way to name the badge a check-in unlocked is to diff
+ * `GET /gaming/profile` before and after it. The "before" half MUST come
+ * from the React Query cache the rest of the app already filled: adding a
+ * request on the submit path would cost the explorer a round trip purely to
+ * decorate a screen. Every failure mode degrades to the plain XP/GeoPoints
+ * screen — never to an error.
+ */
+describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
+  const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
+
+  function profilePayload(overrides: Record<string, unknown> = {}) {
+    return {
+      explorerId: 'explorer-1',
+      totalXP: 500,
+      weeklyXP: 50,
+      geoPointsBalance: 120,
+      currentLevel: 'Explorador',
+      currentStreak: 5,
+      longestStreak: 9,
+      lastActivityLocalDate: '2026-09-17',
+      badges: [{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }],
+      ...overrides,
+    }
+  }
+
+  function seedProfileCache(badges: { name: string; awardedAtUtc: string }[]) {
+    queryClient.setQueryData(gamificationKeys.profile, profilePayload({ badges }))
+  }
+
+  function mockSubmitRoutes() {
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      )
+    )
+  }
+
+  function approvedStatusRoute() {
+    return http.get(`${baseURL}/checkins/checkin-1`, () =>
+      HttpResponse.json(
+        statusPayload({
+          validationStatus: 2,
+          awardStatus: 1,
+          xpAwarded: 50,
+          geoPointsAwarded: 10,
+          createdAt: CHECKIN_CREATED_AT,
+        })
+      )
+    )
+  }
+
+  afterEach(() => {
+    queryClient.clear()
+    useCheckinStore.getState().clearBadgeNamesBefore()
+  })
+
+  it('snapshots the cached badge names during submitCheckin without issuing a profile request', async () => {
+    const { result } = await renderInCameraState()
+    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+
+    let profileRequestCount = 0
+    mockSubmitRoutes()
+    server.use(
+      http.get(`${baseURL}/gaming/profile`, () => {
+        profileRequestCount += 1
+        return HttpResponse.json(profilePayload())
+      })
+    )
+
+    act(() => result.current.capture())
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: 'pending', checkInId: 'checkin-1' })
+    )
+
+    expect(useCheckinStore.getState().badgeNamesBefore).toEqual(['Primer paso'])
+    expect(profileRequestCount).toBe(0)
+  })
+
+  it('clears any stale snapshot when the profile cache is empty at submit time', async () => {
+    const { result } = await renderInCameraState()
+    useCheckinStore.getState().setBadgeNamesBefore(['Stale badge from a previous check-in'])
+
+    mockSubmitRoutes()
+
+    act(() => result.current.capture())
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: 'pending', checkInId: 'checkin-1' })
+    )
+
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+  })
+
+  it('diffs the refetched profile on approval, exposes the streak, and clears the snapshot', async () => {
+    const { result } = await renderInCameraState()
+    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload({
+            currentStreak: 7,
+            badges: [
+              { name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' },
+              { name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' },
+            ],
+          })
+        )
+      )
+    )
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      act(() => result.current.capture())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      expect(result.current.state.kind).toBe('approved')
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100)
+      })
+
+      expect(result.current.celebration).toEqual({
+        unlockedBadgeNames: ['Explorador'],
+        currentStreak: 7,
+      })
+      expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('claims no badge when the snapshot is missing, but still shows the streak and no error', async () => {
+    const { result } = await renderInCameraState()
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload({
+            currentStreak: 3,
+            badges: [{ name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' }],
+          })
+        )
+      )
+    )
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      act(() => result.current.capture())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100)
+      })
+
+      expect(result.current.state).toMatchObject({ kind: 'approved', xpAwarded: 50 })
+      expect(result.current.celebration).toEqual({ unlockedBadgeNames: [], currentStreak: 3 })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('leaves the approved state untouched and raises no error when the profile refetch fails', async () => {
+    const { result } = await renderInCameraState()
+    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      act(() => result.current.capture())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100)
+      })
+
+      expect(result.current.state).toEqual({
+        kind: 'approved',
+        xpAwarded: 50,
+        geoPointsAwarded: 10,
+        placeName: fakeSelectedPlace.placeName,
+      })
+      expect(result.current.celebration).toBeNull()
+      expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
