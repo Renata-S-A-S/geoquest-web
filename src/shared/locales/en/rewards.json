@@ -44,6 +44,21 @@
     "expiresIn": "Expires in {{time}}",
     "expired": "This QR expired."
   },
+  "rating": {
+    "prompt": "How was this reward?",
+    "hint": "Pick 1 to 5. It can only be rated once and cannot be changed afterwards.",
+    "score": "{{value}} out of 5",
+    "submit": "Send rating",
+    "submitting": "Sending…",
+    "thanks": "Thanks! You rated this reward {{value}} out of 5.",
+    "error": {
+      "alreadyRated": "You already rated this redemption, so there is nothing left to do.",
+      "notRedeemed": "You haven't used this redemption at the counter yet. You will be able to rate it once you do.",
+      "redemptionNotFound": "We couldn't find this redemption, so it can't be rated.",
+      "notAuthorized": "This redemption isn't yours, so you can't rate it.",
+      "unknown": "We couldn't send your rating."
+    }
+  },
   "identityVerification": {
     "title": "Identity verification pending",
     "body": "Redeeming a reward requires a verified identity.",

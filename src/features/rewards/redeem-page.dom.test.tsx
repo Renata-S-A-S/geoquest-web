@@ -265,3 +265,118 @@ describe('RedeemPage', () => {
     expect(screen.queryByTestId('redemption-qr-panel')).not.toBeInTheDocument()
   })
 })
+
+/**
+ * Issue #116 — rating a redemption, added as its own block so the redeem
+ * regression guard above stays untouched.
+ *
+ * Two things are load-bearing here. The control appears ONLY for a
+ * `Redeemed` redemption, because rating anything else earns the backend's
+ * `UserReward.NotRedeemed` conflict. And the two 409 causes must not read
+ * the same: `AlreadyRated` is finished, `NotRedeemed` is "come back after
+ * you use it", and one message for both would hide which one it is.
+ */
+describe('RedeemPage rating', () => {
+  beforeEach(() => {
+    calls.redeem = 0
+    calls.status = 0
+    navigateSpy.mockClear()
+    mockCatalog()
+    useRedemptionStore.getState().rememberRedemption(REWARD_ID, USER_REWARD_ID)
+  })
+
+  function mockRatingSuccess(): { sent: unknown } {
+    const captured: { sent: unknown } = { sent: undefined }
+    server.use(
+      http.post(`${baseURL}/rewards/redemptions/${USER_REWARD_ID}/rating`, async ({ request }) => {
+        captured.sent = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+    return captured
+  }
+
+  function mockRatingConflict(title: string) {
+    server.use(
+      http.post(`${baseURL}/rewards/redemptions/${USER_REWARD_ID}/rating`, () =>
+        HttpResponse.json({ title, status: 409 }, { status: 409 })
+      )
+    )
+  }
+
+  it('sends the chosen rating for a Redeemed redemption and then goes read-only', async () => {
+    mockStatus('Redeemed', null)
+    const captured = mockRatingSuccess()
+    renderRedeemPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: '4 de 5' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar calificación' }))
+
+    expect(
+      await screen.findByText('¡Gracias! Calificaste este premio con 4 de 5.')
+    ).toBeInTheDocument()
+    expect(captured.sent).toEqual({ rating: 4 })
+    // Write-once: the backend refuses a second rating with AlreadyRated, so
+    // no affordance to send another one may survive the first.
+    expect(screen.queryByRole('button', { name: 'Enviar calificación' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '4 de 5' })).not.toBeInTheDocument()
+  })
+
+  /**
+   * Nothing selected is not rating 0. The submit button is the only way to
+   * send, and it stays disabled until a real 1-5 score exists — which is
+   * also why there is no sixth button to press.
+   */
+  it('offers exactly the five ratings the backend accepts and cannot submit without one', async () => {
+    mockStatus('Redeemed', null)
+    renderRedeemPage()
+
+    expect(await screen.findByRole('button', { name: 'Enviar calificación' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: '0 de 5' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '6 de 5' })).not.toBeInTheDocument()
+    for (const value of [1, 2, 3, 4, 5]) {
+      expect(screen.getByRole('button', { name: `${value} de 5` })).toBeInTheDocument()
+    }
+  })
+
+  it('shows no rating control while the redemption is only Earned', async () => {
+    mockStatus('Earned', inMinutes(20))
+    renderRedeemPage()
+
+    expect(await screen.findByText('Tu canje sigue activo')).toBeInTheDocument()
+    expect(screen.queryByTestId('redemption-rating')).not.toBeInTheDocument()
+  })
+
+  /**
+   * The whole point of discriminating on the problem+json title. Both of
+   * these arrive as a 409 and only the title says which.
+   */
+  const conflicts = [
+    {
+      title: 'UserReward.AlreadyRated',
+      copy: 'Ya calificaste este canje, así que no queda nada por hacer.',
+      keepsControl: false,
+    },
+    {
+      title: 'UserReward.NotRedeemed',
+      copy: 'Todavía no usaste este canje en el mostrador. Vas a poder calificarlo después de usarlo.',
+      keepsControl: true,
+    },
+  ]
+
+  it.each(conflicts)('explains a $title conflict in its own words', async (conflict) => {
+    mockStatus('Redeemed', null)
+    mockRatingConflict(conflict.title)
+    renderRedeemPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: '5 de 5' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar calificación' }))
+
+    expect(await screen.findByText(conflict.copy)).toBeInTheDocument()
+    // `AlreadyRated` is done, so the control retires; `NotRedeemed` is only
+    // early, so it stays available for the trip back after the counter.
+    expect(screen.queryByRole('button', { name: 'Enviar calificación' }) !== null).toBe(
+      conflict.keepsControl
+    )
+  })
+})
