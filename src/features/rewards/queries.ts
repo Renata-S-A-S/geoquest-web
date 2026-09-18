@@ -1,5 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { getRedemptionStatus, getRewards, redeemReward } from '@/features/rewards/rewards-api'
+import {
+  getRedemptionStatus,
+  getRewards,
+  redeemReward,
+  submitRedemptionRating,
+  type RewardRating,
+} from '@/features/rewards/rewards-api'
 import { effectiveRedemptionStatus } from '@/features/rewards/redemption-status'
 
 /**
@@ -90,5 +96,27 @@ export function useRedemptionStatus(userRewardId: string | undefined, now: Date 
       ...redemption,
       status: effectiveRedemptionStatus(redemption, now),
     }),
+  })
+}
+
+/**
+ * `POST /rewards/redemptions/{userRewardId}/rating` (issue #116) — a
+ * WRITE-ONCE mutation.
+ *
+ * `retry: false` is pinned for the same reason as `useRedeemReward`, though
+ * the cost of getting it wrong is smaller: the backend refuses a second
+ * rating with `UserReward.AlreadyRated`, so an automatic retry over a
+ * dropped-but-delivered response would turn a success into a conflict the
+ * explorer never caused and cannot fix.
+ *
+ * It invalidates NOTHING. `UserRewardStatusResult` carries no rating field,
+ * so the status read has no stale value to refresh — the fact that the
+ * rating landed lives in this mutation's own settled state, which is also
+ * what flips its control read-only.
+ */
+export function useSubmitRedemptionRating(userRewardId: string) {
+  return useMutation({
+    mutationFn: (rating: RewardRating) => submitRedemptionRating(userRewardId, rating),
+    retry: false,
   })
 }
