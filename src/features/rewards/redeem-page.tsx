@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Spinner } from '@/shared/components/ui/spinner'
 import { IdentityVerificationBanner } from '@/features/rewards/identity-verification-banner'
 import { QrCodePanel } from '@/features/rewards/qr-code-panel'
+import { RedemptionRating } from '@/features/rewards/redemption-rating'
 import { useRedeemReward, useRedemptionStatus, useRewards } from '@/features/rewards/queries'
 import { mapRedeemRewardError } from '@/features/rewards/rewards-api'
 import { useRedemptionStore } from '@/shared/stores/redemption-store'
@@ -60,6 +61,11 @@ export function RedeemPage() {
 
   const [minted, setMinted] = useState<RewardRedemptionResult | null>(null)
   const [terminalStatus, setTerminalStatus] = useState<UserRewardStatus | null>(null)
+  // Kept apart from `terminalStatus` because only ONE terminal status can be
+  // rated. It is also why the id has to be copied out at all: the effect
+  // below drops the persisted pointer the instant a redemption ends, and the
+  // rating endpoint is addressed by exactly that id.
+  const [ratableUserRewardId, setRatableUserRewardId] = useState<string | null>(null)
 
   // The catalog is a nicety here, not a prerequisite: it only supplies the
   // title and the cost so the confirm step can name what is being bought and
@@ -74,14 +80,22 @@ export function RedeemPage() {
   const statusQuery = useRedemptionStatus(minted === null ? storedUserRewardId : undefined)
 
   const status = statusQuery.data?.status
+  const statusUserRewardId = statusQuery.data?.userRewardId
   useEffect(() => {
     if (rewardId === undefined || status === undefined || !isTerminal(status)) return
     // Copied into component state BEFORE the pointer is dropped, so the
     // explorer still reads why the redemption ended instead of the screen
     // silently resetting to "redeem this?" under them.
     setTerminalStatus(status)
+    // Gated on the DERIVED status, never on the raw wire field: `Redeemed`
+    // survives `effectiveRedemptionStatus` untouched, but reading the raw
+    // value here would quietly break the day another status gains a
+    // derivation. `Earned` is the case that matters — a QR that is merely
+    // minted has not been used at the counter, and rating it would earn the
+    // `UserReward.NotRedeemed` conflict.
+    setRatableUserRewardId(status === 'Redeemed' ? (statusUserRewardId ?? null) : null)
     forgetRedemption(rewardId)
-  }, [rewardId, status, forgetRedemption])
+  }, [rewardId, status, statusUserRewardId, forgetRedemption])
 
   if (rewardId === undefined) return <Navigate to="/premios" replace />
 
@@ -112,6 +126,7 @@ export function RedeemPage() {
     return (
       <Screen>
         <Notice testId="redeem-terminal">{t(`redeem.terminal.${terminalStatus}`)}</Notice>
+        {ratableUserRewardId !== null && <RedemptionRating userRewardId={ratableUserRewardId} />}
         {/* Back to the confirm step, never straight to the mutation: a
             second redemption is a second charge and deserves the same
             explicit consent as the first. */}

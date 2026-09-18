@@ -44,6 +44,21 @@
     "expiresIn": "Vence en {{time}}",
     "expired": "Este QR venció."
   },
+  "rating": {
+    "prompt": "¿Cómo te fue con este premio?",
+    "hint": "Elegí de 1 a 5. Solo se puede calificar una vez y después no se puede cambiar.",
+    "score": "{{value}} de 5",
+    "submit": "Enviar calificación",
+    "submitting": "Enviando…",
+    "thanks": "¡Gracias! Calificaste este premio con {{value}} de 5.",
+    "error": {
+      "alreadyRated": "Ya calificaste este canje, así que no queda nada por hacer.",
+      "notRedeemed": "Todavía no usaste este canje en el mostrador. Vas a poder calificarlo después de usarlo.",
+      "redemptionNotFound": "No encontramos este canje, así que no se puede calificar.",
+      "notAuthorized": "Este canje no es tuyo, así que no lo podés calificar.",
+      "unknown": "No pudimos enviar tu calificación."
+    }
+  },
   "identityVerification": {
     "title": "Verificación de identidad pendiente",
     "body": "Para canjear un premio necesitás tener tu identidad verificada.",
