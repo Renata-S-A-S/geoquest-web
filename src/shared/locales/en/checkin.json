@@ -17,6 +17,12 @@
     "title": "Your check-in is under manual review",
     "hint": "We'll let you know as soon as we have a result."
   },
+  "approved": {
+    "badgeUnlocked_one": "You unlocked a new badge: {{badgeNames}}!",
+    "badgeUnlocked_other": "You unlocked new badges: {{badgeNames}}!",
+    "streak_one": "{{count}}-day streak",
+    "streak_other": "{{count}}-day streak"
+  },
   "camera": {
     "captureLabel": "Take check-in photo"
   },

@@ -38,7 +38,7 @@ export function CheckinPage() {
   const navigate = useNavigate()
   const { t } = useTranslation('checkin')
   const [selectedPlaceSnapshot] = useState(() => useCheckinStore.getState().selectedPlace)
-  const { state, videoRef, capture, retry } = useCheckin()
+  const { state, videoRef, capture, retry, celebration } = useCheckin()
 
   if (!selectedPlaceSnapshot) {
     return <Navigate to="/" replace />
@@ -109,10 +109,29 @@ export function CheckinPage() {
             {state.placeName}
           </Stamp>
           <b className="font-display text-base text-teal">+{state.xpAwarded} XP</b>
-          <span className="mb-3 mt-0.5 font-sans text-[10.5px] text-muted">
+          <span className="mt-0.5 font-sans text-[10.5px] text-muted">
             +{state.geoPointsAwarded} GeoPoints · {state.placeName}
           </span>
-          <Button variant="secondary" onClick={() => navigate('/perfil')}>
+          {/*
+            Issue #108: both lines hang off `celebration`, which stays null
+            until (and unless) the profile refetch lands. A missing snapshot
+            or a failed refetch therefore renders the pre-#108 screen
+            verbatim, with no error and no empty placeholder.
+          */}
+          {celebration !== null && celebration.unlockedBadgeNames.length > 0 && (
+            <b className="mt-1.5 px-6 text-center font-sans text-[11px] text-coral">
+              {t('approved.badgeUnlocked', {
+                count: celebration.unlockedBadgeNames.length,
+                badgeNames: celebration.unlockedBadgeNames.join(', '),
+              })}
+            </b>
+          )}
+          {celebration !== null && celebration.currentStreak > 0 && (
+            <span className="mt-0.5 font-sans text-[10.5px] text-muted">
+              {t('approved.streak', { count: celebration.currentStreak })}
+            </span>
+          )}
+          <Button variant="secondary" className="mt-3" onClick={() => navigate('/perfil')}>
             {t('actions.viewProfile')}
           </Button>
         </CenteredState>

@@ -17,7 +17,12 @@ import {
   type CheckinRuleRejection,
 } from '@/features/checkin/checkin-api'
 import { nextPollDelayMs } from '@/features/checkin/poll-schedule'
+import { badgeNames, diffUnlockedBadges } from '@/features/checkin/badge-diff'
+import { getGamingProfile } from '@/features/gamification/gamification-api'
+import { gamificationKeys } from '@/features/gamification/queries'
 import { ValidationStatus } from '@/shared/schemas/checkin'
+import type { GamingProfile } from '@/shared/schemas/gamification'
+import { queryClient } from '@/shared/lib/query-client'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 
 export type CheckinState =
@@ -32,11 +37,28 @@ export type CheckinState =
   | { kind: 'rejected-rule'; rule: CheckinRuleRejection }
   | { kind: 'error'; message: string }
 
+/**
+ * Issue #108 — the decorative half of an approved check-in: the badges this
+ * check-in unlocked and the explorer's streak, both derived from a
+ * `GET /gaming/profile` refetch that resolves AFTER the approval transition.
+ *
+ * Deliberately kept OUT of `CheckinState['approved']`: the terminal outcome
+ * is settled the moment the poll returns `Approved`, and it must not wait on
+ * (or be invalidated by) an optional profile read. `null` means "nothing to
+ * celebrate beyond XP/GeoPoints" — a missing snapshot, a failed refetch, or
+ * a refetch still in flight all land here, and all render identically.
+ */
+export interface CheckinCelebration {
+  unlockedBadgeNames: string[]
+  currentStreak: number
+}
+
 export interface UseCheckinResult {
   state: CheckinState
   videoRef: RefObject<HTMLVideoElement>
   capture: () => void
   retry: () => void
+  celebration: CheckinCelebration | null
 }
 
 /**
@@ -51,9 +73,49 @@ export interface UseCheckinResult {
  * a hook, so it can call `useTranslation` directly and stay reactive to
  * language changes, unlike the plain-function fallbacks in `checkin-api.ts`.
  */
+/**
+ * Issue #108 — the "after" half of the badge diff, plus the streak.
+ *
+ * Module-level on purpose: it closes over nothing from the component, so
+ * `armPolling` never has to take it as a dependency. It reaches for the
+ * shared `queryClient` singleton rather than `useQueryClient()` because
+ * `CheckinPage` is reachable without a `QueryClientProvider` ancestor in
+ * tests, exactly like this module already reaches for
+ * `useCheckinStore.getState()`. `providers.tsx` mounts this same instance,
+ * so the app-side cache is the one being read and refilled.
+ *
+ * Returns `null` on ANY failure instead of throwing: a badge line and a
+ * streak are decoration on top of an already-successful check-in, and a
+ * network error here must never repaint a celebration as a failure.
+ */
+async function fetchCelebration(
+  badgeNamesBefore: string[] | null,
+  checkinCreatedAt: string
+): Promise<CheckinCelebration | null> {
+  try {
+    const profile = await queryClient.fetchQuery<GamingProfile>({
+      queryKey: gamificationKeys.profile,
+      queryFn: getGamingProfile,
+      // Force a real read: the cached copy IS the pre-check-in snapshot
+      // this diff is measured against.
+      staleTime: 0,
+      // One attempt. A retry chain would keep a dead request alive long
+      // after the explorer left the screen.
+      retry: false,
+    })
+    return {
+      unlockedBadgeNames: diffUnlockedBadges(badgeNamesBefore, profile.badges, checkinCreatedAt),
+      currentStreak: profile.currentStreak,
+    }
+  } catch {
+    return null
+  }
+}
+
 export function useCheckin(): UseCheckinResult {
   const { t } = useTranslation('checkin')
   const [state, setState] = useState<CheckinState>({ kind: 'requesting-permissions' })
+  const [celebration, setCelebration] = useState<CheckinCelebration | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const positionRef = useRef<GpsReading | null>(null)
@@ -95,19 +157,30 @@ export function useCheckin(): UseCheckinResult {
             // `selectedPlace`, so the terminal-state UI needs its own copy
             // rather than a live read at render time.
             const placeName = useCheckinStore.getState().selectedPlace?.placeName ?? ''
+            // Issue #108: read the badge snapshot BEFORE clearing it, same
+            // reason as `placeName` above.
+            const badgeNamesBefore = useCheckinStore.getState().badgeNamesBefore
             useCheckinStore.getState().clearPending()
             useCheckinStore.getState().clearSelectedPlace()
+            useCheckinStore.getState().clearBadgeNamesBefore()
             setState({
               kind: 'approved',
               xpAwarded: status.xpAwarded,
               geoPointsAwarded: status.geoPointsAwarded,
               placeName,
             })
+            // `status.createdAt` is the SERVER's clock, the same one that
+            // stamps `awardedAtUtc` — never the client's, which can be
+            // skewed far enough to swallow or invent an unlock.
+            void fetchCelebration(badgeNamesBefore, status.createdAt).then((resolved) => {
+              if (!unmountedRef.current && resolved) setCelebration(resolved)
+            })
             return
           }
           if (status.validationStatus === ValidationStatus.Rejected) {
             useCheckinStore.getState().clearPending()
             useCheckinStore.getState().clearSelectedPlace()
+            useCheckinStore.getState().clearBadgeNamesBefore()
             setState({ kind: 'rejected-content' })
             return
           }
@@ -214,6 +287,7 @@ export function useCheckin(): UseCheckinResult {
     }
 
     setState({ kind: 'sending', step: 'upload' })
+    setCelebration(null)
     try {
       const photo = await captureFrame(videoRef.current as HTMLVideoElement)
       const photoUrl = await uploadCheckinPhoto(photo)
@@ -231,6 +305,17 @@ export function useCheckin(): UseCheckinResult {
       // `202`), not only at the poll deadline — recoverable even if the tab
       // closes mid-poll.
       useCheckinStore.getState().setPending({ checkInId, placeName: selectedPlace.placeName })
+      // Issue #108: the "before" half of the badge diff, taken from the
+      // React Query cache the profile screen already filled — reading it
+      // costs no request, which is the whole point. No cached profile means
+      // no snapshot, and the stale one from a previous check-in MUST be
+      // dropped rather than reused against this one.
+      const cachedProfile = queryClient.getQueryData<GamingProfile>(gamificationKeys.profile)
+      if (cachedProfile) {
+        useCheckinStore.getState().setBadgeNamesBefore(badgeNames(cachedProfile.badges))
+      } else {
+        useCheckinStore.getState().clearBadgeNamesBefore()
+      }
       setState({ kind: 'pending', checkInId })
       armPolling(checkInId)
     } catch (error) {
@@ -255,6 +340,7 @@ export function useCheckin(): UseCheckinResult {
 
   const retry = useCallback(() => {
     clearPoll()
+    setCelebration(null)
     if (state.kind === 'permission-denied') {
       void acquirePermissions()
       return
@@ -262,5 +348,5 @@ export function useCheckin(): UseCheckinResult {
     setState({ kind: 'camera' })
   }, [state.kind, acquirePermissions, clearPoll])
 
-  return { state, videoRef, capture, retry }
+  return { state, videoRef, capture, retry, celebration }
 }
