@@ -36,10 +36,21 @@ const VIOLATION_PATTERNS: Record<string, RegExp> = {
  * value, not a Tailwind utility or a CSS custom-property consumer — it
  * cannot read `var(--color-paper)`. A future genuine exception must be added
  * here with a written reason rather than silently regex-excluded.
+ *
+ * The second exception (issue #115) is the redemption QR. It is the first
+ * exception in the COMPONENT layer, and the bar it had to clear was not
+ * "tokens are awkward here" but "a token would break the feature": a QR is
+ * read by a camera, not by a person, and inverting it under `.dark` yields a
+ * light-on-dark symbol that many scanners reject. The failure would surface
+ * at a business counter rather than in CI, which is exactly why it is
+ * pinned here and asserted in both themes by
+ * `features/rewards/qr-code-panel.dom.test.tsx`.
  */
 const ALLOWED_HARDCODED_COLORS: Record<string, string> = {
   'shared/lib/theme.ts':
     'THEME_COLOR_META holds literal hex strings for the <meta name="theme-color"> content attribute (design D-7), which requires a real color string and cannot consume a CSS custom property.',
+  'features/rewards/qr-code-panel.tsx':
+    'QR_FOREGROUND/QR_BACKGROUND must stay literal #000000 on #FFFFFF in BOTH themes (issue #115). A QR code is decoded by luminance contrast off a camera sensor and the specification assumes dark modules on a light background, so a token-themed QR inverts under .dark and becomes unscannable — the reward would fail at the counter, not in CI.',
 }
 
 interface Violation {
