@@ -11,5 +11,13 @@
   "terms": "Terms and conditions",
   "logout": "Log out",
   "logoutConfirmTitle": "Log out?",
-  "logoutConfirmDescription": "You'll need to sign in again."
+  "logoutConfirmDescription": "You'll need to sign in again.",
+  "deleteAccount": {
+    "heading": "Delete account",
+    "description": "If you delete your account, you will no longer be able to access GeoQuest with it.",
+    "action": "Delete my account",
+    "confirmTitle": "Delete your account?",
+    "confirmDescription": "Your account will be deactivated and we'll sign you out. If you sign in again with the same credentials, your account is reactivated.",
+    "error": "We couldn't deactivate your account. Please try again."
+  }
 }

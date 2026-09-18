@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
+import { Trash } from '@phosphor-icons/react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { LanguageSwitcher } from '@/shared/components/language-switcher'
 import { ThemeSwitcher } from '@/shared/components/theme-switcher'
 import { ConfirmationModal } from '@/shared/components/confirmation-modal'
+import { Toast } from '@/shared/components/toast'
 import { Button } from '@/shared/components/ui/button'
 import { useAuthStore } from '@/shared/stores/auth-store'
 import { useSettingsStore } from '@/shared/stores/settings-store'
 import { cn } from '@/shared/lib/cn'
+import { requestAccountDeletion } from '@/features/settings/account-deletion-api'
 
 interface PreferenceToggleProps {
   label: string
@@ -55,6 +58,18 @@ function PreferenceToggle({ label, checked, onChange }: PreferenceToggleProps) {
  * call: `ProtectedRoute` already redirects once `isAuthenticated` flips to
  * false, since `/configuracion` lives inside that guard. PR8 will remove
  * the now-redundant logout affordance from `edit-profile-page.tsx`.
+ *
+ * Account deletion (issue 110, Ley 1581 habeas data) reuses that same
+ * teardown: `DELETE /explorers/me` answers 204, then `logout()` +
+ * `queryClient.clear()` with no `navigate()`. Because the teardown unmounts
+ * this tree immediately, any success message rendered here would die with it
+ * — so the grace-window explanation lives in the `ConfirmationModal`
+ * description, shown BEFORE confirming. The copy promises deactivation and
+ * reactivation on the next login, never erasure and never a date:
+ * `ExplorerErasureOptions.ErasureEnabled` defaults to false, so the sweep
+ * runs but never anonymizes. There is no cancellation endpoint either
+ * (cancelling is implicit on the next successful login), so no
+ * "cancel deletion" affordance is rendered anywhere.
  */
 export function SettingsPage() {
   const { t } = useTranslation('settings')
@@ -67,10 +82,34 @@ export function SettingsPage() {
   const privacyAnalytics = useSettingsStore((state) => state.privacyAnalytics)
   const setPrivacyAnalytics = useSettingsStore((state) => state.setPrivacyAnalytics)
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deletionFailed, setDeletionFailed] = useState(false)
+
   const handleConfirmLogout = () => {
     setConfirmOpen(false)
     logout()
     queryClient.clear()
+  }
+
+  // Every failure status (409 `Explorer.AlreadyDeleted`, 404, 400) collapses
+  // into the same outcome for the explorer — the account was NOT deactivated
+  // — so there is one inline error and, critically, no `logout()`. Swallowing
+  // it would leave them believing a deactivation that never happened.
+  const deleteAccountMutation = useMutation({
+    mutationFn: requestAccountDeletion,
+    onSuccess: () => {
+      logout()
+      queryClient.clear()
+    },
+    onError: () => {
+      setDeletionFailed(true)
+    },
+  })
+
+  const handleConfirmDeletion = () => {
+    setDeleteConfirmOpen(false)
+    setDeletionFailed(false)
+    deleteAccountMutation.mutate()
   }
 
   return (
@@ -111,6 +150,23 @@ export function SettingsPage() {
         </Button>
       </div>
 
+      <div className="flex flex-col gap-3 border-t border-border pt-4">
+        <span className="font-sans text-[11px] font-bold text-ink">
+          {t('deleteAccount.heading')}
+        </span>
+        <p className="font-sans text-[11px] text-muted">{t('deleteAccount.description')}</p>
+        {deletionFailed && <Toast variant="error" message={t('deleteAccount.error')} />}
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-fit"
+          disabled={deleteAccountMutation.isPending}
+          onClick={() => setDeleteConfirmOpen(true)}
+        >
+          {t('deleteAccount.action')}
+        </Button>
+      </div>
+
       {confirmOpen && (
         <ConfirmationModal
           title={t('logoutConfirmTitle')}
@@ -118,6 +174,18 @@ export function SettingsPage() {
           confirmLabel={t('logout')}
           onConfirm={handleConfirmLogout}
           onCancel={() => setConfirmOpen(false)}
+        />
+      )}
+
+      {deleteConfirmOpen && (
+        <ConfirmationModal
+          icon={Trash}
+          destructive
+          title={t('deleteAccount.confirmTitle')}
+          description={t('deleteAccount.confirmDescription')}
+          confirmLabel={t('deleteAccount.action')}
+          onConfirm={handleConfirmDeletion}
+          onCancel={() => setDeleteConfirmOpen(false)}
         />
       )}
     </div>
