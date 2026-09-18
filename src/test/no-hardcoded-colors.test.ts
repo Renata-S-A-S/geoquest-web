@@ -73,9 +73,69 @@ function collectSourceFiles(dir: string): string[] {
   return files
 }
 
+/**
+ * `//` only opens a comment when it is not part of a `://` scheme, so a
+ * seeded URL such as `http://localhost:9000/...` keeps its content.
+ */
+function findLineCommentStart(line: string, from: number): number {
+  let at = line.indexOf('//', from)
+  while (at > 0 && line[at - 1] === ':') {
+    at = line.indexOf('//', at + 2)
+  }
+  return at
+}
+
+/**
+ * Blanks comment content before scanning, preserving the line count so the
+ * reported line numbers still point at the real source lines.
+ *
+ * A comment cannot render a color, so a hex inside one is never a real
+ * violation. An issue reference like `#110` is three hex digits, though, so
+ * HEX_LITERAL matched it and failed the build on a doc comment - twice in
+ * two PRs, each time worked around by rewording the comment. Rewording does
+ * not scale: this repo cites issues in comments as a matter of course.
+ */
+export function stripComments(lines: string[]): string[] {
+  let inBlock = false
+
+  return lines.map((line) => {
+    let kept = ''
+    let index = 0
+
+    while (index < line.length) {
+      if (inBlock) {
+        const close = line.indexOf('*/', index)
+        if (close === -1) return kept
+        inBlock = false
+        index = close + 2
+        continue
+      }
+
+      const blockOpen = line.indexOf('/*', index)
+      const lineOpen = findLineCommentStart(line, index)
+      const next = Math.min(
+        blockOpen === -1 ? Number.POSITIVE_INFINITY : blockOpen,
+        lineOpen === -1 ? Number.POSITIVE_INFINITY : lineOpen
+      )
+
+      if (next === Number.POSITIVE_INFINITY) {
+        return kept + line.slice(index)
+      }
+
+      kept += line.slice(index, next)
+      if (next === lineOpen) return kept
+
+      inBlock = true
+      index = next + 2
+    }
+
+    return kept
+  })
+}
+
 function scanFile(srcDir: string, relativePath: string): Violation[] {
   const content = readFileSync(join(srcDir, relativePath), 'utf-8')
-  const lines = content.split('\n')
+  const lines = stripComments(content.split('\n'))
   const violations: Violation[] = []
 
   lines.forEach((line, index) => {
@@ -98,6 +158,53 @@ const allViolations = sourceFiles.flatMap((path) => scanFile(srcDir, path))
 const unallowedViolations = allViolations.filter(
   (violation) => !(violation.path in ALLOWED_HARDCODED_COLORS)
 )
+
+describe('stripComments', () => {
+  it('blanks an issue reference inside a block comment', () => {
+    const lines = [
+      '/**',
+      ' * Deletion copy, see issue #110 for the rationale.',
+      ' */',
+      'const a = 1',
+    ]
+
+    expect(stripComments(lines).join(' ')).not.toContain('#110')
+  })
+
+  it('keeps a hex literal that is real code', () => {
+    const lines = ["export const paper = '#F6F3EC'"]
+
+    expect(stripComments(lines)[0]).toContain('#F6F3EC')
+  })
+
+  it('does not treat the // in a url scheme as a comment', () => {
+    const lines = ["const seed = 'http://localhost:9000/geoquest/#F6F3EC.jpg'"]
+
+    expect(stripComments(lines)[0]).toContain('#F6F3EC')
+  })
+
+  it('blanks a trailing line comment but keeps the code before it', () => {
+    const lines = ["const paper = '#F6F3EC' // fallback #110"]
+    const [stripped] = stripComments(lines)
+
+    expect(stripped).toContain('#F6F3EC')
+    expect(stripped).not.toContain('#110')
+  })
+
+  it('keeps code that follows a block comment closing mid-line', () => {
+    const lines = ["/* see #110 */ const ink = '#0A1618'"]
+    const [stripped] = stripComments(lines)
+
+    expect(stripped).not.toContain('#110')
+    expect(stripped).toContain('#0A1618')
+  })
+
+  it('preserves the line count so reported line numbers stay correct', () => {
+    const lines = ['/**', ' * #110', ' */', 'const a = 1']
+
+    expect(stripComments(lines)).toHaveLength(4)
+  })
+})
 
 describe('no-hardcoded-colors static scan', () => {
   /**
