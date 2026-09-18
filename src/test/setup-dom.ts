@@ -5,6 +5,7 @@ import i18next from '@/test/i18n'
 import { stubPrefersColorScheme } from '@/test/match-media'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
+import { useRedemptionStore } from '@/shared/stores/redemption-store'
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' })
@@ -24,6 +25,12 @@ afterEach(async () => {
   useCheckinStore.getState().clearPending()
   useCheckinStore.getState().clearSelectedPlace()
   useCheckinStore.getState().clearBadgeNamesBefore()
+  // Issue #115. Reset with `setState` rather than an action: the store has
+  // no clear-everything action on purpose — production code only ever
+  // forgets ONE reward's redemption, and adding a bulk clear just for the
+  // suite would put a "drop every pointer" button next to the ids that keep
+  // a remount from re-charging the explorer.
+  useRedemptionStore.setState({ activeByRewardId: {} })
   window.localStorage.clear()
   // MANDATORY: the i18next singleton leaks its active language across tests
   // in the same file otherwise (design D-C) — `localStorage.clear()` above

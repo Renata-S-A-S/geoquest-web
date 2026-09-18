@@ -12,6 +12,32 @@
     "emptyTitle": "No rewards yet",
     "emptyDescription": "Check back soon to redeem your GeoPoints."
   },
+  "redeem": {
+    "cost": "{{points}} pts will be deducted from your balance.",
+    "confirmTitle": "Redeem this reward?",
+    "confirmBody": "Confirming generates a QR code that is shown only once: show it at the counter before it expires.",
+    "confirmAction": "Confirm redemption",
+    "back": "Back to catalog",
+    "redeeming": "Generating your redemption…",
+    "checking": "Looking up your redemption…",
+    "dismiss": "Close the QR",
+    "dismissWarning": "Closing makes the QR code disappear for good: it is not stored anywhere and cannot be shown again.",
+    "heldTitle": "Your redemption is still active",
+    "heldBody": "The QR code was shown once and cannot be recovered. You will be able to redeem this reward again once this redemption expires.",
+    "statusError": "We couldn't check your redemption status.",
+    "again": "Redeem again",
+    "terminal": {
+      "Redeemed": "You already used this redemption at the counter.",
+      "Expired": "This redemption expired unused.",
+      "Failed": "This redemption could not be completed."
+    },
+    "error": {
+      "stockExhausted": "This reward is out of stock, so the redemption could not be generated.",
+      "businessNotActive": "The business is not active right now, so it isn't accepting redemptions. Try again once it is back.",
+      "rewardNotFound": "This reward is no longer available.",
+      "unknown": "We couldn't complete the redemption."
+    }
+  },
   "redemption": {
     "qrTitle": "Redemption QR code",
     "instructions": "Show this code at the counter to redeem your reward.",
