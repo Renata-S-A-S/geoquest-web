@@ -11,5 +11,10 @@
     "retry": "Retry",
     "emptyTitle": "No rewards yet",
     "emptyDescription": "Check back soon to redeem your GeoPoints."
+  },
+  "identityVerification": {
+    "title": "Identity verification pending",
+    "body": "Redeeming a reward requires a verified identity.",
+    "unavailable": "You can't start verification from the app yet. Try redeeming the reward again later."
   }
 }

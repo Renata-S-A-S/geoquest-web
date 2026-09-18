@@ -2,7 +2,8 @@ import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
-import { getRewards } from '@/features/rewards/rewards-api'
+import { apiClient } from '@/shared/lib/api-client'
+import { getRewards, mapRedeemRewardError } from '@/features/rewards/rewards-api'
 
 /**
  * Rewards read layer — transport tests. Mirrors `routes-api.test.ts`:
@@ -84,5 +85,93 @@ describe('getRewards', () => {
     server.use(http.get(`${baseURL}/rewards`, () => HttpResponse.json([withoutRewardId])))
 
     await expect(getRewards()).rejects.toThrow()
+  })
+})
+
+/**
+ * `POST /rewards/{id}/redeem` error taxonomy. The endpoint itself is NOT
+ * called anywhere yet (the redeem flow is a later slice), so these tests
+ * drive a raw `apiClient.post` against MSW purely to produce a real Axios
+ * error with the exact problem+json body the backend sends.
+ *
+ * The important case is the pair of 403s: `RedemptionEndpoints`
+ * (`StatusCodeForRequest`) maps BOTH `IdentityNotVerified` and
+ * `BusinessNotActive` to 403, so a mapper that discriminated on the status
+ * code alone would report "verify your identity" for an inactive business.
+ */
+async function captureRedeemError(status: number, body?: unknown): Promise<unknown> {
+  server.use(
+    http.post(`${baseURL}/rewards/${rewardId}/redeem`, () =>
+      body === undefined ? new HttpResponse(null, { status }) : HttpResponse.json(body, { status })
+    )
+  )
+
+  try {
+    await apiClient.post(`/rewards/${rewardId}/redeem`)
+  } catch (error) {
+    return error
+  }
+  throw new Error('expected the redeem request to reject')
+}
+
+describe('mapRedeemRewardError', () => {
+  it('maps a 403 titled IdentityNotVerified to identityNotVerified', async () => {
+    const error = await captureRedeemError(403, {
+      title: 'RequestRewardRedemptionCommand.IdentityNotVerified',
+      detail: 'Tu identidad todavía no está verificada.',
+      status: 403,
+    })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'identityNotVerified' })
+  })
+
+  it('maps a 403 titled BusinessNotActive to businessNotActive, NOT to identityNotVerified', async () => {
+    const error = await captureRedeemError(403, {
+      title: 'RequestRewardRedemptionCommand.BusinessNotActive',
+      detail: 'El comercio no está activo.',
+      status: 403,
+    })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'businessNotActive' })
+  })
+
+  it('maps a 404 titled RewardNotFound to rewardNotFound', async () => {
+    const error = await captureRedeemError(404, {
+      title: 'RequestRewardRedemptionCommand.RewardNotFound',
+      status: 404,
+    })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'rewardNotFound' })
+  })
+
+  it('maps a 409 titled Reward.StockExhausted to stockExhausted', async () => {
+    const error = await captureRedeemError(409, { title: 'Reward.StockExhausted', status: 409 })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'stockExhausted' })
+  })
+
+  it('maps a 400 with an untracked title to unknown', async () => {
+    const error = await captureRedeemError(400, {
+      title: 'RequestRewardRedemptionCommand.SomeFutureRule',
+      status: 400,
+    })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'unknown' })
+  })
+
+  it('maps a 403 with no problem+json body to unknown, because the two 403 causes are indistinguishable without a title', async () => {
+    const error = await captureRedeemError(403)
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'unknown' })
+  })
+
+  it('maps an empty problem+json title to unknown, not to an empty kind', async () => {
+    const error = await captureRedeemError(400, { title: '', status: 400 })
+
+    expect(mapRedeemRewardError(error)).toEqual({ kind: 'unknown' })
+  })
+
+  it('maps a non-Axios failure to unknown', () => {
+    expect(mapRedeemRewardError(new Error('boom'))).toEqual({ kind: 'unknown' })
   })
 })
