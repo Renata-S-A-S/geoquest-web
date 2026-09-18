@@ -7,7 +7,9 @@ import {
   getRedemptionStatus,
   getRewards,
   mapRedeemRewardError,
+  mapSubmitRatingError,
   redeemReward,
+  submitRedemptionRating,
 } from '@/features/rewards/rewards-api'
 
 /**
@@ -344,5 +346,99 @@ describe('getRedemptionStatus', () => {
     await expect(getRedemptionStatus(userRewardId)).rejects.toMatchObject({
       response: { status: 403 },
     })
+  })
+})
+
+/**
+ * Rating transport (issue #116). Same MSW-at-the-wire shape as everything
+ * above.
+ *
+ * The case that matters is the 409 PAIR. `StatusCodeForRating` answers 409
+ * for BOTH `UserReward.AlreadyRated` and `UserReward.NotRedeemed`, exactly
+ * like the 403 pair the redeem mapper already handles, and the two are not
+ * the same situation for an explorer: one is finished, the other is a "come
+ * back after you use it". A mapper that read the status code would collapse
+ * them into one message and throw away the only bit that says whether to
+ * return.
+ */
+async function captureRatingError(status: number, body?: unknown): Promise<unknown> {
+  server.use(
+    http.post(`${baseURL}/rewards/redemptions/${userRewardId}/rating`, () =>
+      body === undefined ? new HttpResponse(null, { status }) : HttpResponse.json(body, { status })
+    )
+  )
+
+  try {
+    await apiClient.post(`/rewards/redemptions/${userRewardId}/rating`)
+  } catch (error) {
+    return error
+  }
+  throw new Error('expected the rating request to reject')
+}
+
+describe('submitRedemptionRating', () => {
+  it('POSTs the rating as an integer body and resolves on a 204 with no content', async () => {
+    let sentBody: unknown
+    server.use(
+      http.post(`${baseURL}/rewards/redemptions/${userRewardId}/rating`, async ({ request }) => {
+        sentBody = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+
+    await expect(submitRedemptionRating(userRewardId, 4)).resolves.toBeUndefined()
+    expect(sentBody).toEqual({ rating: 4 })
+  })
+
+  it('rejects the documented failures so the caller can run them through mapSubmitRatingError', async () => {
+    server.use(
+      http.post(`${baseURL}/rewards/redemptions/${userRewardId}/rating`, () =>
+        HttpResponse.json({ title: 'UserReward.AlreadyRated', status: 409 }, { status: 409 })
+      )
+    )
+
+    await expect(submitRedemptionRating(userRewardId, 5)).rejects.toMatchObject({
+      response: { status: 409 },
+    })
+  })
+})
+
+describe('mapSubmitRatingError', () => {
+  it('maps a 409 titled UserReward.AlreadyRated to alreadyRated', async () => {
+    const error = await captureRatingError(409, { title: 'UserReward.AlreadyRated', status: 409 })
+
+    expect(mapSubmitRatingError(error)).toEqual({ kind: 'alreadyRated' })
+  })
+
+  it('maps a 409 titled UserReward.NotRedeemed to notRedeemed, NOT to alreadyRated', async () => {
+    const error = await captureRatingError(409, { title: 'UserReward.NotRedeemed', status: 409 })
+
+    expect(mapSubmitRatingError(error)).toEqual({ kind: 'notRedeemed' })
+  })
+
+  it('maps a 404 NotFound to redemptionNotFound', async () => {
+    const error = await captureRatingError(404, {
+      title: 'SubmitRewardExperienceRatingCommand.NotFound',
+      status: 404,
+    })
+
+    expect(mapSubmitRatingError(error)).toEqual({ kind: 'redemptionNotFound' })
+  })
+
+  it('maps a 403 NotAuthorized to notAuthorized', async () => {
+    const error = await captureRatingError(403, {
+      title: 'SubmitRewardExperienceRatingCommand.NotAuthorized',
+      status: 403,
+    })
+
+    expect(mapSubmitRatingError(error)).toEqual({ kind: 'notAuthorized' })
+  })
+
+  it('maps a 409 with no parseable title to unknown, because the two causes are then indistinguishable', async () => {
+    expect(mapSubmitRatingError(await captureRatingError(409))).toEqual({ kind: 'unknown' })
+  })
+
+  it('maps a non-Axios failure to unknown', () => {
+    expect(mapSubmitRatingError(new Error('boom'))).toEqual({ kind: 'unknown' })
   })
 })

@@ -147,3 +147,82 @@ export async function getRedemptionStatus(userRewardId: string): Promise<UserRew
   const { data } = await apiClient.get(`/rewards/redemptions/${userRewardId}`)
   return userRewardStatusResultSchema.parse(data)
 }
+
+/**
+ * A reward experience rating, pinned at the type level to the exact closed
+ * set the backend accepts.
+ *
+ * `SubmitRewardExperienceRatingCommandValidator` declares
+ * `InclusiveBetween(1, 5)` and the domain re-validates it, so 0 and 6 are
+ * refused twice on the server. Keeping the union here means the UI cannot
+ * even construct an out-of-range rating: `REWARD_RATING_VALUES` is the one
+ * list the control renders its buttons from, so there is no sixth button to
+ * press, and "nothing selected" is `null` rather than 0.
+ */
+export const REWARD_RATING_VALUES = [1, 2, 3, 4, 5] as const
+export type RewardRating = (typeof REWARD_RATING_VALUES)[number]
+
+/** Every failure `POST /rewards/redemptions/{id}/rating` can report. */
+export type SubmitRatingErrorKind =
+  'alreadyRated' | 'notRedeemed' | 'redemptionNotFound' | 'notAuthorized' | 'unknown'
+
+export type SubmitRatingError = { kind: SubmitRatingErrorKind }
+
+const RATING_ERROR_KIND_BY_TITLE: Record<string, SubmitRatingErrorKind> = {
+  'UserReward.AlreadyRated': 'alreadyRated',
+  'UserReward.NotRedeemed': 'notRedeemed',
+  'SubmitRewardExperienceRatingCommand.NotFound': 'redemptionNotFound',
+  'SubmitRewardExperienceRatingCommand.NotAuthorized': 'notAuthorized',
+}
+
+/**
+ * Maps a `POST /rewards/redemptions/{id}/rating` rejection to a
+ * `SubmitRatingError`, discriminating on the problem+json `title` for the
+ * same reason `mapRedeemRewardError` does — only here the collision is a
+ * 409, not a 403.
+ *
+ * `RedemptionEndpoints.StatusCodeForRating` answers 409 for BOTH
+ * `UserReward.AlreadyRated` and `UserReward.NotRedeemed`, and those are
+ * opposite situations for an explorer. `AlreadyRated` is finished: the
+ * rating landed, there is nothing left to do, and the honest reply is
+ * reassurance. `NotRedeemed` means the QR has not been scanned at the
+ * counter yet, so the rating is not refused but merely early, and the
+ * explorer can come back and give it. Collapsing the pair into one
+ * "blocked" message would throw away the single bit that tells them which
+ * of the two it is.
+ *
+ * A 409 with no parseable title therefore falls back to `unknown` instead
+ * of guessing either half, exactly like the title-less 403 above.
+ */
+export function mapSubmitRatingError(error: unknown): SubmitRatingError {
+  if (!axios.isAxiosError(error) || !error.response) return { kind: 'unknown' }
+
+  const problem = problemDetailsSchema.safeParse(error.response.data)
+  const title = problem.success ? problem.data.title : undefined
+  const kind = title === undefined ? undefined : RATING_ERROR_KIND_BY_TITLE[title]
+
+  return { kind: kind ?? 'unknown' }
+}
+
+/**
+ * `POST /rewards/redemptions/{userRewardId}/rating`.
+ *
+ * Answers 204 No Content on success, so there is no payload to parse and
+ * nothing for a Zod schema to guard — the resolution itself is the whole
+ * result. That is also why the return type is `void` rather than a result
+ * object: inventing one would imply a body the contract does not have.
+ *
+ * The write is ONE-WAY. `UserReward.AlreadyRated` exists precisely because
+ * a second rating for the same redemption is refused, so this must never be
+ * called again after it resolves; the caller goes read-only instead of
+ * offering an edit that the backend would reject.
+ *
+ * Rejections are left raw for `mapSubmitRatingError` above, which needs the
+ * Axios error rather than a pre-digested one.
+ */
+export async function submitRedemptionRating(
+  userRewardId: string,
+  rating: RewardRating
+): Promise<void> {
+  await apiClient.post(`/rewards/redemptions/${userRewardId}/rating`, { rating })
+}
