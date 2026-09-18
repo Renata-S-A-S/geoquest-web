@@ -131,6 +131,19 @@ export function useCheckin(): UseCheckinResult {
   }, [])
 
   /**
+   * Issue #152 — releases the camera the moment it has no remaining job.
+   * Nulling the ref is half the contract, not bookkeeping: it is what makes
+   * this idempotent, so the unmount cleanup after a capture does not stop
+   * the same tracks a second time.
+   */
+  const releaseStream = useCallback(() => {
+    if (streamRef.current) {
+      stopCameraStream(streamRef.current)
+      streamRef.current = null
+    }
+  }, [])
+
+  /**
    * Hand-rolled recursive `setTimeout` loop around the pure
    * `nextPollDelayMs` schedule (design decision #1). Armed on entering
    * `pending`, cleared on unmount and on every terminal transition.
@@ -216,6 +229,15 @@ export function useCheckin(): UseCheckinResult {
    */
   const acquirePermissions = useCallback((): Promise<void> => {
     if (acquisitionPromiseRef.current) return acquisitionPromiseRef.current
+    // Issue #152: never request a second camera while the first one is
+    // still held. Not every path into a terminal state runs through
+    // `captureFrame` — `submitCheckin` bails out to `error` before it when
+    // `selectedPlace` went stale — so without this the retry below would
+    // overwrite `streamRef` and strand a live camera with nothing left to
+    // stop it. Deliberately placed AFTER the re-entrancy guard: StrictMode's
+    // second, synchronous call returns the in-flight promise above and never
+    // reaches here, so the concurrent-acquisition fix stays intact.
+    releaseStream()
     setState({ kind: 'requesting-permissions' })
     const promise = (async () => {
       try {
@@ -240,7 +262,7 @@ export function useCheckin(): UseCheckinResult {
     })()
     acquisitionPromiseRef.current = promise
     return promise
-  }, [t])
+  }, [releaseStream, t])
 
   useEffect(() => {
     // Reset on every (re)mount, not just at first render: React 18
@@ -254,10 +276,7 @@ export function useCheckin(): UseCheckinResult {
     return () => {
       unmountedRef.current = true
       clearPoll()
-      if (streamRef.current) {
-        stopCameraStream(streamRef.current)
-        streamRef.current = null
-      }
+      releaseStream()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -290,6 +309,11 @@ export function useCheckin(): UseCheckinResult {
     setCelebration(null)
     try {
       const photo = await captureFrame(videoRef.current as HTMLVideoElement)
+      // Issue #152: the frame is a `Blob` now, so the camera has nothing
+      // left to do. Waiting for unmount kept it — and the OS camera
+      // indicator — live through `sending` -> `pending` -> `approved`, i.e.
+      // up to the 120s polling deadline in `poll-schedule.ts`.
+      releaseStream()
       const photoUrl = await uploadCheckinPhoto(photo)
       if (unmountedRef.current) return
       setState({ kind: 'sending', step: 'create' })
@@ -331,22 +355,27 @@ export function useCheckin(): UseCheckinResult {
         setState({ kind: 'error', message: mapped.message })
       }
     }
-  }, [armPolling, t])
+  }, [armPolling, releaseStream, t])
 
   const capture = useCallback(() => {
     if (state.kind !== 'camera') return
     void submitCheckin()
   }, [state.kind, submitCheckin])
 
+  /**
+   * Issue #152 — every retry re-acquires, not just the `permission-denied`
+   * one. Dropping straight back to `camera` used to work only because the
+   * stream from the first attempt was still live and the `srcObject` effect
+   * re-attached it; now that capture releases it, that path would render a
+   * black viewfinder. Re-reading the GPS along the way is the point rather
+   * than a side effect: an `OutOfRadius` rejection tells the explorer to get
+   * closer, so the retry has to measure where they are now.
+   */
   const retry = useCallback(() => {
     clearPoll()
     setCelebration(null)
-    if (state.kind === 'permission-denied') {
-      void acquirePermissions()
-      return
-    }
-    setState({ kind: 'camera' })
-  }, [state.kind, acquirePermissions, clearPoll])
+    void acquirePermissions()
+  }, [acquirePermissions, clearPoll])
 
   return { state, videoRef, capture, retry, celebration }
 }

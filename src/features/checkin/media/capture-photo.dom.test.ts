@@ -109,4 +109,18 @@ describe('stopCameraStream', () => {
     expect(stop1).toHaveBeenCalledOnce()
     expect(stop2).toHaveBeenCalledOnce()
   })
+
+  it('does not throw when the same stream is stopped twice', () => {
+    // Issue #152 releases the stream at capture time and again on unmount.
+    // `useCheckin` nulls its ref so the second release is skipped, but the
+    // helper itself must stay safe to call on an already-stopped stream —
+    // `MediaStreamTrack.stop()` is a no-op once the track has ended.
+    const track = { stop: vi.fn() }
+    const stream = { getTracks: () => [track] } as unknown as MediaStream
+
+    stopCameraStream(stream)
+
+    expect(() => stopCameraStream(stream)).not.toThrow()
+    expect(track.stop).toHaveBeenCalledTimes(2)
+  })
 })
