@@ -22,11 +22,33 @@ export interface CheckinStoreState {
   setSelectedPlace: (place: SelectedPlace) => void
   /** Touches ONLY `selectedPlace` — never `pending` (design doc decision #11). */
   clearSelectedPlace: () => void
+  /**
+   * Badge names the explorer already owned when the current check-in was
+   * submitted — the "before" half of the `badge-diff.ts` snapshot. `null`
+   * means "no snapshot taken", which makes the whole badge feature degrade
+   * to silence instead of guessing. Deletable with `badge-diff.ts` once the
+   * backend exposes `CheckInStatusResult.BadgesAwarded`.
+   */
+  badgeNamesBefore: string[] | null
+  /** Touches ONLY `badgeNamesBefore` — never `pending` or `selectedPlace`. */
+  setBadgeNamesBefore: (names: string[]) => void
+  /** Touches ONLY `badgeNamesBefore` — never `pending` or `selectedPlace`. */
+  clearBadgeNamesBefore: () => void
 }
 
 /** Shape persisted by a v1 client — the only field that ever existed before WU003b. */
 interface PersistedStateV1 {
   pending: PendingCheckin | null
+}
+
+/** Shape persisted by a v2 client — v1 plus the `selectedPlace` slot (WU003b). */
+interface PersistedStateV2 extends PersistedStateV1 {
+  selectedPlace: SelectedPlace | null
+}
+
+/** Shape persisted by a v3 client — v2 plus the badge snapshot (issue #108). */
+interface PersistedStateV3 extends PersistedStateV2 {
+  badgeNamesBefore: string[] | null
 }
 
 /**
@@ -48,9 +70,15 @@ interface PersistedStateV1 {
  * `version: 2` (WU003b, design doc "Migration / Rollout") adds the
  * `selectedPlace` slot — the place chosen on `place-discovery`, carried into
  * check-in via this store instead of router state (design decision #1: a
- * router-state handoff dies on a mid-check-in refresh). The v1->v2
- * `migrate` MUST preserve `pending` unchanged; it must never reconstruct or
- * drop it, since a v1 client may have a real in-flight check-in persisted.
+ * router-state handoff dies on a mid-check-in refresh).
+ *
+ * `version: 3` (issue #108) adds `badgeNamesBefore`, the persisted "before"
+ * half of the badge diff (`features/checkin/badge-diff.ts`).
+ *
+ * Both migrations MUST preserve every earlier field unchanged; they must
+ * never reconstruct or drop one, since a v1 or v2 client may have a real
+ * in-flight check-in persisted. The steps are written as separate, additive
+ * `if`s so a v1 client migrates all the way to v3 in one pass.
  */
 export const useCheckinStore = create<CheckinStoreState>()(
   persist(
@@ -62,18 +90,30 @@ export const useCheckinStore = create<CheckinStoreState>()(
       selectedPlace: null,
       setSelectedPlace: (place) => set({ selectedPlace: place }),
       clearSelectedPlace: () => set({ selectedPlace: null }),
+      badgeNamesBefore: null,
+      setBadgeNamesBefore: (names) => set({ badgeNamesBefore: names }),
+      clearBadgeNamesBefore: () => set({ badgeNamesBefore: null }),
     }),
     {
       name: 'geoquest.pending-checkin',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ pending: state.pending, selectedPlace: state.selectedPlace }),
+      partialize: (state) => ({
+        pending: state.pending,
+        selectedPlace: state.selectedPlace,
+        badgeNamesBefore: state.badgeNamesBefore,
+      }),
       migrate: (persistedState, version) => {
-        if (version === 1) {
-          const v1State = persistedState as PersistedStateV1
-          return { pending: v1State.pending, selectedPlace: null }
+        let migrated = persistedState as Partial<PersistedStateV3>
+
+        if (version <= 1) {
+          migrated = { pending: (migrated as PersistedStateV1).pending, selectedPlace: null }
         }
-        return persistedState as CheckinStoreState
+        if (version <= 2) {
+          migrated = { ...(migrated as PersistedStateV2), badgeNamesBefore: null }
+        }
+
+        return migrated as CheckinStoreState
       },
     }
   )

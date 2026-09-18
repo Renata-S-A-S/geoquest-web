@@ -110,12 +110,15 @@ describe('checkin-store v1 -> v2 migration', () => {
     expect(useCheckinStore.getState().selectedPlace).toBeNull()
   })
 
-  it('persists state under version 2 after a write', async () => {
+  // Asserts the CURRENT schema version stamp, so it moves with every bump
+  // (2 -> 3 on issue #108). Kept here rather than duplicated per migration
+  // block: there is only ever one current version.
+  it('persists state under the current schema version after a write', async () => {
     const { useCheckinStore } = await importFreshCheckinStore('migration-2')
     useCheckinStore.getState().setSelectedPlace({ placeId: 'place-1', placeName: 'MAMM' })
 
     const raw = JSON.parse(window.localStorage.getItem('geoquest.pending-checkin') as string)
-    expect(raw.version).toBe(2)
+    expect(raw.version).toBe(3)
   })
 })
 
@@ -161,5 +164,103 @@ describe('setSelectedPlace / clearSelectedPlace', () => {
     expect(useCheckinStore.getState().pending).toEqual(
       expect.objectContaining({ checkInId: 'checkin-unrelated-2', placeName: 'Museo' })
     )
+  })
+})
+
+/**
+ * Issue #108 — `badgeNamesBefore` slot + v2->v3 migration. The backend's
+ * `CheckInStatusResult` carries no badges field, so the only way to know
+ * which badge a check-in unlocked is to diff `GET /gaming/profile` before
+ * and after it. The "before" half of that diff has to survive a tab close
+ * mid-poll, so it is persisted here alongside `pending`.
+ *
+ * The v2->v3 migration MUST preserve BOTH `pending` and `selectedPlace`
+ * unchanged: a real v2 client can have an in-flight check-in waiting on
+ * manual review, and dropping either field would strand it.
+ */
+describe('checkin-store v2 -> v3 migration', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('preserves an in-flight pending and selectedPlace and defaults badgeNamesBefore to null', async () => {
+    const v2State = {
+      state: {
+        pending: {
+          checkInId: 'checkin-v2-migrated',
+          placeName: 'El Cielo',
+          createdAtIso: '2026-09-10T00:00:00.000Z',
+        },
+        selectedPlace: { placeId: 'place-7', placeName: 'El Cielo' },
+      },
+      version: 2,
+    }
+    window.localStorage.setItem('geoquest.pending-checkin', JSON.stringify(v2State))
+
+    const { useCheckinStore } = await importFreshCheckinStore('migration-v3-0')
+    await useCheckinStore.persist.rehydrate()
+
+    expect(useCheckinStore.getState().pending).toEqual({
+      checkInId: 'checkin-v2-migrated',
+      placeName: 'El Cielo',
+      createdAtIso: '2026-09-10T00:00:00.000Z',
+    })
+    expect(useCheckinStore.getState().selectedPlace).toEqual({
+      placeId: 'place-7',
+      placeName: 'El Cielo',
+    })
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+  })
+
+  it('still migrates a v1 client all the way to v3 with both new slots defaulted', async () => {
+    const v1State = {
+      state: {
+        pending: {
+          checkInId: 'checkin-v1-to-v3',
+          placeName: 'Museo',
+          createdAtIso: '2026-08-20T00:00:00.000Z',
+        },
+      },
+      version: 1,
+    }
+    window.localStorage.setItem('geoquest.pending-checkin', JSON.stringify(v1State))
+
+    const { useCheckinStore } = await importFreshCheckinStore('migration-v3-1')
+    await useCheckinStore.persist.rehydrate()
+
+    expect(useCheckinStore.getState().pending).toMatchObject({ checkInId: 'checkin-v1-to-v3' })
+    expect(useCheckinStore.getState().selectedPlace).toBeNull()
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+  })
+
+  it('persists badgeNamesBefore so a fresh instance rehydrates the snapshot', async () => {
+    const { useCheckinStore: firstInstance } = await importFreshCheckinStore('badge-snapshot-0')
+    firstInstance.getState().setBadgeNamesBefore(['Primer paso', 'Explorador'])
+
+    const { useCheckinStore: secondInstance } = await importFreshCheckinStore('badge-snapshot-1')
+    await secondInstance.persist.rehydrate()
+
+    expect(secondInstance.getState().badgeNamesBefore).toEqual(['Primer paso', 'Explorador'])
+  })
+
+  it('setBadgeNamesBefore and clearBadgeNamesBefore touch only that slot', async () => {
+    const { useCheckinStore } = await importFreshCheckinStore('badge-snapshot-2')
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-9', placeName: 'Museo' })
+    useCheckinStore.getState().setSelectedPlace({ placeId: 'place-9', placeName: 'Museo' })
+
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    expect(useCheckinStore.getState().pending).toMatchObject({ checkInId: 'checkin-9' })
+    expect(useCheckinStore.getState().selectedPlace).toEqual({
+      placeId: 'place-9',
+      placeName: 'Museo',
+    })
+
+    useCheckinStore.getState().clearBadgeNamesBefore()
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+    expect(useCheckinStore.getState().pending).toMatchObject({ checkInId: 'checkin-9' })
+    expect(useCheckinStore.getState().selectedPlace).toEqual({
+      placeId: 'place-9',
+      placeName: 'Museo',
+    })
   })
 })
