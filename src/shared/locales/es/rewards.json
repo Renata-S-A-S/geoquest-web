@@ -11,5 +11,10 @@
     "retry": "Reintentar",
     "emptyTitle": "Todavía no hay premios",
     "emptyDescription": "Volvé pronto para canjear tus GeoPoints."
+  },
+  "identityVerification": {
+    "title": "Verificación de identidad pendiente",
+    "body": "Para canjear un premio necesitás tener tu identidad verificada.",
+    "unavailable": "Todavía no podés iniciar la verificación desde la app. Volvé a intentar el canje más adelante."
   }
 }
