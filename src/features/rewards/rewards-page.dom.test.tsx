@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { RewardsPage } from '@/features/rewards/rewards-page'
@@ -16,6 +16,12 @@ import type { RewardSummaryResult } from '@/features/rewards/schemas'
  * both its `Guid` and its `null` form.
  */
 const baseURL = TEST_API_BASE_URL
+
+const { navigateSpy } = vi.hoisted(() => ({ navigateSpy: vi.fn() }))
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return { ...actual, useNavigate: () => navigateSpy }
+})
 
 const rewardA: RewardSummaryResult = {
   rewardId: 'b8f4d3c2-1a05-4e77-9c31-6d2f8e4a7b10',
@@ -95,6 +101,23 @@ describe('RewardsPage', () => {
     const cardA = await screen.findByTestId(`reward-card-${rewardA.rewardId}`)
     expect(within(cardA).queryAllByRole('img')).toHaveLength(0)
     expect(screen.queryAllByRole('img')).toHaveLength(0)
+  })
+
+  /**
+   * Criterion 11.6 — the catalog is the only entry point into the redeem
+   * flow. The reward id travels in the URL rather than in router state: a
+   * mid-redemption refresh would drop router state, and the redeem screen
+   * must survive one to find its persisted `userRewardId` again (same
+   * reasoning as `checkin-store`'s `selectedPlace`, design decision #1).
+   */
+  it('navigates to the reward redeem route when a card is tapped', async () => {
+    navigateSpy.mockClear()
+    mockRewardsList([rewardA, rewardB])
+    renderRewardsPage()
+
+    fireEvent.click(await screen.findByTestId(`reward-card-${rewardA.rewardId}`))
+
+    expect(navigateSpy).toHaveBeenCalledWith(`/premios/${rewardA.rewardId}/canjear`)
   })
 
   it('shows the loading skeleton while GET /rewards is in flight [Loading state]', () => {

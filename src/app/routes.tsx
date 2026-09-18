@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from './layout/app-shell'
 import { LoginPage } from '@/features/auth/login-page'
@@ -13,9 +14,33 @@ import { ProfilePage } from '@/features/gamification/profile-page'
 import { RewardsLayout } from './layout/rewards-layout'
 import { RewardsPage } from '@/features/rewards/rewards-page'
 import { RoutesPage } from '@/features/routes/routes-page'
+import { Skeleton } from '@/shared/components/ui/skeleton'
 import { SettingsPage } from '@/features/settings/settings-page'
 import { TermsPage } from './terms-page'
 import { ProtectedRoute } from './protected-route'
+
+/**
+ * Issue #115 — the redeem screen is the ONLY lazily-loaded route in this
+ * file; everything else is imported eagerly above. It is split because it is
+ * the sole consumer of `qrcode.react`, a dependency exactly one screen in
+ * the whole app needs and that every other explorer would otherwise download
+ * on first paint.
+ *
+ * `React.lazy` wants a default export and `redeem-page.tsx` has a named one
+ * (the repo's convention everywhere), so the promise is remapped rather than
+ * a default export added just to satisfy the loader.
+ *
+ * Its path is `/premios/:rewardId/canjear`, a CHILD of the `/premios`
+ * section rather than a sibling flow like `/checkin`. A redemption belongs
+ * to one reward, so the reward id belongs in the URL: the screen has to
+ * survive a refresh to find the `userRewardId` it persisted, and router
+ * state does not. Staying inside `RewardsLayout` also leaves the sub-nav on
+ * screen, which is the explorer's way back out. Neither tab reads as active
+ * there, correctly — the screen is in the section but on neither tab.
+ */
+const RedeemPage = lazy(() =>
+  import('@/features/rewards/redeem-page').then((module) => ({ default: module.RedeemPage }))
+)
 
 /**
  * `/login` es hermana del árbol con AppShell, no hija: un usuario deslogueado
@@ -85,6 +110,31 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <RewardsPage /> },
               { path: 'leaderboard', element: <LeaderboardPage /> },
+              {
+                // `:rewardId` is a single segment, so it cannot shadow the
+                // literal `leaderboard` sibling above: that path is one
+                // segment and this one is two.
+                path: ':rewardId/canjear',
+                // The Suspense boundary sits on the route element rather than
+                // around the whole tree, so a slow chunk never blanks the app
+                // shell or the rewards sub-nav — only the panel below them.
+                // Its skeleton is `RewardsPage`'s own loading state, so the
+                // wait looks the same whether it is the chunk or the network.
+                // Inlined instead of extracted into a component because this
+                // file exports a router, and `react-refresh/only-export-components`
+                // rejects mixing a component declaration into it.
+                element: (
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-col gap-2 p-4">
+                        <Skeleton className="h-48 w-full" />
+                      </div>
+                    }
+                  >
+                    <RedeemPage />
+                  </Suspense>
+                ),
+              },
             ],
           },
           { path: '/perfil', element: <ProfilePage /> },

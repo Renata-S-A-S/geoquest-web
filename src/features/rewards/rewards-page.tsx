@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Gift } from '@phosphor-icons/react'
 import { RewardCard } from '@/features/rewards/reward-card'
 import { EmptyState } from '@/shared/components/empty-state'
@@ -14,9 +15,17 @@ import { useRewards } from '@/features/rewards/queries'
  *
  * The section title lives in `RewardsLayout`, not here: it is shared with
  * the ranking tab, so rendering it again on this screen would duplicate it.
+ *
+ * Issue #115 — tapping a card opens `/premios/{rewardId}/canjear`. The
+ * reward id travels in the URL and not in router state on purpose: the
+ * redeem screen has to survive a refresh to find the persisted
+ * `userRewardId` of a redemption already paid for, and router state does
+ * not survive one (same trap as `checkin-store`'s `selectedPlace`, design
+ * decision #1).
  */
 export function RewardsPage() {
   const { t } = useTranslation('rewards')
+  const navigate = useNavigate()
   const { data: rewards, isPending, isError, refetch } = useRewards()
 
   if (isPending) {
@@ -51,7 +60,11 @@ export function RewardsPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {rewards.map((reward) => (
-            <RewardCard key={reward.rewardId} reward={reward} />
+            <RewardCard
+              key={reward.rewardId}
+              reward={reward}
+              onSelect={(selected) => navigate(`/premios/${selected.rewardId}/canjear`)}
+            />
           ))}
         </ul>
       )}
