@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
-import { act, render, renderHook, waitFor } from '@testing-library/react'
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { HttpResponse, http } from 'msw'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useCheckin } from '@/features/checkin/use-checkin'
@@ -11,6 +11,7 @@ import {
   MediaPermissionError,
   captureFrame,
   requestCameraStream,
+  stopCameraStream,
 } from '@/features/checkin/media/capture-photo'
 import { requestPosition } from '@/features/checkin/media/request-position'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
@@ -479,7 +480,10 @@ describe('useCheckin', () => {
 
     act(() => result.current.retry())
 
-    expect(result.current.state).toEqual({ kind: 'camera' })
+    // Issue #152: the stream was released at capture time, so retry now has
+    // to re-acquire it. `camera` is therefore reached asynchronously, after
+    // a short `requesting-permissions` pass — the destination is unchanged.
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
   })
 
   it('an unrecognized 400 title or network failure falls back to a generic error state, with retry back to camera', async () => {
@@ -499,7 +503,9 @@ describe('useCheckin', () => {
 
     act(() => result.current.retry())
 
-    expect(result.current.state).toEqual({ kind: 'camera' })
+    // Issue #152: same as the rejected-content retry above — `camera` is now
+    // reached through a re-acquisition instead of a live leftover stream.
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
   })
 })
 
@@ -715,5 +721,245 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+/**
+ * Issue #152 — camera teardown. The captured frame is already a `Blob` the
+ * moment `captureFrame` resolves, so the `MediaStream` has no remaining job.
+ * Releasing it only on unmount left the camera — and the OS camera
+ * indicator — live through `sending` -> `pending` -> `approved`, i.e. up to
+ * the 120s polling deadline in `poll-schedule.ts`.
+ *
+ * Stopping the stream at capture couples directly to `retry()`: it used to
+ * fall back to a still-live `streamRef.current`, so every retry path that is
+ * not `permission-denied` must now re-acquire, or the viewfinder comes back
+ * black.
+ */
+describe('useCheckin camera teardown (issue #152)', () => {
+  const secondStream = { getTracks: () => [] } as unknown as MediaStream
+
+  // Testing Library's global auto-cleanup unmounts the previous test's hook
+  // AFTER this file's describe-level `afterEach` has already run, so its
+  // teardown `stopCameraStream` call lands on a freshly cleared mock and
+  // leaks into the next test. Every assertion here counts those calls, so
+  // the clear has to happen on the way IN, not on the way out.
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  function mockUploadRoutes() {
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      )
+    )
+  }
+
+  it('stops the camera stream as soon as the frame is captured, before the upload completes', async () => {
+    const { result } = await renderInCameraState()
+
+    // Hold the upload open so the assertion lands strictly inside the
+    // `sending` window — the exact stretch where the camera used to stay on.
+    let releaseUpload!: () => void
+    const uploadGate = new Promise<void>((resolve) => {
+      releaseUpload = resolve
+    })
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, async () => {
+        await uploadGate
+        return HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      }),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      )
+    )
+
+    act(() => result.current.capture())
+
+    await waitFor(() => expect(stopCameraStream).toHaveBeenCalledWith(fakeStream))
+    expect(result.current.state).toEqual({ kind: 'sending', step: 'upload' })
+
+    releaseUpload()
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: 'pending', checkInId: 'checkin-1' })
+    )
+  })
+
+  it('releases the stream exactly once when unmounting after a capture', async () => {
+    const { result, unmount } = await renderInCameraState()
+    mockUploadRoutes()
+
+    act(() => result.current.capture())
+    await waitFor(() => expect(stopCameraStream).toHaveBeenCalledTimes(1))
+
+    unmount()
+
+    // The unmount cleanup must find an already-released ref and skip it
+    // rather than stop the same tracks a second time.
+    expect(stopCameraStream).toHaveBeenCalledTimes(1)
+  })
+
+  it('still releases the stream on unmount when no capture ever happened', async () => {
+    const { unmount } = await renderInCameraState()
+
+    unmount()
+
+    expect(stopCameraStream).toHaveBeenCalledWith(fakeStream)
+  })
+
+  it('re-acquires the camera when retrying from rejected-content', async () => {
+    const { result } = await renderInCameraState()
+
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ checkInId: 'checkin-1' }, { status: 202 })
+      ),
+      http.get(`${baseURL}/checkins/checkin-1`, () =>
+        HttpResponse.json(statusPayload({ validationStatus: 3 }))
+      )
+    )
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      act(() => result.current.capture())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      expect(result.current.state).toEqual({ kind: 'rejected-content' })
+    } finally {
+      vi.useRealTimers()
+    }
+
+    vi.mocked(requestCameraStream).mockResolvedValue(secondStream)
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+    expect(requestCameraStream).toHaveBeenCalledTimes(2)
+  })
+
+  it('re-acquires the camera when retrying from rejected-rule', async () => {
+    const { result } = await renderInCameraState()
+
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ title: 'CreateCheckInCommand.OutOfRadius' }, { status: 400 })
+      )
+    )
+
+    act(() => result.current.capture())
+    await waitFor(() =>
+      expect(result.current.state).toEqual({ kind: 'rejected-rule', rule: 'OutOfRadius' })
+    )
+
+    vi.mocked(requestCameraStream).mockResolvedValue(secondStream)
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+    expect(requestCameraStream).toHaveBeenCalledTimes(2)
+    // An OutOfRadius rejection asks the explorer to get closer, so the
+    // retry has to measure where they are now instead of resubmitting the
+    // stale reading that was already rejected.
+    expect(requestPosition).toHaveBeenCalledTimes(2)
+  })
+
+  it('re-acquires the camera when retrying from a generic error', async () => {
+    const { result } = await renderInCameraState()
+
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ title: 'CreateCheckInCommand.SomethingElse' }, { status: 400 })
+      )
+    )
+
+    act(() => result.current.capture())
+    await waitFor(() => expect(result.current.state.kind).toBe('error'))
+
+    vi.mocked(requestCameraStream).mockResolvedValue(secondStream)
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+    expect(requestCameraStream).toHaveBeenCalledTimes(2)
+  })
+
+  it('releases the still-live stream when retrying from an error raised before capture', async () => {
+    // `submitCheckin` bails out before `captureFrame` when `selectedPlace`
+    // went stale, so nothing released the stream on the way to `error`.
+    // Re-acquiring on retry would otherwise overwrite `streamRef` and leave
+    // the first camera on with no reference left to stop it.
+    const { result } = await renderInCameraState()
+    useCheckinStore.getState().clearSelectedPlace()
+
+    act(() => result.current.capture())
+    await waitFor(() => expect(result.current.state.kind).toBe('error'))
+    expect(stopCameraStream).not.toHaveBeenCalled()
+
+    vi.mocked(requestCameraStream).mockResolvedValue(secondStream)
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'camera' }))
+    expect(stopCameraStream).toHaveBeenCalledWith(fakeStream)
+    expect(stopCameraStream).toHaveBeenCalledTimes(1)
+  })
+
+  it('brings the viewfinder back to life after retrying a rejected check-in', async () => {
+    // The hook-only tests above prove `requestCameraStream` runs again; only
+    // a real render proves the <video> that remounts on the way back to
+    // `camera` is wired to the NEW stream instead of coming back black.
+    mockHappyPermissions()
+    seedSelectedPlace()
+    server.use(
+      http.post(`${baseURL}/checkins/photo`, () =>
+        HttpResponse.json({ photoUrl: 'https://cdn.example.com/checkins/x.jpg' })
+      ),
+      http.post(`${baseURL}/checkins`, () =>
+        HttpResponse.json({ title: 'CreateCheckInCommand.OutOfRadius' }, { status: 400 })
+      )
+    )
+
+    render(
+      <MemoryRouter>
+        <CheckinPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() =>
+      expect((document.querySelector('video') as HTMLVideoElement | null)?.srcObject).toBe(
+        fakeStream
+      )
+    )
+
+    const captureButton = await screen.findByRole('button', { name: 'Tomar foto de check-in' })
+    act(() => captureButton.click())
+
+    const retryButton = await screen.findByRole('button', { name: 'Intentar de nuevo' })
+    vi.mocked(requestCameraStream).mockResolvedValue(secondStream)
+    act(() => retryButton.click())
+
+    await waitFor(() =>
+      expect((document.querySelector('video') as HTMLVideoElement | null)?.srcObject).toBe(
+        secondStream
+      )
+    )
   })
 })
