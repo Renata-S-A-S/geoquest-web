@@ -11,5 +11,13 @@
   "terms": "Términos y condiciones",
   "logout": "Cerrar sesión",
   "logoutConfirmTitle": "¿Cerrar sesión?",
-  "logoutConfirmDescription": "Vas a necesitar iniciar sesión de nuevo."
+  "logoutConfirmDescription": "Vas a necesitar iniciar sesión de nuevo.",
+  "deleteAccount": {
+    "heading": "Eliminar cuenta",
+    "description": "Al eliminar tu cuenta dejarás de acceder a GeoQuest con ella.",
+    "action": "Eliminar mi cuenta",
+    "confirmTitle": "¿Eliminar tu cuenta?",
+    "confirmDescription": "Tu cuenta quedará desactivada y cerraremos tu sesión. Si volvés a iniciar sesión con las mismas credenciales, tu cuenta se reactiva.",
+    "error": "No pudimos desactivar tu cuenta. Volvé a intentarlo."
+  }
 }

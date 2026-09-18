@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SignOut } from '@phosphor-icons/react'
+import { SignOut, type Icon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { TornPanel } from './torn-panel'
 import { Button } from '@/shared/components/ui/button'
@@ -11,6 +11,13 @@ export interface ConfirmationModalProps {
   confirmLabel: string
   cancelLabel?: string
   destructive?: boolean
+  /**
+   * Icon shown inside the destructive circle. Defaults to `SignOut` so the
+   * existing logout call sites keep their exact current appearance; account
+   * deletion passes `Trash`. Still gated by `destructive` — an icon on a
+   * non-destructive modal renders nothing, as before.
+   */
+  icon?: Icon
   onConfirm: () => void
   onCancel: () => void
 }
@@ -34,6 +41,7 @@ export function ConfirmationModal({
   confirmLabel,
   cancelLabel,
   destructive = true,
+  icon: Icon = SignOut,
   onConfirm,
   onCancel,
 }: ConfirmationModalProps): ReactNode {
@@ -55,7 +63,7 @@ export function ConfirmationModal({
           <div className="flex items-center gap-3">
             {destructive && (
               <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-surface-alert">
-                <SignOut size={20} weight="fill" className="text-alert" />
+                <Icon size={20} weight="fill" className="text-alert" />
               </span>
             )}
             <b className="font-display text-lg text-ink lg:text-[21px]">{title}</b>
