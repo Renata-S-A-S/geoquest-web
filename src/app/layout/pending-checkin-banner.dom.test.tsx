@@ -174,3 +174,156 @@ describe('PendingCheckinBanner', () => {
     expect(screen.getByRole('button', { name: 'Dismiss notice' })).toBeInTheDocument()
   })
 })
+
+/**
+ * Issue #108 — the banner is the SECOND path an approved check-in can reach
+ * the UI (the first is `use-checkin.ts`'s poll loop), so it runs the same
+ * badge diff and the same cleanup. The "before" snapshot is read from the
+ * persisted store at mount, which is exactly why it is persisted: the tab
+ * that took it may be long gone.
+ */
+describe('PendingCheckinBanner badge diff (issue #108)', () => {
+  const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
+
+  function profilePayload(badges: { name: string; awardedAtUtc: string }[]) {
+    return {
+      explorerId: 'explorer-1',
+      totalXP: 500,
+      weeklyXP: 50,
+      geoPointsBalance: 120,
+      currentLevel: 'Explorador',
+      currentStreak: 5,
+      longestStreak: 9,
+      lastActivityLocalDate: '2026-09-17',
+      badges,
+    }
+  }
+
+  function approvedStatusRoute() {
+    return http.get(`${baseURL}/checkins/checkin-1`, () =>
+      HttpResponse.json(
+        statusPayload({
+          validationStatus: 2,
+          xpAwarded: 50,
+          geoPointsAwarded: 10,
+          createdAt: CHECKIN_CREATED_AT,
+        })
+      )
+    )
+  }
+
+  beforeEach(() => {
+    useCheckinStore.getState().clearPending()
+    useCheckinStore.getState().clearBadgeNamesBefore()
+  })
+
+  it('names the badge unlocked by the approved check-in and clears the snapshot', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload([
+            { name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' },
+            { name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' },
+          ])
+        )
+      )
+    )
+
+    renderBanner()
+
+    await waitFor(() =>
+      expect(screen.getByText('¡Desbloqueaste un badge nuevo: Explorador!')).toBeInTheDocument()
+    )
+    expect(screen.getByText(/50 XP/)).toBeInTheDocument()
+    await waitFor(() => expect(useCheckinStore.getState().badgeNamesBefore).toBeNull())
+  })
+
+  it('never asks for the profile while the check-in is still pending review', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    let profileRequestCount = 0
+    server.use(
+      http.get(`${baseURL}/checkins/checkin-1`, () =>
+        HttpResponse.json(statusPayload({ validationStatus: 1 }))
+      ),
+      http.get(`${baseURL}/gaming/profile`, () => {
+        profileRequestCount += 1
+        return HttpResponse.json(profilePayload([]))
+      })
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(useCheckinStore.getState().pending).not.toBeNull())
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(profileRequestCount).toBe(0)
+  })
+
+  it('claims nothing when the badge was already owned before the check-in', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+        )
+      )
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(screen.getByText(/50 XP/)).toBeInTheDocument())
+    expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
+  })
+
+  it('shows the plain approved notice with no badge line and no error when the snapshot is missing', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload([{ name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' }])
+        )
+      )
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(screen.getByText(/50 XP/)).toBeInTheDocument())
+    expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/No pudimos/)).not.toBeInTheDocument()
+  })
+
+  it('shows the plain approved notice with no error when the profile refetch fails', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(screen.getByText(/50 XP/)).toBeInTheDocument())
+    expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/No pudimos/)).not.toBeInTheDocument()
+    await waitFor(() => expect(useCheckinStore.getState().badgeNamesBefore).toBeNull())
+  })
+
+  it('clears the snapshot alongside the pending entry on a 404', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'missing', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    server.use(
+      http.get(`${baseURL}/checkins/missing`, () => new HttpResponse(null, { status: 404 }))
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(useCheckinStore.getState().pending).toBeNull())
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+  })
+})
