@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import i18next from 'i18next'
 import { act } from 'react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TEST_API_BASE_URL } from '@/test/api-base-url'
 import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
@@ -355,5 +355,85 @@ describe('PendingCheckinBanner badge diff (issue #108)', () => {
 
     await waitFor(() => expect(useCheckinStore.getState().pending).toBeNull())
     expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+  })
+})
+
+/**
+ * Issue #154, point 4 — same diagnostic contract as `use-checkin.ts`: the
+ * banner must say WHY it claimed nothing, because the screen looks the same
+ * either way.
+ */
+describe('PendingCheckinBanner badge diff diagnostics (issue #154)', () => {
+  const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
+
+  // Testing Library's global auto-cleanup runs after this describe's hooks,
+  // so a late unmount from an earlier test can otherwise leak onto this
+  // spy. Every assertion here counts calls — clear on the way IN.
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useCheckinStore.getState().clearPending()
+    useCheckinStore.getState().clearBadgeNamesBefore()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  function approvedStatusRoute() {
+    return http.get(`${baseURL}/checkins/checkin-1`, () =>
+      HttpResponse.json(
+        statusPayload({
+          validationStatus: 2,
+          xpAwarded: 50,
+          geoPointsAwarded: 10,
+          createdAt: CHECKIN_CREATED_AT,
+        })
+      )
+    )
+  }
+
+  function emptyProfilePayload() {
+    return {
+      explorerId: 'explorer-1',
+      totalXP: 500,
+      weeklyXP: 50,
+      geoPointsBalance: 120,
+      currentLevel: 'Explorador',
+      currentStreak: 5,
+      longestStreak: 9,
+      lastActivityLocalDate: '2026-09-17',
+      badges: [],
+    }
+  }
+
+  it('warns that no snapshot survived the reload', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => HttpResponse.json(emptyProfilePayload()))
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(screen.getByText(/50 XP/)).toBeInTheDocument())
+    await waitFor(() => expect(warn).toHaveBeenCalledTimes(1))
+    expect(warn.mock.calls[0][0]).toMatch(/snapshot/i)
+  })
+
+  it('warns that the profile read failed, not that the snapshot was missing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    useCheckinStore.getState().setBadgeNamesBefore(['Primer paso'])
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    renderBanner()
+
+    await waitFor(() => expect(screen.getByText(/50 XP/)).toBeInTheDocument())
+    await waitFor(() => expect(warn).toHaveBeenCalledTimes(1))
+    expect(warn.mock.calls[0][0]).toMatch(/profile/i)
   })
 })
