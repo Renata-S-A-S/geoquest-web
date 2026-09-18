@@ -6,7 +6,7 @@ import { X } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { getCheckinStatus } from '@/features/checkin/checkin-api'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
-import { diffUnlockedBadges } from '@/features/checkin/badge-diff'
+import { diffUnlockedBadges, warnBadgeDiffDegraded } from '@/features/checkin/badge-diff'
 import { getGamingProfile } from '@/features/gamification/gamification-api'
 import { gamificationKeys } from '@/features/gamification/queries'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
@@ -85,10 +85,11 @@ export function PendingCheckinBanner() {
    * Issue #108 — the "after" half of the badge diff, requested ONLY once the
    * check-in is known to be approved: a still-pending or rejected follow-up
    * has nothing to celebrate and must not spend a request. Errors are left
-   * unread on purpose (`retry: false`, no `error` destructured): a failed
-   * profile read degrades to the plain approved notice, never to an error.
+   * read only for the issue #154 diagnostic below (`retry: false`): a failed
+   * profile read still degrades to the plain approved notice, never to an
+   * error the explorer can see.
    */
-  const { data: profile } = useQuery({
+  const { data: profile, error: profileError } = useQuery({
     queryKey: gamificationKeys.profile,
     queryFn: getGamingProfile,
     enabled: outcome === 'approved',
@@ -100,6 +101,22 @@ export function PendingCheckinBanner() {
   // `awardedAtUtc` — never this device's, which may be skewed.
   const unlockedBadgeNames =
     data && profile ? diffUnlockedBadges(badgeNamesBefore, profile.badges, data.createdAt) : []
+
+  /**
+   * Issue #154, point 4 — development-only, and only once the outcome is
+   * approved, because that is the only state where a badge could have been
+   * claimed at all. A missing snapshot is the ordinary case here (the tab
+   * that would have taken it is gone after a reload), so it must read
+   * differently from an endpoint that simply did not answer.
+   */
+  useEffect(() => {
+    if (outcome !== 'approved') return
+    if (profileError) {
+      warnBadgeDiffDegraded('profile-unavailable')
+      return
+    }
+    if (profile && badgeNamesBefore === null) warnBadgeDiffDegraded('snapshot-missing')
+  }, [outcome, profile, profileError, badgeNamesBefore])
 
   useEffect(() => {
     if (!snapshot) return
