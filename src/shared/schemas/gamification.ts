@@ -22,9 +22,31 @@ export const categorySchema = z.enum([
 ])
 export type Category = z.infer<typeof categorySchema>
 
-/** One entry of `GamificationProfileResult.Badges` — name + award date only (issue #41: no description/iconUrl yet). */
+/**
+ * One entry of `GamificationProfileResult.Badges`. The full backend record is
+ * `BadgeAwardResult(string Name, string Description, string? IconUrl,
+ * DateTime AwardedAtUtc)` — backend issue #41 added `Description` and
+ * `IconUrl` and CLOSED on 2026-08-24, so both fields are populated on every
+ * response today. This schema declared only `name` + `awardedAtUtc` until
+ * issue #153, and because Zod strips undeclared keys the description was
+ * silently discarded on every request. Do not narrow this object again
+ * without checking the backend contract first.
+ *
+ * `iconUrl` is parsed because it is part of the contract and costs nothing,
+ * but nothing renders it: it is NULL for all 7 seeded badge rows, so icon
+ * rendering would be untested code for data that does not exist yet.
+ *
+ * `description` is Spanish free text stored in the `Badge` table, not a
+ * translatable key, so it renders in Spanish even under the `en` locale.
+ * That is a known limitation, not an oversight — same precedent as
+ * `auth-api.ts` surfacing the server's ProblemDetails `detail` verbatim.
+ * Fixing it needs a backend-side localized-copy contract, not a client
+ * translation layer guessing at keys.
+ */
 export const badgeAwardSchema = z.object({
   name: z.string(),
+  description: z.string(),
+  iconUrl: z.string().nullable(),
   awardedAtUtc: z.string(),
 })
 export type BadgeAward = z.infer<typeof badgeAwardSchema>

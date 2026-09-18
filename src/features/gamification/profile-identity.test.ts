@@ -17,7 +17,14 @@ const profile: GamingProfile = {
   currentStreak: 3,
   longestStreak: 8,
   lastActivityLocalDate: '2026-08-24',
-  badges: [{ name: 'Primer paso', awardedAtUtc: '2026-08-20T00:00:00Z' }],
+  badges: [
+    {
+      name: 'Primer paso',
+      description: 'Completaste tu primer check-in verificado.',
+      iconUrl: null,
+      awardedAtUtc: '2026-08-20T00:00:00Z',
+    },
+  ],
 }
 
 const me: ExplorerProfileResponse = {

@@ -17,6 +17,7 @@ import { requestPosition } from '@/features/checkin/media/request-position'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { queryClient } from '@/shared/lib/query-client'
 import { gamificationKeys } from '@/features/gamification/queries'
+import type { BadgeAward } from '@/shared/schemas/gamification'
 
 /**
  * Design decision #9: mock the two browser-touching media adapters entirely
@@ -521,6 +522,15 @@ describe('useCheckin', () => {
 describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
   const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
 
+  /**
+   * Full `BadgeAwardResult` shape — `description` and `iconUrl` have been on
+   * the wire since backend issue #41 closed (2026-08-24) and are now parsed
+   * (issue #153), so a payload without them no longer passes the schema.
+   */
+  function badge(name: string, awardedAtUtc: string): BadgeAward {
+    return { name, description: `Insignia ${name}.`, iconUrl: null, awardedAtUtc }
+  }
+
   function profilePayload(overrides: Record<string, unknown> = {}) {
     return {
       explorerId: 'explorer-1',
@@ -531,12 +541,12 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
       currentStreak: 5,
       longestStreak: 9,
       lastActivityLocalDate: '2026-09-17',
-      badges: [{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }],
+      badges: [badge('Primer paso', '2026-01-01T00:00:00Z')],
       ...overrides,
     }
   }
 
-  function seedProfileCache(badges: { name: string; awardedAtUtc: string }[]) {
+  function seedProfileCache(badges: BadgeAward[]) {
     queryClient.setQueryData(gamificationKeys.profile, profilePayload({ badges }))
   }
 
@@ -572,7 +582,7 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
 
   it('snapshots the cached badge names during submitCheckin without issuing a profile request', async () => {
     const { result } = await renderInCameraState()
-    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+    seedProfileCache([badge('Primer paso', '2026-01-01T00:00:00Z')])
 
     let profileRequestCount = 0
     mockSubmitRoutes()
@@ -608,7 +618,7 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
 
   it('diffs the refetched profile on approval, exposes the streak, and clears the snapshot', async () => {
     const { result } = await renderInCameraState()
-    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+    seedProfileCache([badge('Primer paso', '2026-01-01T00:00:00Z')])
 
     mockSubmitRoutes()
     server.use(
@@ -618,8 +628,8 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
           profilePayload({
             currentStreak: 7,
             badges: [
-              { name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' },
-              { name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' },
+              badge('Primer paso', '2026-01-01T00:00:00Z'),
+              badge('Explorador', '2026-09-17T12:00:03Z'),
             ],
           })
         )
@@ -661,7 +671,7 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
         HttpResponse.json(
           profilePayload({
             currentStreak: 3,
-            badges: [{ name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' }],
+            badges: [badge('Explorador', '2026-09-17T12:00:03Z')],
           })
         )
       )
@@ -689,7 +699,7 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
 
   it('leaves the approved state untouched and raises no error when the profile refetch fails', async () => {
     const { result } = await renderInCameraState()
-    seedProfileCache([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
+    seedProfileCache([badge('Primer paso', '2026-01-01T00:00:00Z')])
 
     mockSubmitRoutes()
     server.use(
