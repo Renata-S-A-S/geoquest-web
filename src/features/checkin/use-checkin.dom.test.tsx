@@ -575,10 +575,38 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
     )
   }
 
+  // Testing Library's global auto-cleanup unmounts the previous test's hook
+  // AFTER this file's describe-level `afterEach`, so a late celebration fetch
+  // can otherwise leak its `console.warn` onto the next test's spy. The
+  // diagnostics cases below count those calls — clear on the way IN.
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   afterEach(() => {
     queryClient.clear()
     useCheckinStore.getState().clearBadgeNamesBefore()
+    vi.restoreAllMocks()
   })
+
+  /** Capture, then advance past the first poll tick and the profile refetch. */
+  async function captureUntilApproved(capture: () => void) {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    try {
+      act(() => capture())
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000)
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100)
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  }
 
   it('snapshots the cached badge names during submitCheckin without issuing a profile request', async () => {
     const { result } = await renderInCameraState()
@@ -661,7 +689,14 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
     }
   })
 
-  it('claims no badge when the snapshot is missing, but still shows the streak and no error', async () => {
+  /**
+   * Issue #154 — THE path, not an edge case. Nothing but `/perfil` fills
+   * `gamificationKeys.profile`, and map -> place -> check-in never goes
+   * there, so the cache is cold for every first-time explorer. This case
+   * used to assert the empty list as intended behaviour, which is how the
+   * celebration shipped structurally unable to fire.
+   */
+  it('claims the badge this check-in unlocked even when the cache was cold at submit time', async () => {
     const { result } = await renderInCameraState()
 
     mockSubmitRoutes()
@@ -677,25 +712,82 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
       )
     )
 
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
-    try {
-      act(() => result.current.capture())
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(0)
-      })
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2_000)
-      })
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(100)
-      })
+    await captureUntilApproved(result.current.capture)
 
-      expect(result.current.state).toMatchObject({ kind: 'approved', xpAwarded: 50 })
-      expect(result.current.celebration).toEqual({ unlockedBadgeNames: [], currentStreak: 3 })
-    } finally {
-      vi.useRealTimers()
-    }
+    // No snapshot was ever taken — `badgeNamesBefore` stayed null through
+    // the whole submit, exactly as on the real cold path.
+    expect(useCheckinStore.getState().badgeNamesBefore).toBeNull()
+    expect(result.current.state).toMatchObject({ kind: 'approved', xpAwarded: 50 })
+    expect(result.current.celebration).toEqual({
+      unlockedBadgeNames: ['Explorador'],
+      currentStreak: 3,
+    })
   })
+
+  it('claims no badge on a cold cache when the only badge predates the check-in', async () => {
+    const { result } = await renderInCameraState()
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload({
+            currentStreak: 3,
+            // One second before `CHECKIN_CREATED_AT`: earned earlier, or on
+            // another device. Without a baseline the timestamp is the only
+            // thing standing between a celebration and a false claim.
+            badges: [badge('Veterano', '2026-09-17T11:59:59Z')],
+          })
+        )
+      )
+    )
+
+    await captureUntilApproved(result.current.capture)
+
+    expect(result.current.state).toMatchObject({ kind: 'approved', xpAwarded: 50 })
+    expect(result.current.celebration).toEqual({ unlockedBadgeNames: [], currentStreak: 3 })
+  })
+
+  it('renders the badge line on the approved screen after a cold-cache check-in', async () => {
+    // The hook-level cases above stop at `celebration`; this one renders the
+    // real `CheckinPage` so the assertion is the line an explorer sees.
+    mockHappyPermissions()
+    seedSelectedPlace()
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(
+          profilePayload({
+            currentStreak: 3,
+            badges: [badge('Explorador', '2026-09-17T12:00:03Z')],
+          })
+        )
+      )
+    )
+
+    render(
+      <MemoryRouter>
+        <CheckinPage />
+      </MemoryRouter>
+    )
+
+    const captureButton = await screen.findByRole('button', {
+      name: 'Tomar foto de check-in',
+    })
+    await act(async () => {
+      captureButton.click()
+    })
+
+    // Real timers, so the wait has to clear `poll-schedule.ts`'s first
+    // 2s tick before the approved screen can even render.
+    expect(
+      await screen.findByText('¡Desbloqueaste un badge nuevo: Explorador!', undefined, {
+        timeout: 6_000,
+      })
+    ).toBeInTheDocument()
+  }, 15_000)
 
   it('leaves the approved state untouched and raises no error when the profile refetch fails', async () => {
     const { result } = await renderInCameraState()
@@ -731,6 +823,46 @@ describe('useCheckin badge snapshot, diff and streak (issue #108)', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  /**
+   * Issue #154, point 4 — a cold snapshot and a dead profile endpoint render
+   * the identical approved screen, so the console is the only place the
+   * difference can show up while developing.
+   */
+  it('warns that no snapshot was taken when the cache was cold at submit time', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { result } = await renderInCameraState()
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => HttpResponse.json(profilePayload()))
+    )
+
+    await captureUntilApproved(result.current.capture)
+
+    expect(result.current.state.kind).toBe('approved')
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatch(/snapshot/i)
+  })
+
+  it('warns that the profile read failed, not that the snapshot was missing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { result } = await renderInCameraState()
+    seedProfileCache([badge('Primer paso', '2026-01-01T00:00:00Z')])
+
+    mockSubmitRoutes()
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () => new HttpResponse(null, { status: 500 }))
+    )
+
+    await captureUntilApproved(result.current.capture)
+
+    expect(result.current.celebration).toBeNull()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatch(/profile/i)
   })
 })
 

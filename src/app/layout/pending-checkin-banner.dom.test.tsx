@@ -288,12 +288,36 @@ describe('PendingCheckinBanner badge diff (issue #108)', () => {
     expect(screen.queryByText(/Desbloqueaste/)).not.toBeInTheDocument()
   })
 
-  it('shows the plain approved notice with no badge line and no error when the snapshot is missing', async () => {
+  /**
+   * Issue #154 — the banner is reached after a reload, so the snapshot is
+   * missing here even more often than on the polling path: the tab that
+   * would have taken it is gone. Without a baseline the timestamp alone
+   * decides, exactly as in `use-checkin.ts`.
+   */
+  it('names the badge unlocked by the check-in when the snapshot is missing', async () => {
     useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
     server.use(
       approvedStatusRoute(),
       http.get(`${baseURL}/gaming/profile`, () =>
         HttpResponse.json(profilePayload([badge('Explorador', '2026-09-17T12:00:03Z')]))
+      )
+    )
+
+    renderBanner()
+
+    await waitFor(() =>
+      expect(screen.getByText('¡Desbloqueaste un badge nuevo: Explorador!')).toBeInTheDocument()
+    )
+    expect(screen.getByText(/50 XP/)).toBeInTheDocument()
+    expect(screen.queryByText(/No pudimos/)).not.toBeInTheDocument()
+  })
+
+  it('claims nothing without a snapshot when the badge predates the check-in', async () => {
+    useCheckinStore.getState().setPending({ checkInId: 'checkin-1', placeName: 'El Cielo' })
+    server.use(
+      approvedStatusRoute(),
+      http.get(`${baseURL}/gaming/profile`, () =>
+        HttpResponse.json(profilePayload([badge('Veterano', '2026-09-17T11:59:59Z')]))
       )
     )
 

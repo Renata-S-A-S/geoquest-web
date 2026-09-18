@@ -39,6 +39,40 @@ function toEpochMs(value: string): number {
   return Date.parse(TIMEZONE_DESIGNATOR.test(value) ? value : value + 'Z')
 }
 
+/**
+ * Why a check-in celebrated fewer badges than it could have.
+ *
+ * - `snapshot-missing`: no pre-check-in baseline existed, so the diff ran on
+ *   the timestamp test alone (issue #154 — the normal case on a cold cache,
+ *   not a failure).
+ * - `profile-unavailable`: the post-approval `GET /gaming/profile` never
+ *   landed, so there was nothing to diff at all.
+ */
+export type BadgeDiffDegradation = 'snapshot-missing' | 'profile-unavailable'
+
+const DEGRADATION_MESSAGES: Record<BadgeDiffDegradation, string> = {
+  'snapshot-missing':
+    '[badge-diff] No pre-check-in badge snapshot was taken; claiming unlocks from the award timestamp alone.',
+  'profile-unavailable':
+    '[badge-diff] The post-approval profile read failed; no badge can be claimed for this check-in.',
+}
+
+/**
+ * Issue #154, point 4 — development-only diagnostic. Both degradations
+ * render the exact same screen (no badge line), which is how a total
+ * celebration blackout stayed invisible for a day. Naming the cause costs
+ * nothing and is the difference between "nothing to celebrate" and "the
+ * feature is broken".
+ *
+ * Guarded on `import.meta.env.DEV` rather than a log level: this is a
+ * debugging aid for whoever is working on the diff, never explorer-facing
+ * console noise in a production build.
+ */
+export function warnBadgeDiffDegraded(degradation: BadgeDiffDegradation): void {
+  if (!import.meta.env.DEV) return
+  console.warn(DEGRADATION_MESSAGES[degradation])
+}
+
 /** Projects a profile's badge list down to the names the snapshot stores. */
 export function badgeNames(badges: BadgeAward[]): string[] {
   return badges.map((award) => award.name)
@@ -48,15 +82,15 @@ export function badgeNames(badges: BadgeAward[]): string[] {
  * Names of the badges this check-in unlocked.
  *
  * @param before Badge names owned when the check-in was submitted, or `null`
- *   when no snapshot was taken. `null` yields an empty list — with no
- *   baseline the diff can prove nothing. An empty array is a REAL snapshot
- *   (an explorer with no badges yet) and is treated as such.
+ *   when no snapshot was taken. An empty array is a REAL snapshot (an
+ *   explorer with no badges yet); `null` means there was no baseline to
+ *   compare against, and the timestamp test carries the decision alone.
  * @param after The profile's badge list refetched after approval.
  * @param checkinCreatedAt The check-in's server-side `createdAt`. Server
  *   time on both sides of the comparison, never the client clock, so device
  *   skew cannot silently widen or narrow the window.
  *
- * A badge counts as unlocked by this check-in only when it is absent from
+ * A badge counts as unlocked by this check-in when it is absent from
  * `before` AND was awarded at or after `checkinCreatedAt`. The timestamp
  * test is AT-or-after rather than strictly-after on purpose: the backend
  * stamps the check-in's `CreatedAt` and the badge's `AwardedAtUtc` inside
@@ -64,18 +98,27 @@ export function badgeNames(badges: BadgeAward[]): string[] {
  * shape of a badge this check-in earned — excluding it would drop the most
  * common true positive. Anything older predates the check-in (earned
  * earlier, or on another device against a stale snapshot) and is dropped.
+ *
+ * ISSUE #154 — a `null` snapshot used to short-circuit to an empty list,
+ * on the reasoning that without a baseline the diff could prove nothing.
+ * That made the celebration structurally unreachable: only `/perfil` fills
+ * the profile cache the snapshot is read from, and the real path (open app
+ * -> map -> tap place -> check in) never goes there, so every unlock was
+ * dropped in silence. A null snapshot now falls through to the timestamp
+ * filter alone. The `before` set was always the weaker of the two tests —
+ * a guard against clock-adjacent false positives, not the load-bearing
+ * one — and a badge awarded at or after this check-in's server timestamp
+ * was almost certainly caused by it.
  */
 export function diffUnlockedBadges(
   before: string[] | null,
   after: BadgeAward[],
   checkinCreatedAt: string
 ): string[] {
-  if (before === null) return []
-
   const checkinEpochMs = toEpochMs(checkinCreatedAt)
   if (Number.isNaN(checkinEpochMs)) return []
 
-  const alreadyOwned = new Set(before)
+  const alreadyOwned = new Set(before ?? [])
 
   return after
     .filter((award) => {

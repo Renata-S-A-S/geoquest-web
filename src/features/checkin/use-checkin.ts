@@ -17,7 +17,11 @@ import {
   type CheckinRuleRejection,
 } from '@/features/checkin/checkin-api'
 import { nextPollDelayMs } from '@/features/checkin/poll-schedule'
-import { badgeNames, diffUnlockedBadges } from '@/features/checkin/badge-diff'
+import {
+  badgeNames,
+  diffUnlockedBadges,
+  warnBadgeDiffDegraded,
+} from '@/features/checkin/badge-diff'
 import { getGamingProfile } from '@/features/gamification/gamification-api'
 import { gamificationKeys } from '@/features/gamification/queries'
 import { ValidationStatus } from '@/shared/schemas/checkin'
@@ -45,8 +49,10 @@ export type CheckinState =
  * Deliberately kept OUT of `CheckinState['approved']`: the terminal outcome
  * is settled the moment the poll returns `Approved`, and it must not wait on
  * (or be invalidated by) an optional profile read. `null` means "nothing to
- * celebrate beyond XP/GeoPoints" — a missing snapshot, a failed refetch, or
- * a refetch still in flight all land here, and all render identically.
+ * celebrate beyond XP/GeoPoints" — a failed refetch and a refetch still in
+ * flight both land here, and both render identically. Since issue #154 a
+ * missing snapshot no longer does: the diff degrades to the timestamp test
+ * instead of giving up.
  */
 export interface CheckinCelebration {
   unlockedBadgeNames: string[]
@@ -92,6 +98,10 @@ async function fetchCelebration(
   badgeNamesBefore: string[] | null,
   checkinCreatedAt: string
 ): Promise<CheckinCelebration | null> {
+  // Issue #154: a cold cache is the ordinary case on the map -> check-in
+  // path, so this is a "you are reading the timestamp only" note, not an
+  // error. It exists because the degraded and healthy screens are identical.
+  if (badgeNamesBefore === null) warnBadgeDiffDegraded('snapshot-missing')
   try {
     const profile = await queryClient.fetchQuery<GamingProfile>({
       queryKey: gamificationKeys.profile,
@@ -108,6 +118,7 @@ async function fetchCelebration(
       currentStreak: profile.currentStreak,
     }
   } catch {
+    warnBadgeDiffDegraded('profile-unavailable')
     return null
   }
 }
