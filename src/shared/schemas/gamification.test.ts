@@ -39,13 +39,40 @@ describe('categorySchema', () => {
 })
 
 describe('badgeAwardSchema', () => {
-  it('accepts { name, awardedAtUtc }', () => {
-    const payload = { name: 'Primer paso', awardedAtUtc: '2026-08-20T00:00:00Z' }
+  it('keeps the description and iconUrl the backend sends (issue #41, closed 2026-08-24)', () => {
+    const payload = {
+      name: 'Primer paso',
+      description: 'Completaste tu primer check-in verificado.',
+      iconUrl: 'https://cdn.example.com/badges/primer-paso.png',
+      awardedAtUtc: '2026-08-20T00:00:00Z',
+    }
     expect(badgeAwardSchema.parse(payload)).toEqual(payload)
   })
 
+  it('accepts a null iconUrl (every seeded badge row has IconUrl NULL today)', () => {
+    const payload = {
+      name: 'Primer paso',
+      description: 'Completaste tu primer check-in verificado.',
+      iconUrl: null,
+      awardedAtUtc: '2026-08-20T00:00:00Z',
+    }
+    expect(badgeAwardSchema.parse(payload)).toEqual(payload)
+  })
+
+  it('rejects a payload missing description (the backend has sent it since #41)', () => {
+    expect(() =>
+      badgeAwardSchema.parse({
+        name: 'Primer paso',
+        iconUrl: null,
+        awardedAtUtc: '2026-08-20T00:00:00Z',
+      })
+    ).toThrow()
+  })
+
   it('rejects a payload missing awardedAtUtc', () => {
-    expect(() => badgeAwardSchema.parse({ name: 'Primer paso' })).toThrow()
+    expect(() =>
+      badgeAwardSchema.parse({ name: 'Primer paso', description: 'x', iconUrl: null })
+    ).toThrow()
   })
 })
 
@@ -74,7 +101,14 @@ describe('gamingProfileSchema', () => {
   it('accepts a non-empty badges list', () => {
     const payload = {
       ...base,
-      badges: [{ name: 'Primer paso', awardedAtUtc: '2026-08-20T00:00:00Z' }],
+      badges: [
+        {
+          name: 'Primer paso',
+          description: 'Completaste tu primer check-in verificado.',
+          iconUrl: null,
+          awardedAtUtc: '2026-08-20T00:00:00Z',
+        },
+      ],
     }
     expect(gamingProfileSchema.parse(payload)).toEqual(payload)
   })

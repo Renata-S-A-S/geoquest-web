@@ -9,6 +9,7 @@ import { server } from '@/test/msw-server'
 import { useCheckinStore } from '@/shared/stores/checkin-store'
 import { getGenericContentRejectionMessage } from '@/features/checkin/checkin-copy'
 import { PendingCheckinBanner } from './pending-checkin-banner'
+import type { BadgeAward } from '@/shared/schemas/gamification'
 
 /** Same fixed-namespace `t` pattern as the component under test (PR3a). */
 const tCheckin = i18next.getFixedT('es', 'checkin')
@@ -185,7 +186,16 @@ describe('PendingCheckinBanner', () => {
 describe('PendingCheckinBanner badge diff (issue #108)', () => {
   const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
 
-  function profilePayload(badges: { name: string; awardedAtUtc: string }[]) {
+  /**
+   * Full `BadgeAwardResult` shape — `description` and `iconUrl` have been on
+   * the wire since backend issue #41 closed (2026-08-24) and are now parsed
+   * (issue #153), so a payload without them no longer passes the schema.
+   */
+  function badge(name: string, awardedAtUtc: string): BadgeAward {
+    return { name, description: `Insignia ${name}.`, iconUrl: null, awardedAtUtc }
+  }
+
+  function profilePayload(badges: BadgeAward[]) {
     return {
       explorerId: 'explorer-1',
       totalXP: 500,
@@ -225,8 +235,8 @@ describe('PendingCheckinBanner badge diff (issue #108)', () => {
       http.get(`${baseURL}/gaming/profile`, () =>
         HttpResponse.json(
           profilePayload([
-            { name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' },
-            { name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' },
+            badge('Primer paso', '2026-01-01T00:00:00Z'),
+            badge('Explorador', '2026-09-17T12:00:03Z'),
           ])
         )
       )
@@ -268,9 +278,7 @@ describe('PendingCheckinBanner badge diff (issue #108)', () => {
     server.use(
       approvedStatusRoute(),
       http.get(`${baseURL}/gaming/profile`, () =>
-        HttpResponse.json(
-          profilePayload([{ name: 'Primer paso', awardedAtUtc: '2026-01-01T00:00:00Z' }])
-        )
+        HttpResponse.json(profilePayload([badge('Primer paso', '2026-01-01T00:00:00Z')]))
       )
     )
 
@@ -285,9 +293,7 @@ describe('PendingCheckinBanner badge diff (issue #108)', () => {
     server.use(
       approvedStatusRoute(),
       http.get(`${baseURL}/gaming/profile`, () =>
-        HttpResponse.json(
-          profilePayload([{ name: 'Explorador', awardedAtUtc: '2026-09-17T12:00:03Z' }])
-        )
+        HttpResponse.json(profilePayload([badge('Explorador', '2026-09-17T12:00:03Z')]))
       )
     )
 

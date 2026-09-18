@@ -13,10 +13,13 @@ export interface BadgeDetailModalProps {
  * `TornPanel edge="top" backing="ink"` overlay, mismo hairline estándar que
  * `ConfirmationModal`. Cierra con Esc o click en el backdrop.
  *
- * TODO(#41): el backend todavía no expone `description` ni `iconUrl` en
- * `BadgeAwardResult` (solo `name` + `awardedAtUtc`) — este modal NO debe
- * inferir ni mostrar un placeholder para esos campos hasta que el issue
- * #41 los agregue al contrato.
+ * Proyección pura del badge: nombre, descripción y fecha, sin copy propia.
+ * La descripción llega del servidor (backend issue #41, cerrado el
+ * 2026-08-24) y se muestra tal cual, incluso bajo locale `en`, porque es
+ * texto libre en español guardado en la base y no una clave traducible —
+ * mismo criterio que `auth-api.ts` con el `detail` de ProblemDetails.
+ * `badge.iconUrl` se parsea pero no se renderiza: es NULL en las 7 filas
+ * sembradas, así que no hay ícono que mostrar todavía.
  */
 export function BadgeDetailModal({ badge, onClose }: BadgeDetailModalProps) {
   useEffect(() => {
@@ -42,7 +45,9 @@ export function BadgeDetailModal({ badge, onClose }: BadgeDetailModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-6"
       onClick={onClose}
     >
-      <div className="relative w-[220px]" onClick={(event) => event.stopPropagation()}>
+      {/* 220px alcanzaba para un nombre corto; una frase completa de
+          descripción se partía en demasiadas líneas, de ahí los 280px. */}
+      <div className="relative w-[280px]" onClick={(event) => event.stopPropagation()}>
         <TornPanel
           edge="top"
           backing="ink"
@@ -52,6 +57,7 @@ export function BadgeDetailModal({ badge, onClose }: BadgeDetailModalProps) {
           className="flex flex-col items-center gap-1.5 px-3.5 pb-4 pt-[18px] text-center"
         >
           <b className="font-display text-sm text-ink">{badge.name}</b>
+          <p className="font-sans text-[12px] leading-snug text-ink">{badge.description}</p>
           <span className="font-sans text-[11px] text-muted">{awardedAt}</span>
         </TornPanel>
       </div>

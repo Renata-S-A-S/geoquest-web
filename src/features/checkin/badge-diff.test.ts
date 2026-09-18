@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { badgeNames, diffUnlockedBadges } from '@/features/checkin/badge-diff'
+import type { BadgeAward } from '@/shared/schemas/gamification'
 
 const CHECKIN_CREATED_AT = '2026-09-17T12:00:00Z'
 
-function badge(name: string, awardedAtUtc: string) {
-  return { name, awardedAtUtc }
+/**
+ * The diff reads only `name` and `awardedAtUtc`; `description` and `iconUrl`
+ * are here so the fixture stays a real `BadgeAward` (issue #153), not because
+ * this module cares about them.
+ */
+function badge(name: string, awardedAtUtc: string): BadgeAward {
+  return { name, description: `Insignia ${name}.`, iconUrl: null, awardedAtUtc }
 }
 
 describe('badgeNames', () => {
